@@ -1,0 +1,195 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Manueller Trigger über GitHub UI
+
+env:
+  GODOT_VERSION: "4.3"
+  EXPORT_NAME: "WildGrove"  # Dein Spielname – hier anpassen
+  PROJECT_PATH: "."          # Pfad zum Godot-Projekt im Repo
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Repo auschecken ──────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # ── 2. Java 17 installieren (Godot 4 braucht ≥ 17) ─────────────────
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # ── 3. Android SDK einrichten ────────────────────────────────────────
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools & NDK
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;23.2.8568313"
+
+      # ── 4. Godot 4 + Export Templates herunterladen ──────────────────────
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        run: |
+          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          wget -q "${GODOT_URL}/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          echo "Godot version:"
+          godot --version
+
+      - name: Download Android export templates
+        run: |
+          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          TPL_FILE="Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          wget -q "${GODOT_URL}/${TPL_FILE}" -O templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          unzip -q templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable/
+
+      # ── 5. Debug-Keystore erstellen (kein Signing-Secret nötig) ──────────
+      - name: Generate debug keystore
+        run: |
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass android \
+            -keypass android \
+            -dname "CN=Debug, O=Android, C=US"
+
+      # ── 6. Export-Preset konfigurieren ───────────────────────────────────
+      # Godot liest export_presets.cfg aus dem Projektordner.
+      # Der Schritt schreibt eine minimale Konfiguration, falls noch keine existiert.
+      - name: Ensure export_presets.cfg exists
+        run: |
+          PRESETS_FILE="${PROJECT_PATH}/export_presets.cfg"
+          if [ ! -f "$PRESETS_FILE" ]; then
+            echo "Keine export_presets.cfg gefunden – erstelle Debug-Preset..."
+            cat > "$PRESETS_FILE" << 'EOF'
+          [preset.0]
+          name="Android Debug"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/android/${EXPORT_NAME}-debug.apk"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.0.options]
+          gradle_build/use_gradle_build=false
+          gradle_build/gradle_build_directory=""
+          gradle_build/android_source_template=""
+          architectures/armeabi-v7a=false
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug="../../debug.keystore"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
+          package/unique_name="com.yourname.wildgrove"
+          package/name="WildGrove"
+          package/signed=true
+          package/classify_as_game=true
+          screen/immersive_mode=true
+          screen/support_small=false
+          screen/support_normal=true
+          screen/support_large=true
+          screen/support_xlarge=true
+          EOF
+          else
+            echo "export_presets.cfg gefunden – behalte bestehende Konfiguration."
+          fi
+
+      # ── 7. Ausgabeverzeichnis anlegen ────────────────────────────────────
+      - name: Create output directory
+        run: mkdir -p "${PROJECT_PATH}/build/android"
+
+      # ── 8. Godot-Headless-Import ausführen ──────────────────────────────
+      - name: Import project assets
+        run: |
+          cd "${PROJECT_PATH}"
+          godot --headless --editor --quit 2>&1 || true
+          # Kurze Pause, damit alle Import-Dateien geschrieben werden
+          sleep 5
+
+      # ── 9. APK exportieren ───────────────────────────────────────────────
+      - name: Export APK
+        run: |
+          cd "${PROJECT_PATH}"
+          godot --headless \
+            --export-debug "Android Debug" \
+            "build/android/${EXPORT_NAME}-debug.apk" \
+            2>&1
+
+      # ── 10. Prüfen ob APK erstellt wurde ─────────────────────────────────
+      - name: Verify APK
+        run: |
+          APK="${PROJECT_PATH}/build/android/${EXPORT_NAME}-debug.apk"
+          if [ -f "$APK" ]; then
+            SIZE=$(du -sh "$APK" | cut -f1)
+            echo "✅ APK erfolgreich erstellt: $APK ($SIZE)"
+          else
+            echo "❌ APK wurde NICHT erstellt!"
+            exit 1
+          fi
+
+      # ── 11. APK als GitHub Artifact hochladen ────────────────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildGrove-debug-APK
+          path: ${{ env.PROJECT_PATH }}/build/android/*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      # ── Optional: Release erstellen bei Tag-Push ─────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: build-android
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download APK from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: WildGrove-debug-APK
+          path: ./release
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./release/*.apk
+          generate_release_notes: true
+          name: "WildGrove ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
