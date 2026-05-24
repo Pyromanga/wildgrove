@@ -13,7 +13,7 @@ config/description="Ein Abenteuer-RPG mit Farming, Dorfbau und Dungeons"
 config/version="0.1.0"
 config/tags=PackedStringArray("mobile", "rpg", "3d")
 run/main_scene="res://scenes/Main.tscn"
-config/featuconfigedStringArray("4.3", "Mobile")
+config/features=PackedStringArray("4.3", "Mobile")
 
 [display]
 
