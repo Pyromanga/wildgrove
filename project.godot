@@ -4,7 +4,7 @@
 ; Erstellt mit GitHub Actions CI/CD
 
 [configuration]
-
+run/main_scene="res://Main.tscn"
 config_version=5
 
 [application]
