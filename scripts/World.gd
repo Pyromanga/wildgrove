@@ -74,7 +74,7 @@ func _ready() -> void:
                                                                                                                                                                                                     	body.add_child(mesh_inst)
 
                                                                                                                                                                                                         	# Interactable-Komponente mit Ressourcen- und Skill-Daten
-                                                                                                                                                                                                            	var interact := Interactable.new()
+                                                                                                                                                                                                            	var interact := load("res://scripts/Interactable.gd").new()var
                                                                                                                                                                                                                 	interact.display_name = "Baumstumpf"
                                                                                                                                                                                                                     	interact.resource_type = "Holz"
                                                                                                                                                                                                                         	interact.resource_amount = 1
