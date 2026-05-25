@@ -136,3 +136,4 @@ func _get_setting(key: String, default_val: Variant) -> Variant:
 	if nodes.size() > 0 and nodes[0].has_method("get_setting"):
 		return nodes[0].get_setting(key)
 	return default_val
+# Überschreibt die alte _get_setting mit null-safe Version

@@ -1,6 +1,6 @@
 extends CanvasLayer
 ## HUD.gd — Joystick-Visuals, Settings-Button
-## Reagiert auf ui_offset_changed Signal von Settings
+## Nutzt Anchors statt absolute Positionen → überlebt Bildschirm-Rotation
 
 signal settings_requested
 
@@ -9,39 +9,62 @@ const JS_RADIUS: float = 90.0
 var _js_base: ColorRect
 var _js_knob: ColorRect
 var _settings_btn: Button
-var _base_btn_pos: Vector2   # Ausgangsposition des Buttons
-var _base_js_pos: Vector2    # Ausgangsposition des Joysticks
+
+# UI-Offset vom Settings-Slider
+var _ui_offset: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	var vp: Vector2 = get_viewport().get_visible_rect().size
-	_build_joystick(vp)
-	_build_settings_button(vp)
+	_build_joystick()
+	_build_settings_button()
 	_connect_touch_input()
 
+	# Viewport-Änderung (Rotation) abfangen
+	get_viewport().size_changed.connect(_on_viewport_resized)
 
-func _build_joystick(vp: Vector2) -> void:
+
+func _build_joystick() -> void:
 	_js_base = ColorRect.new()
 	_js_base.size = Vector2(JS_RADIUS * 2, JS_RADIUS * 2)
 	_js_base.color = Color(1, 1, 1, 0.15)
-	_base_js_pos = Vector2(40, vp.y - JS_RADIUS * 2 - 60)
-	_js_base.position = _base_js_pos
+	# Anchor unten-links — bleibt bei Rotation immer unten links
+	_js_base.anchor_left   = 0.0
+	_js_base.anchor_right  = 0.0
+	_js_base.anchor_top    = 1.0
+	_js_base.anchor_bottom = 1.0
+	_js_base.offset_left   = 40
+	_js_base.offset_right  = 40 + JS_RADIUS * 2
+	_js_base.offset_top    = -(JS_RADIUS * 2 + 60)
+	_js_base.offset_bottom = -60
 	add_child(_js_base)
 
 	_js_knob = ColorRect.new()
 	_js_knob.size = Vector2(60, 60)
 	_js_knob.color = Color(1, 1, 1, 0.8)
-	_js_knob.position = _js_base.position + Vector2(JS_RADIUS - 30, JS_RADIUS - 30)
+	_js_knob.anchor_left   = 0.0
+	_js_knob.anchor_right  = 0.0
+	_js_knob.anchor_top    = 1.0
+	_js_knob.anchor_bottom = 1.0
+	_js_knob.offset_left   = 40 + JS_RADIUS - 30
+	_js_knob.offset_right  = 40 + JS_RADIUS + 30
+	_js_knob.offset_top    = -(JS_RADIUS + 60)
+	_js_knob.offset_bottom = -(JS_RADIUS + 60) + 60
 	add_child(_js_knob)
 
 
-func _build_settings_button(vp: Vector2) -> void:
+func _build_settings_button() -> void:
 	_settings_btn = Button.new()
 	_settings_btn.text = "⚙"
-	# Größer und weiter von der Ecke weg
 	_settings_btn.custom_minimum_size = Vector2(90, 90)
-	_base_btn_pos = Vector2(vp.x - 110, 40)
-	_settings_btn.position = _base_btn_pos
+	# Anchor oben-rechts — bleibt bei Rotation immer oben rechts
+	_settings_btn.anchor_left   = 1.0
+	_settings_btn.anchor_right  = 1.0
+	_settings_btn.anchor_top    = 0.0
+	_settings_btn.anchor_bottom = 0.0
+	_settings_btn.offset_left   = -110
+	_settings_btn.offset_right  = -20
+	_settings_btn.offset_top    = 40
+	_settings_btn.offset_bottom = 130
 	_settings_btn.add_theme_font_size_override("font_size", 44)
 	_settings_btn.pressed.connect(func() -> void: emit_signal("settings_requested"))
 	add_child(_settings_btn)
@@ -53,11 +76,27 @@ func _connect_touch_input() -> void:
 		nodes[0].register_joystick_visuals(_js_base, _js_knob)
 
 
-func apply_ui_offset(offset: Vector2) -> void:
-	# Joystick verschieben
-	var new_js: Vector2 = _base_js_pos + offset
-	_js_base.position = new_js
-	_js_knob.position = new_js + Vector2(JS_RADIUS - 30, JS_RADIUS - 30)
+func _on_viewport_resized() -> void:
+	# Anchors passen sich automatisch an — wir müssen nur den Offset neu anwenden
+	apply_ui_offset(_ui_offset)
 
-	# Settings-Button verschieben (nur Y, X bleibt rechts)
-	_settings_btn.position = _base_btn_pos + Vector2(0, offset.y)
+
+func apply_ui_offset(offset: Vector2) -> void:
+	_ui_offset = offset
+
+	# Joystick verschieben (relativ zur Anchor-Ausgangsposition)
+	_js_base.offset_left   = 40 + offset.x
+	_js_base.offset_right  = 40 + JS_RADIUS * 2 + offset.x
+	_js_base.offset_top    = -(JS_RADIUS * 2 + 60) + offset.y
+	_js_base.offset_bottom = -60 + offset.y
+
+	_js_knob.offset_left   = 40 + JS_RADIUS - 30 + offset.x
+	_js_knob.offset_right  = 40 + JS_RADIUS + 30 + offset.x
+	_js_knob.offset_top    = -(JS_RADIUS + 60) + offset.y
+	_js_knob.offset_bottom = -(JS_RADIUS + 60) + 60 + offset.y
+
+	# Settings-Button: beide Achsen verschieben
+	_settings_btn.offset_left   = -110 + offset.x
+	_settings_btn.offset_right  = -20  + offset.x
+	_settings_btn.offset_top    = 40   + offset.y
+	_settings_btn.offset_bottom = 130  + offset.y

@@ -59,7 +59,19 @@ func _get_fixed_mode() -> bool:
 	return true
 
 
+func _is_settings_open() -> bool:
+	var nodes: Array = get_tree().get_nodes_in_group("settings")
+	if nodes.size() > 0:
+		return nodes[0].is_settings_open()
+	return false
+
+
 func _input(event: InputEvent) -> void:
+	# Kein Spieler-Input wenn Settings offen
+	if _is_settings_open():
+		js_vec = Vector2.ZERO
+		return
+
 	var sw: float = get_viewport().get_visible_rect().size.x
 
 	if event is InputEventScreenTouch:

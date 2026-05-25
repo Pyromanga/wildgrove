@@ -39,6 +39,10 @@ func toggle() -> void:
 	_panel.visible = not _panel.visible
 
 
+func is_settings_open() -> bool:
+	return _panel != null and _panel.visible
+
+
 func get_setting(key: String) -> Variant:
 	return _values.get(key, null)
 
