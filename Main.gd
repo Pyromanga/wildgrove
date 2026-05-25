@@ -2,25 +2,56 @@ extends Node
 
 var _player: CharacterBody3D
 var _spring_arm: SpringArm3D
-
-var _js_finger := -1
-var _js_origin := Vector2.ZERO
-var _js_vec    := Vector2.ZERO
-const JS_RADIUS := 90.0
-
-var _cam_finger := -1
-var _cam_last   := Vector2.ZERO
-
+var _log_label: Label
+var _log_lines: Array[String] = []
 var _js_base: ColorRect
 var _js_knob: ColorRect
-var _dbg: Label
+
+var _js_finger: int = -1
+var _js_origin: Vector2 = Vector2.ZERO
+var _js_vec: Vector2 = Vector2.ZERO
+const JS_RADIUS: float = 90.0
+var _cam_finger: int = -1
+var _cam_last: Vector2 = Vector2.ZERO
+
+const SPEED: float = 5.5
+const GRAVITY: float = 9.8
+
+
+func _log(msg: String) -> void:
+	print(msg)
+	_log_lines.append(msg)
+	if _log_lines.size() > 15:
+		_log_lines.remove_at(0)
+	if _log_label:
+		_log_label.text = "\n".join(_log_lines)
 
 
 func _ready() -> void:
+	_build_screen_log()
+	_log("=== _ready() START ===")
 	_build_world()
+	_log("Welt OK")
 	_build_player()
-	# HUD erst im nächsten Frame damit Viewport-Size stimmt
+	_log("Spieler OK")
 	call_deferred("_build_hud")
+
+
+func _build_screen_log() -> void:
+	var cl := CanvasLayer.new()
+	cl.layer = 100
+	add_child(cl)
+	var bg := ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.7)
+	bg.size = Vector2(1080, 420)
+	cl.add_child(bg)
+	_log_label = Label.new()
+	_log_label.position = Vector2(10, 10)
+	_log_label.size = Vector2(1060, 400)
+	_log_label.add_theme_font_size_override("font_size", 26)
+	_log_label.add_theme_color_override("font_color", Color.GREEN)
+	_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	cl.add_child(_log_label)
 
 
 func _build_world() -> void:
@@ -39,7 +70,6 @@ func _build_world() -> void:
 	env_node.environment = env
 	add_child(env_node)
 
-	# Boden StaticBody
 	var gb := StaticBody3D.new()
 	var gc := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
@@ -49,7 +79,6 @@ func _build_world() -> void:
 	gb.add_child(gc)
 	add_child(gb)
 
-	# Boden Mesh
 	var gm := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(200, 200)
@@ -59,12 +88,11 @@ func _build_world() -> void:
 	gm.material_override = gmat
 	add_child(gm)
 
-	# Paar Würfel
-	var positions = [
-		Vector3(5, 1, 5), Vector3(-6, 1, 4), Vector3(8, 1, -5),
-		Vector3(-4, 1, -8), Vector3(3, 1, -3), Vector3(-9, 1, 2)
+	var props: Array[Vector3] = [
+		Vector3(5,1,5), Vector3(-6,1,4), Vector3(8,1,-5),
+		Vector3(-4,1,-8), Vector3(3,1,-3)
 	]
-	for pos in positions:
+	for pos in props:
 		var b := StaticBody3D.new()
 		var bc := CollisionShape3D.new()
 		var bx := BoxShape3D.new()
@@ -76,7 +104,7 @@ func _build_world() -> void:
 		box.size = Vector3(1.5, 2, 1.5)
 		bm.mesh = box
 		var bmat := StandardMaterial3D.new()
-		bmat.albedo_color = Color(0.2, 0.45, 0.15)
+		bmat.albedo_color = Color(0.15, 0.4, 0.1)
 		bm.material_override = bmat
 		b.add_child(bm)
 		b.position = pos
@@ -122,59 +150,44 @@ func _build_player() -> void:
 
 
 func _build_hud() -> void:
+	_log("HUD START")
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	_log("VP: " + str(vp))
+
 	var hud := CanvasLayer.new()
 	hud.layer = 10
 	add_child(hud)
 
-	# Viewport size NACH dem deferred call — jetzt korrekt
-	var vp := get_viewport().get_visible_rect().size
-
-	# ── Debug Label ──────────────────────────────────────────────────────
-	_dbg = Label.new()
-	_dbg.position = Vector2(10, 10)
-	_dbg.size = Vector2(600, 200)
-	_dbg.add_theme_font_size_override("font_size", 28)
-	_dbg.add_theme_color_override("font_color", Color.YELLOW)
-	_dbg.text = "WILDGROVE OK\nVP: " + str(vp)
-	hud.add_child(_dbg)
-
-	# ── Joystick Base — großes rotes Quadrat zum Testen ─────────────────
 	_js_base = ColorRect.new()
 	_js_base.size = Vector2(JS_RADIUS * 2, JS_RADIUS * 2)
-	_js_base.color = Color(1, 0, 0, 0.5)  # ROT — gut sichtbar
+	_js_base.color = Color(1, 0, 0, 0.6)
 	_js_base.position = Vector2(30, vp.y - JS_RADIUS * 2 - 30)
 	hud.add_child(_js_base)
 
-	# ── Joystick Knob — weißes Quadrat ──────────────────────────────────
 	_js_knob = ColorRect.new()
 	_js_knob.size = Vector2(60, 60)
-	_js_knob.color = Color(1, 1, 1, 0.9)
+	_js_knob.color = Color(1, 1, 1, 1.0)
 	_js_knob.position = _js_base.position + Vector2(JS_RADIUS - 30, JS_RADIUS - 30)
 	hud.add_child(_js_knob)
 
-	# ── Kamera-Bereich Hinweis ───────────────────────────────────────────
-	var hint := ColorRect.new()
-	hint.size = Vector2(200, 60)
-	hint.color = Color(0, 0, 1, 0.25)  # Blau = Kamera-Zone
-	hint.position = Vector2(vp.x - 220, vp.y - 80)
-	hud.add_child(hint)
+	var cam_hint := ColorRect.new()
+	cam_hint.size = Vector2(180, 60)
+	cam_hint.color = Color(0, 0.4, 1, 0.5)
+	cam_hint.position = Vector2(vp.x - 200, vp.y - 80)
+	hud.add_child(cam_hint)
 
-	var hlbl := Label.new()
-	hlbl.text = "KAMERA"
-	hlbl.add_theme_font_size_override("font_size", 24)
-	hlbl.add_theme_color_override("font_color", Color.WHITE)
-	hlbl.position = hint.position + Vector2(40, 15)
-	hud.add_child(hlbl)
+	_log("HUD DONE - Joystick bei: " + str(_js_base.position))
 
 
 func _input(event: InputEvent) -> void:
-	if not _js_base:
+	if not _js_base or not _spring_arm:
 		return
-	var sw := get_viewport().get_visible_rect().size.x
+	var sw: float = get_viewport().get_visible_rect().size.x
 
 	if event is InputEventScreenTouch:
 		var pos: Vector2 = event.position
 		if event.pressed:
+			_log("Touch " + str(pos))
 			if pos.x < sw * 0.5:
 				if _js_finger < 0:
 					_js_finger = event.index
@@ -195,12 +208,12 @@ func _input(event: InputEvent) -> void:
 
 	elif event is InputEventScreenDrag:
 		if event.index == _js_finger:
-			var delta := event.position - _js_origin
-			var clamped := delta.limit_length(JS_RADIUS)
+			var delta: Vector2 = event.position - _js_origin
+			var clamped: Vector2 = delta.limit_length(JS_RADIUS)
 			_js_vec = clamped / JS_RADIUS
 			_js_knob.position = _js_origin + clamped - Vector2(30, 30)
 		elif event.index == _cam_finger:
-			var d := event.position - _cam_last
+			var d: Vector2 = event.position - _cam_last
 			_cam_last = event.position
 			_spring_arm.rotation.y -= d.x * 0.007
 			_spring_arm.rotation.x = clamp(
@@ -217,15 +230,11 @@ func _input(event: InputEvent) -> void:
 			)
 
 
-const SPEED   := 5.5
-const GRAVITY := 9.8
-
-
 func _physics_process(delta: float) -> void:
 	if not _player or not _spring_arm:
 		return
 
-	var kb := Vector2.ZERO
+	var kb: Vector2 = Vector2.ZERO
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):   kb.y += 1
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):  kb.y -= 1
 	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):  kb.x -= 1
@@ -233,13 +242,13 @@ func _physics_process(delta: float) -> void:
 	if kb.length() > 0.1:
 		kb = kb.normalized()
 
-	var input_vec := _js_vec if _js_vec.length() > 0.05 else kb
+	var input_vec: Vector2 = _js_vec if _js_vec.length() > 0.05 else kb
 
 	if input_vec.length() > 0.05:
-		var basis := _spring_arm.global_transform.basis
-		var fwd   := Vector3(-basis.z.x, 0, -basis.z.z).normalized()
-		var right := Vector3( basis.x.x, 0,  basis.x.z).normalized()
-		var dir   := (fwd * input_vec.y + right * input_vec.x).normalized()
+		var basis: Basis = _spring_arm.global_transform.basis
+		var fwd: Vector3 = Vector3(-basis.z.x, 0, -basis.z.z).normalized()
+		var right: Vector3 = Vector3(basis.x.x, 0, basis.x.z).normalized()
+		var dir: Vector3 = (fwd * input_vec.y + right * input_vec.x).normalized()
 		_player.velocity.x = dir.x * SPEED
 		_player.velocity.z = dir.z * SPEED
 	else:
@@ -252,11 +261,3 @@ func _physics_process(delta: float) -> void:
 		_player.velocity.y = 0.0
 
 	_player.move_and_slide()
-
-	if _dbg:
-		_dbg.text = "VP: %s\nPos: %.1f / %.1f / %.1f\nJS-Finger: %d  Vec: %.2f,%.2f\nCam-Finger: %d" % [
-			str(get_viewport().get_visible_rect().size),
-			_player.position.x, _player.position.y, _player.position.z,
-			_js_finger, _js_vec.x, _js_vec.y,
-			_cam_finger
-		]
