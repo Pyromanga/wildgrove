@@ -18,129 +18,148 @@ var _target_zoom: float  = 8.0
 
 func _ready() -> void:
 	add_to_group("player")
-	_build_mesh()
-	_build_camera()
-	position = Vector3(0, 0.9, 0)
+    	_build_mesh()
+        	_build_camera()
+            	position = Vector3(0, 0.9, 0)
 
 
-func _build_mesh() -> void:
-	var col := CollisionShape3D.new()
-	var caps := CapsuleShape3D.new()
-	caps.radius = 0.4
-	caps.height = 1.0
-	col.shape = caps
-	col.position.y = 0.9
-	add_child(col)
+                func _build_mesh() -> void:
+                	var col := CollisionShape3D.new()
+                    	var caps := CapsuleShape3D.new()
+                        	caps.radius = 0.4
+                            	caps.height = 1.0
+                                	col.shape = caps
+                                    	col.position.y = 0.9
+                                        	add_child(col)
 
-	_mesh = MeshInstance3D.new()
-	var cm := CapsuleMesh.new()
-	cm.radius = 0.4
-	cm.height = 1.8
-	_mesh.mesh = cm
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.95, 0.6, 0.05)
-	_mesh.material_override = mat
-	_mesh.position.y = 0.9
-	add_child(_mesh)
-
-
-func _build_camera() -> void:
-	_spring_arm = SpringArm3D.new()
-	_spring_arm.spring_length = _target_zoom
-	_spring_arm.position = Vector3(0, 1.5, 0)
-	_spring_arm.rotation.x = _target_pitch
-	add_child(_spring_arm)
-
-	var cam := Camera3D.new()
-	cam.current = true
-	_spring_arm.add_child(cam)
+                                            	_mesh = MeshInstance3D.new()
+                                                	var cm := CapsuleMesh.new()
+                                                    	cm.radius = 0.4
+                                                        	cm.height = 1.8
+                                                            	_mesh.mesh = cm
+                                                                	var mat := StandardMaterial3D.new()
+                                                                    	mat.albedo_color = Color(0.95, 0.6, 0.05)
+                                                                        	_mesh.material_override = mat
+                                                                            	_mesh.position.y = 0.9
+                                                                                	add_child(_mesh)
 
 
-func _physics_process(delta: float) -> void:
-	var touch: Node = _get_touch()
-	if not touch:
-		return
-	_handle_movement(touch, delta)
-	_handle_camera(touch, delta)
+                                                                                    func _build_camera() -> void:
+                                                                                    	_spring_arm = SpringArm3D.new()
+                                                                                        	_spring_arm.spring_length = _target_zoom
+                                                                                            	_spring_arm.position = Vector3(0, 1.5, 0)
+                                                                                                	_spring_arm.rotation.x = _target_pitch
+                                                                                                    	add_child(_spring_arm)
+
+                                                                                                        	var cam := Camera3D.new()
+                                                                                                            	cam.current = true
+                                                                                                                	_spring_arm.add_child(cam)
 
 
-func _handle_movement(touch: Node, delta: float) -> void:
-	var input_vec: Vector2 = touch.js_vec
-
-	# cam_relative — explizit bool casten damit null nicht als false gilt
-	var cam_relative: bool = true
-	var raw: Variant = _get_setting("cam_relative")
-	if raw != null:
-		cam_relative = bool(raw)
-
-	if input_vec.length() > 0.05:
-		var dir: Vector3
-		if cam_relative:
-			# Bewegung relativ zur aktuellen Kamerarichtung
-			var basis: Basis   = _spring_arm.global_transform.basis
-			var fwd: Vector3   = Vector3(-basis.z.x, 0, -basis.z.z).normalized()
-			var right: Vector3 = Vector3( basis.x.x, 0,  basis.x.z).normalized()
-			dir = (fwd * input_vec.y + right * input_vec.x).normalized()
-		else:
-			# Feste Weltachsen — hoch = immer -Z (Norden)
-			dir = Vector3(input_vec.x, 0, -input_vec.y).normalized()
-
-		velocity.x = dir.x * SPEED
-		velocity.z = dir.z * SPEED
-
-		var target_y: float = atan2(dir.x, dir.z)
-		_mesh.rotation.y = lerp_angle(_mesh.rotation.y, target_y, 12.0 * delta)
-	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED * 8 * delta)
-		velocity.z = move_toward(velocity.z, 0, SPEED * 8 * delta)
-
-	if not is_on_floor():
-		velocity.y -= GRAVITY * delta
-	else:
-		velocity.y = 0.0
-
-	move_and_slide()
+                                                                                                                    func _physics_process(delta: float) -> void:
+                                                                                                                    	var touch: Node = _get_touch()
+                                                                                                                        	if not touch:
+                                                                                                                            		return
+                                                                                                                                    	_handle_movement(touch, delta)
+                                                                                                                                        	_handle_camera(touch, delta)
 
 
-func _handle_camera(touch: Node, delta: float) -> void:
-	if touch.cam_delta != Vector2.ZERO:
-		_target_yaw  -= touch.cam_delta.x * 0.007
-		_target_pitch = clamp(
-			_target_pitch - touch.cam_delta.y * 0.007,
-			deg_to_rad(-65), deg_to_rad(-10)
-		)
-		touch.cam_delta = Vector2.ZERO
+                                                                                                                                            func _handle_movement(touch: Node, delta: float) -> void:
+                                                                                                                                            	var input_vec: Vector2 = touch.js_vec
 
-	if touch.zoom_delta != 0.0:
-		_target_zoom = clamp(_target_zoom + touch.zoom_delta, ZOOM_MIN, ZOOM_MAX)
-		touch.zoom_delta = 0.0
+                                                                                                                                                	var cam_relative: bool = true
+                                                                                                                                                    	var raw: Variant = _get_setting("cam_relative")
+                                                                                                                                                        	if raw != null:
+                                                                                                                                                            		cam_relative = bool(raw)
 
-	var cam_smooth: float  = CAM_SMOOTH
-	var zoom_smooth: float = ZOOM_SMOOTH
-	var cs: Variant = _get_setting("cam_smooth")
-	var zs: Variant = _get_setting("zoom_smooth")
-	if cs != null: cam_smooth  = float(cs)
-	if zs != null: zoom_smooth = float(zs)
+                                                                                                                                                                    	if input_vec.length() > 0.05:
+                                                                                                                                                                        		var dir: Vector3
+                                                                                                                                                                                		if cam_relative:
+                                                                                                                                                                                        			var basis: Basis   = _spring_arm.global_transform.basis
+                                                                                                                                                                                                    			var fwd: Vector3   = Vector3(-basis.z.x, 0, -basis.z.z).normalized()
+                                                                                                                                                                                                                			var right: Vector3 = Vector3( basis.x.x, 0,  basis.x.z).normalized()
+                                                                                                                                                                                                                            			dir = (fwd * input_vec.y + right * input_vec.x).normalized()
+                                                                                                                                                                                                                                        		else:
+                                                                                                                                                                                                                                                			dir = Vector3(input_vec.x, 0, -input_vec.y).normalized()
 
-	_spring_arm.rotation.y = lerp_angle(
-		_spring_arm.rotation.y, _target_yaw, cam_smooth * delta
-	)
-	_spring_arm.rotation.x = lerp(
-		_spring_arm.rotation.x, _target_pitch, cam_smooth * delta
-	)
-	_spring_arm.spring_length = lerp(
-		_spring_arm.spring_length, _target_zoom, zoom_smooth * delta
-	)
+                                                                                                                                                                                                                                                            		velocity.x = dir.x * SPEED
+                                                                                                                                                                                                                                                                    		velocity.z = dir.z * SPEED
+
+                                                                                                                                                                                                                                                                            		var target_y: float = atan2(dir.x, dir.z)
+                                                                                                                                                                                                                                                                                    		_mesh.rotation.y = lerp_angle(_mesh.rotation.y, target_y, 12.0 * delta)
+                                                                                                                                                                                                                                                                                            	else:
+                                                                                                                                                                                                                                                                                                		velocity.x = move_toward(velocity.x, 0, SPEED * 8 * delta)
+                                                                                                                                                                                                                                                                                                        		velocity.z = move_toward(velocity.z, 0, SPEED * 8 * delta)
+
+                                                                                                                                                                                                                                                                                                                	if not is_on_floor():
+                                                                                                                                                                                                                                                                                                                    		velocity.y -= GRAVITY * delta
+                                                                                                                                                                                                                                                                                                                            	else:
+                                                                                                                                                                                                                                                                                                                                		velocity.y = 0.0
+
+                                                                                                                                                                                                                                                                                                                                        	move_and_slide()
 
 
-func _get_touch() -> Node:
-	var nodes: Array = get_tree().get_nodes_in_group("touch_input")
-	return nodes[0] if nodes.size() > 0 else null
+                                                                                                                                                                                                                                                                                                                                            func _handle_camera(touch: Node, delta: float) -> void:
+                                                                                                                                                                                                                                                                                                                                            	if touch.cam_delta != Vector2.ZERO:
+                                                                                                                                                                                                                                                                                                                                                		_target_yaw  -= touch.cam_delta.x * 0.007
+                                                                                                                                                                                                                                                                                                                                                        		_target_pitch = clamp(
+                                                                                                                                                                                                                                                                                                                                                                    			_target_pitch - touch.cam_delta.y * 0.007,
+                                                                                                                                                                                                                                                                                                                                                                                			deg_to_rad(-65), deg_to_rad(-10)
+                                                                                                                                                                                                                                                                                                                                                                )
+                                                                                                                                                                                                                                                                                                                                                                		touch.cam_delta = Vector2.ZERO
+
+                                                                                                                                                                                                                                                                                                                                                                        	if touch.zoom_delta != 0.0:
+                                                                                                                                                                                                                                                                                                                                                                            		_target_zoom = clamp(_target_zoom + touch.zoom_delta, ZOOM_MIN, ZOOM_MAX)
+                                                                                                                                                                                                                                                                                                                                                                                    		touch.zoom_delta = 0.0
+
+                                                                                                                                                                                                                                                                                                                                                                                            	var cam_smooth: float  = CAM_SMOOTH
+                                                                                                                                                                                                                                                                                                                                                                                                	var zoom_smooth: float = ZOOM_SMOOTH
+                                                                                                                                                                                                                                                                                                                                                                                                    	var cs: Variant = _get_setting("cam_smooth")
+                                                                                                                                                                                                                                                                                                                                                                                                        	var zs: Variant = _get_setting("zoom_smooth")
+                                                                                                                                                                                                                                                                                                                                                                                                            	if cs != null: cam_smooth  = float(cs)
+                                                                                                                                                                                                                                                                                                                                                                                                                	if zs != null: zoom_smooth = float(zs)
+
+                                                                                                                                                                                                                                                                                                                                                                                                                    	_spring_arm.rotation.y = lerp_angle(
+                                                                                                                                                                                                                                                                                                                                                                                                                            		_spring_arm.rotation.y, _target_yaw, cam_smooth * delta
+                                                                                                                                                                                                                                                                                                                                                                                                                        )
+                                                                                                                                                                                                                                                                                                                                                                                                                        	_spring_arm.rotation.x = lerp(
+                                                                                                                                                                                                                                                                                                                                                                                                                                		_spring_arm.rotation.x, _target_pitch, cam_smooth * delta
+                                                                                                                                                                                                                                                                                                                                                                                                                            )
+                                                                                                                                                                                                                                                                                                                                                                                                                            	_spring_arm.spring_length = lerp(
+                                                                                                                                                                                                                                                                                                                                                                                                                                    		_spring_arm.spring_length, _target_zoom, zoom_smooth * delta
+                                                                                                                                                                                                                                                                                                                                                                                                                                )
 
 
-# Gibt null zurück wenn nicht gefunden — Caller muss auf null prüfen
-func _get_setting(key: String) -> Variant:
-	var nodes: Array = get_tree().get_nodes_in_group("settings")
-	if nodes.size() > 0 and nodes[0].has_method("get_setting"):
-		return nodes[0].get_setting(key)
-	return null
+                                                                                                                                                                                                                                                                                                                                                                                                                                func _get_touch() -> Node:
+                                                                                                                                                                                                                                                                                                                                                                                                                                	var nodes: Array = get_tree().get_nodes_in_group("touch_input")
+                                                                                                                                                                                                                                                                                                                                                                                                                                    	return nodes[0] if nodes.size() > 0 else null
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                        func _get_setting(key: String) -> Variant:
+                                                                                                                                                                                                                                                                                                                                                                                                                                        	var nodes: Array = get_tree().get_nodes_in_group("settings")
+                                                                                                                                                                                                                                                                                                                                                                                                                                            	if nodes.size() > 0 and nodes[0].has_method("get_setting"):
+                                                                                                                                                                                                                                                                                                                                                                                                                                                		return nodes[0].get_setting(key)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                        	return null
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            # ----- NEU: Interaktions-Methode -----
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            func try_interact(screen_pos: Vector2) -> void:
+                                                                                                                                                                                                                                                                                                                                                                                                                                                            	var cam: Camera3D = _spring_arm.get_node("Camera3D")
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                	var from := cam.project_ray_origin(screen_pos)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                    	var to := from + cam.project_ray_normal(screen_pos) * 100.0
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                        	var space_state := get_world_3d().direct_space_state
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            	var query := PhysicsRayQueryParameters3D.create(from, to)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                	var result := space_state.intersect_ray(query)
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    	if result.is_empty():
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        		return
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                	var collider: Node = result.collider
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    	var interact_node := collider.get_node_or_null("Interactable")
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        	if interact_node and interact_node.has_method("interact"):
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            		interact_node.interact(self)extends
+                                                                                                                                                                                                                                                                                                                                                                                                                                )
+                                                                                                                                                                                                                                                                                                                                                                                                                            )
+                                                                                                                                                                                                                                                                                                                                                                                                                        )
+                                                                                                                                                                                                                                                                                                                                                                )
