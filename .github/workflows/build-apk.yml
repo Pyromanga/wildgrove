@@ -129,7 +129,23 @@ jobs:
             echo "export_presets.cfg gefunden – behalte bestehende Konfiguration."
           fi
 
-      # ── 7. Ausgabeverzeichnis anlegen ────────────────────────────────────
+      # ── 7. Versionsnummer aus Git-Commit-Anzahl setzen ───────────────────
+      # Steigt bei jedem Push → Android erlaubt automatische Updates
+      - name: Set version code from git commit count
+        run: |
+          VERSION_CODE=$(git rev-list --count HEAD)
+          echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_ENV
+          echo "Version code: $VERSION_CODE"
+          sed -i "s/config\/version=.*/config\/version=\"0.1.${VERSION_CODE}\"/" "${PROJECT_PATH}/project.godot"
+          if [ -f "${PROJECT_PATH}/export_presets.cfg" ]; then
+            if grep -q "version/code=" "${PROJECT_PATH}/export_presets.cfg"; then
+              sed -i "s/version\/code=.*/version\/code=${VERSION_CODE}/" "${PROJECT_PATH}/export_presets.cfg"
+            else
+              echo "version/code=${VERSION_CODE}" >> "${PROJECT_PATH}/export_presets.cfg"
+            fi
+          fi
+
+      # ── 8. Ausgabeverzeichnis anlegen ────────────────────────────────────
       - name: Create output directory
         run: mkdir -p "${PROJECT_PATH}/build/android"
 
