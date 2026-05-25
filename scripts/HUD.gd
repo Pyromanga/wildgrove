@@ -1,14 +1,16 @@
 extends CanvasLayer
-## HUD.gd — Heads-Up Display
-## Zuständig für: Joystick-Visuals, Settings-Button
-## Kommuniziert mit TouchInput via register_joystick_visuals()
+## HUD.gd — Joystick-Visuals, Settings-Button
+## Reagiert auf ui_offset_changed Signal von Settings
 
 signal settings_requested
 
+const JS_RADIUS: float = 90.0
+
 var _js_base: ColorRect
 var _js_knob: ColorRect
-
-const JS_RADIUS: float = 90.0
+var _settings_btn: Button
+var _base_btn_pos: Vector2   # Ausgangsposition des Buttons
+var _base_js_pos: Vector2    # Ausgangsposition des Joysticks
 
 
 func _ready() -> void:
@@ -22,7 +24,8 @@ func _build_joystick(vp: Vector2) -> void:
 	_js_base = ColorRect.new()
 	_js_base.size = Vector2(JS_RADIUS * 2, JS_RADIUS * 2)
 	_js_base.color = Color(1, 1, 1, 0.15)
-	_js_base.position = Vector2(30, vp.y - JS_RADIUS * 2 - 30)
+	_base_js_pos = Vector2(40, vp.y - JS_RADIUS * 2 - 60)
+	_js_base.position = _base_js_pos
 	add_child(_js_base)
 
 	_js_knob = ColorRect.new()
@@ -33,17 +36,28 @@ func _build_joystick(vp: Vector2) -> void:
 
 
 func _build_settings_button(vp: Vector2) -> void:
-	var btn := Button.new()
-	btn.text = "⚙"
-	btn.position = Vector2(vp.x - 90, 20)
-	btn.size = Vector2(70, 70)
-	btn.add_theme_font_size_override("font_size", 36)
-	btn.pressed.connect(func() -> void: emit_signal("settings_requested"))
-	add_child(btn)
+	_settings_btn = Button.new()
+	_settings_btn.text = "⚙"
+	# Größer und weiter von der Ecke weg
+	_settings_btn.custom_minimum_size = Vector2(90, 90)
+	_base_btn_pos = Vector2(vp.x - 110, 40)
+	_settings_btn.position = _base_btn_pos
+	_settings_btn.add_theme_font_size_override("font_size", 44)
+	_settings_btn.pressed.connect(func() -> void: emit_signal("settings_requested"))
+	add_child(_settings_btn)
 
 
 func _connect_touch_input() -> void:
-	# TouchInput braucht Referenz auf die Joystick-Visuals
 	var nodes: Array = get_tree().get_nodes_in_group("touch_input")
 	if nodes.size() > 0:
 		nodes[0].register_joystick_visuals(_js_base, _js_knob)
+
+
+func apply_ui_offset(offset: Vector2) -> void:
+	# Joystick verschieben
+	var new_js: Vector2 = _base_js_pos + offset
+	_js_base.position = new_js
+	_js_knob.position = new_js + Vector2(JS_RADIUS - 30, JS_RADIUS - 30)
+
+	# Settings-Button verschieben (nur Y, X bleibt rechts)
+	_settings_btn.position = _base_btn_pos + Vector2(0, offset.y)

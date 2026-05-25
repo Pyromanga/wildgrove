@@ -37,3 +37,4 @@ func _build_ui() -> void:
 	add_child(sett)
 
 	hud.settings_requested.connect(sett.toggle)
+	sett.ui_offset_changed.connect(hud.apply_ui_offset)

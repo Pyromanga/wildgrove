@@ -1,13 +1,30 @@
 extends CanvasLayer
 ## Settings.gd — Einstellungs-Panel
 
+signal ui_offset_changed(offset: Vector2)
+
 var _panel: ColorRect
 var _values: Dictionary = {
-	"cam_relative":  true,
-	"screen_lock":   false,
-	"cam_smooth":    14.0,   # Kamera-Drehgeschwindigkeit
-	"zoom_smooth":   8.0,    # Zoom-Geschwindigkeit
+	"cam_relative":    true,
+	"screen_rotation": 0,      # 0=frei, 1=nur hochkant, 2=nur quer, 3=180° erlaubt
+	"cam_smooth":      14.0,
+	"zoom_smooth":     8.0,
+	"ui_offset_x":     0.0,    # HUD horizontal verschieben
+	"ui_offset_y":     0.0,    # HUD vertikal verschieben
 }
+
+const ROTATION_LABELS: Array = [
+	"Frei (alles erlaubt)",
+	"Nur Hochkant",
+	"Nur Querformat",
+	"Hochkant + 180° (kopfüber)",
+]
+const ROTATION_MODES: Array = [
+	DisplayServer.SCREEN_SENSOR,
+	DisplayServer.SCREEN_PORTRAIT,
+	DisplayServer.SCREEN_LANDSCAPE,
+	DisplayServer.SCREEN_SENSOR_PORTRAIT,
+]
 
 
 func _ready() -> void:
@@ -28,14 +45,29 @@ func get_setting(key: String) -> Variant:
 func _build_panel(vp: Vector2) -> void:
 	_panel = ColorRect.new()
 	_panel.color = Color(0.08, 0.08, 0.08, 0.95)
-	_panel.size = Vector2(660, 720)
-	_panel.position = Vector2(vp.x * 0.5 - 330, vp.y * 0.5 - 360)
+	_panel.size = Vector2(680, vp.y * 0.85)
+	_panel.position = Vector2(vp.x * 0.5 - 340, vp.y * 0.075)
 	add_child(_panel)
 
-	# Scroll-Container damit es auf kleinen Screens passt
+	# Titel (fest oben)
+	var title := Label.new()
+	title.text = "⚙  Einstellungen"
+	title.position = Vector2(20, 16)
+	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_color_override("font_color", Color.WHITE)
+	_panel.add_child(title)
+
+	var hline := ColorRect.new()
+	hline.color = Color(1, 1, 1, 0.15)
+	hline.size = Vector2(640, 2)
+	hline.position = Vector2(20, 64)
+	_panel.add_child(hline)
+
+	# Scroll-Bereich
 	var scroll := ScrollContainer.new()
-	scroll.position = Vector2(0, 70)
-	scroll.size = Vector2(660, 590)
+	scroll.position = Vector2(0, 72)
+	scroll.size = Vector2(680, _panel.size.y - 72)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_panel.add_child(scroll)
 
 	var content := VBoxContainer.new()
@@ -43,78 +75,91 @@ func _build_panel(vp: Vector2) -> void:
 	content.add_theme_constant_override("separation", 0)
 	scroll.add_child(content)
 
-	_add_label(_panel, "⚙  Einstellungen", Vector2(20, 16), 34, Color.WHITE)
-	_add_hline(_panel, Vector2(20, 62), 620)
-
 	# ── Kamera-relative Bewegung ─────────────────────────────────────────
 	_section(content, "Bewegung relativ zur Kamera",
 		"EIN: Joystick hoch = Blickrichtung\nAUS: Joystick hoch = immer Norden")
 	content.add_child(_make_toggle("cam_relative"))
 	_spacer(content, 20)
-
-	_add_hline(content)
+	_hline(content)
 
 	# ── Bildschirm-Rotation ──────────────────────────────────────────────
-	_section(content, "Bildschirm sperren (Hochkant)",
-		"EIN: immer Hochkant  |  AUS: dreht frei mit")
-	content.add_child(_make_toggle("screen_lock", _on_screen_lock_changed))
+	_section(content, "Bildschirm-Rotation", "Wie sich der Bildschirm dreht")
+	content.add_child(_make_rotation_picker())
 	_spacer(content, 20)
-
-	_add_hline(content)
+	_hline(content)
 
 	# ── Kamera-Geschwindigkeit ───────────────────────────────────────────
 	_section(content, "Kamera-Geschwindigkeit", "Wie schnell dreht sich die Kamera")
-	var cam_row := _make_slider_row("cam_smooth", 2.0, 30.0, 1.0)
-	content.add_child(cam_row)
+	content.add_child(_make_slider("cam_smooth", 2.0, 30.0, 1.0))
 	_spacer(content, 20)
-
-	_add_hline(content)
+	_hline(content)
 
 	# ── Zoom-Geschwindigkeit ─────────────────────────────────────────────
 	_section(content, "Zoom-Geschwindigkeit", "Wie schnell zoomt die Kamera")
-	var zoom_row := _make_slider_row("zoom_smooth", 1.0, 20.0, 1.0)
-	content.add_child(zoom_row)
-	_spacer(content, 30)
+	content.add_child(_make_slider("zoom_smooth", 1.0, 20.0, 1.0))
+	_spacer(content, 20)
+	_hline(content)
 
-	# ── Schließen ────────────────────────────────────────────────────────
-	var close := Button.new()
-	close.text = "✕  Schließen"
-	close.custom_minimum_size = Vector2(280, 55)
-	close.add_theme_font_size_override("font_size", 26)
-	close.pressed.connect(toggle)
-	var close_wrap := CenterContainer.new()
-	close_wrap.add_child(close)
-	content.add_child(close_wrap)
+	# ── UI Position ──────────────────────────────────────────────────────
+	_section(content, "UI Position — Horizontal",
+		"Joystick & Buttons nach links/rechts verschieben")
+	content.add_child(_make_slider("ui_offset_x", -200.0, 200.0, 5.0, _on_ui_offset_changed))
 	_spacer(content, 20)
 
+	_section(content, "UI Position — Vertikal",
+		"Joystick & Buttons nach oben/unten verschieben")
+	content.add_child(_make_slider("ui_offset_y", -200.0, 200.0, 5.0, _on_ui_offset_changed))
+	_spacer(content, 30)
 
-# ── Section-Header ─────────────────────────────────────────────────────────
-func _section(parent: Control, title: String, subtitle: String) -> void:
-	_spacer(parent, 16)
-	var lbl := Label.new()
-	lbl.text = title
-	lbl.add_theme_font_size_override("font_size", 28)
-	lbl.add_theme_color_override("font_color", Color.WHITE)
-	lbl.add_theme_constant_override("margin_left", 20)
-	parent.add_child(lbl)
-
-	var sub := Label.new()
-	sub.text = subtitle
-	sub.add_theme_font_size_override("font_size", 20)
-	sub.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
-	sub.add_theme_constant_override("margin_left", 20)
-	parent.add_child(sub)
-	_spacer(parent, 10)
+	# Schließen
+	var close := Button.new()
+	close.text = "✕  Schließen"
+	close.custom_minimum_size = Vector2(280, 60)
+	close.add_theme_font_size_override("font_size", 28)
+	close.pressed.connect(toggle)
+	var wrap := CenterContainer.new()
+	wrap.add_child(close)
+	content.add_child(wrap)
+	_spacer(content, 30)
 
 
-# ── Toggle-Button ──────────────────────────────────────────────────────────
+# ── Rotations-Picker ───────────────────────────────────────────────────────
+func _make_rotation_picker() -> Control:
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var current: int = _values.get("screen_rotation", 0)
+	for i in ROTATION_LABELS.size():
+		var btn := Button.new()
+		btn.text = ("● " if i == current else "○ ") + ROTATION_LABELS[i]
+		btn.add_theme_font_size_override("font_size", 24)
+		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var idx := i  # capture
+		btn.pressed.connect(func() -> void:
+			_values["screen_rotation"] = idx
+			DisplayServer.screen_set_orientation(ROTATION_MODES[idx])
+			# Alle Buttons aktualisieren
+			for j in vbox.get_child_count():
+				var b: Button = vbox.get_child(j)
+				b.text = ("● " if j == idx else "○ ") + ROTATION_LABELS[j]
+		)
+		vbox.add_child(btn)
+
+	return margin
+
+
+# ── Toggle ─────────────────────────────────────────────────────────────────
 func _make_toggle(key: String, callback: Callable = Callable()) -> Control:
-	var wrap := MarginContainer.new()
-	wrap.add_theme_constant_override("margin_left", 20)
-
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
 	var btn := Button.new()
 	btn.text = "●  EIN" if _values.get(key, false) else "○  AUS"
-	btn.custom_minimum_size = Vector2(160, 55)
+	btn.custom_minimum_size = Vector2(160, 58)
 	btn.add_theme_font_size_override("font_size", 26)
 	btn.pressed.connect(func() -> void:
 		_values[key] = not _values.get(key, false)
@@ -122,51 +167,48 @@ func _make_toggle(key: String, callback: Callable = Callable()) -> Control:
 		if callback.is_valid():
 			callback.call(_values[key])
 	)
-	wrap.add_child(btn)
-	return wrap
+	margin.add_child(btn)
+	return margin
 
 
-# ── Slider Row ─────────────────────────────────────────────────────────────
-func _make_slider_row(key: String, min_val: float, max_val: float, step: float) -> Control:
-	var wrap := MarginContainer.new()
-	wrap.add_theme_constant_override("margin_left", 20)
-	wrap.add_theme_constant_override("margin_right", 20)
+# ── Slider ─────────────────────────────────────────────────────────────────
+func _make_slider(key: String, mn: float, mx: float, step: float,
+		callback: Callable = Callable()) -> Control:
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
 
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 16)
-	wrap.add_child(hbox)
+	hbox.add_theme_constant_override("separation", 12)
+	margin.add_child(hbox)
 
-	# Langsam-Label
-	var lbl_slow := Label.new()
-	lbl_slow.text = "Langsam"
-	lbl_slow.add_theme_font_size_override("font_size", 20)
-	lbl_slow.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
-	lbl_slow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hbox.add_child(lbl_slow)
+	var lbl_l := Label.new()
+	lbl_l.text = "−"
+	lbl_l.add_theme_font_size_override("font_size", 28)
+	lbl_l.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
+	lbl_l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hbox.add_child(lbl_l)
 
-	# Slider
 	var slider := HSlider.new()
-	slider.min_value = min_val
-	slider.max_value = max_val
+	slider.min_value = mn
+	slider.max_value = mx
 	slider.step = step
-	slider.value = _values.get(key, (min_val + max_val) * 0.5)
+	slider.value = _values.get(key, (mn + mx) * 0.5)
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	slider.custom_minimum_size = Vector2(0, 50)
+	slider.custom_minimum_size = Vector2(0, 55)
 	hbox.add_child(slider)
 
-	# Schnell-Label
-	var lbl_fast := Label.new()
-	lbl_fast.text = "Schnell"
-	lbl_fast.add_theme_font_size_override("font_size", 20)
-	lbl_fast.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
-	lbl_fast.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hbox.add_child(lbl_fast)
+	var lbl_r := Label.new()
+	lbl_r.text = "+"
+	lbl_r.add_theme_font_size_override("font_size", 28)
+	lbl_r.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
+	lbl_r.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hbox.add_child(lbl_r)
 
-	# Wert-Anzeige
 	var val_lbl := Label.new()
-	val_lbl.text = str(slider.value)
-	val_lbl.custom_minimum_size = Vector2(50, 0)
-	val_lbl.add_theme_font_size_override("font_size", 22)
+	val_lbl.text = str(snappedi(slider.value, 1))
+	val_lbl.custom_minimum_size = Vector2(60, 0)
+	val_lbl.add_theme_font_size_override("font_size", 24)
 	val_lbl.add_theme_color_override("font_color", Color.WHITE)
 	val_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	val_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -174,40 +216,48 @@ func _make_slider_row(key: String, min_val: float, max_val: float, step: float) 
 
 	slider.value_changed.connect(func(val: float) -> void:
 		_values[key] = val
-		val_lbl.text = str(val)
+		val_lbl.text = str(snappedi(val, 1))
+		if callback.is_valid():
+			callback.call()
 	)
-
-	return wrap
+	return margin
 
 
 # ── Callbacks ─────────────────────────────────────────────────────────────
-func _on_screen_lock_changed(locked: bool) -> void:
-	if locked:
-		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_PORTRAIT)
-	else:
-		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR)
+func _on_ui_offset_changed() -> void:
+	var offset := Vector2(
+		_values.get("ui_offset_x", 0.0),
+		_values.get("ui_offset_y", 0.0)
+	)
+	emit_signal("ui_offset_changed", offset)
 
 
-# ── Hilfsfunktionen ────────────────────────────────────────────────────────
-func _add_label(parent: Control, text: String, pos: Vector2, size: int, color: Color) -> void:
+# ── Helpers ────────────────────────────────────────────────────────────────
+func _section(parent: Control, title: String, sub: String) -> void:
+	_spacer(parent, 18)
 	var lbl := Label.new()
-	lbl.text = text
-	lbl.position = pos
-	lbl.add_theme_font_size_override("font_size", size)
-	lbl.add_theme_color_override("font_color", color)
+	lbl.text = title
+	lbl.add_theme_font_size_override("font_size", 28)
+	lbl.add_theme_color_override("font_color", Color.WHITE)
+	lbl.add_theme_constant_override("margin_left", 20)
 	parent.add_child(lbl)
+	var s := Label.new()
+	s.text = sub
+	s.add_theme_font_size_override("font_size", 20)
+	s.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
+	s.add_theme_constant_override("margin_left", 20)
+	parent.add_child(s)
+	_spacer(parent, 10)
 
 
-func _add_hline(parent: Control, pos: Vector2 = Vector2.ZERO, width: float = 620) -> void:
+func _hline(parent: Control) -> void:
 	var line := ColorRect.new()
 	line.color = Color(1, 1, 1, 0.12)
-	line.custom_minimum_size = Vector2(width, 2)
-	if pos != Vector2.ZERO:
-		line.position = pos
+	line.custom_minimum_size = Vector2(640, 2)
 	parent.add_child(line)
 
 
-func _spacer(parent: Control, height: int = 16) -> void:
+func _spacer(parent: Control, h: int = 16) -> void:
 	var s := Control.new()
-	s.custom_minimum_size = Vector2(0, height)
+	s.custom_minimum_size = Vector2(0, h)
 	parent.add_child(s)
