@@ -150,9 +150,9 @@ jobs:
       - name: Install GUT test plugin
         run: |
           mkdir -p "${PROJECT_PATH}/addons"
-          wget -q https://github.com/bitwes/Gut/releases/download/v9.3.0/gut_v9.3.0.zip -O gut.zip
+          wget -q https://github.com/bitwes/Gut/releases/download/v9.3.0/gut-9.3.0.zip -O gut.zip
           unzip -q gut.zip -d "${PROJECT_PATH}/addons/"
-          echo "GUT installiert"
+          echo "GUT installiert"mkdir
 
       # ── 9. Ausgabeverzeichnis anlegen ────────────────────────────────────
       - name: Create output directory
