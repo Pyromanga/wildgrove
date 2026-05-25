@@ -33,6 +33,16 @@ func _ready() -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	_build_panel(vp)
 	_panel.visible = false
+	# Panel-Position bei Bildschirm-Rotation aktualisieren
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+
+func _on_viewport_resized() -> void:
+	if not _panel:
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	_panel.size = Vector2(680, vp.y * 0.85)
+	_panel.position = Vector2(vp.x * 0.5 - 340, vp.y * 0.075)
 
 
 func toggle() -> void:

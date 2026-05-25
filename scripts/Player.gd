@@ -5,13 +5,12 @@ const SPEED: float       = 5.5
 const GRAVITY: float     = 9.8
 const ZOOM_MIN: float    = 3.0
 const ZOOM_MAX: float    = 16.0
-const CAM_SMOOTH: float  = 14.0  # Kamera-Drehung: höher = direkter
-const ZOOM_SMOOTH: float = 8.0   # Zoom: höher = direkter
+const CAM_SMOOTH: float  = 14.0
+const ZOOM_SMOOTH: float = 8.0
 
 var _spring_arm: SpringArm3D
 var _mesh: MeshInstance3D
 
-# Zielwerte — werden geglättet interpoliert
 var _target_yaw: float   = 0.0
 var _target_pitch: float = deg_to_rad(-35.0)
 var _target_zoom: float  = 8.0
@@ -58,26 +57,32 @@ func _build_camera() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var touch := _get_touch()
+	var touch: Node = _get_touch()
 	if not touch:
 		return
-
 	_handle_movement(touch, delta)
 	_handle_camera(touch, delta)
 
 
 func _handle_movement(touch: Node, delta: float) -> void:
 	var input_vec: Vector2 = touch.js_vec
-	var cam_relative: bool = _get_setting("cam_relative", true)
+
+	# cam_relative — explizit bool casten damit null nicht als false gilt
+	var cam_relative: bool = true
+	var raw: Variant = _get_setting("cam_relative")
+	if raw != null:
+		cam_relative = bool(raw)
 
 	if input_vec.length() > 0.05:
 		var dir: Vector3
 		if cam_relative:
-			var basis: Basis  = _spring_arm.global_transform.basis
-			var fwd: Vector3  = Vector3(-basis.z.x, 0, -basis.z.z).normalized()
-			var right: Vector3 = Vector3(basis.x.x, 0, basis.x.z).normalized()
+			# Bewegung relativ zur aktuellen Kamerarichtung
+			var basis: Basis   = _spring_arm.global_transform.basis
+			var fwd: Vector3   = Vector3(-basis.z.x, 0, -basis.z.z).normalized()
+			var right: Vector3 = Vector3( basis.x.x, 0,  basis.x.z).normalized()
 			dir = (fwd * input_vec.y + right * input_vec.x).normalized()
 		else:
+			# Feste Weltachsen — hoch = immer -Z (Norden)
 			dir = Vector3(input_vec.x, 0, -input_vec.y).normalized()
 
 		velocity.x = dir.x * SPEED
@@ -98,10 +103,9 @@ func _handle_movement(touch: Node, delta: float) -> void:
 
 
 func _handle_camera(touch: Node, delta: float) -> void:
-	# Zielwerte akkumulieren
 	if touch.cam_delta != Vector2.ZERO:
-		_target_yaw   -= touch.cam_delta.x * 0.007
-		_target_pitch  = clamp(
+		_target_yaw  -= touch.cam_delta.x * 0.007
+		_target_pitch = clamp(
 			_target_pitch - touch.cam_delta.y * 0.007,
 			deg_to_rad(-65), deg_to_rad(-10)
 		)
@@ -111,9 +115,12 @@ func _handle_camera(touch: Node, delta: float) -> void:
 		_target_zoom = clamp(_target_zoom + touch.zoom_delta, ZOOM_MIN, ZOOM_MAX)
 		touch.zoom_delta = 0.0
 
-	# Smooth interpolieren — Werte kommen aus Settings-Slidern
-	var cam_smooth: float  = _get_setting("cam_smooth",  CAM_SMOOTH)
-	var zoom_smooth: float = _get_setting("zoom_smooth", ZOOM_SMOOTH)
+	var cam_smooth: float  = CAM_SMOOTH
+	var zoom_smooth: float = ZOOM_SMOOTH
+	var cs: Variant = _get_setting("cam_smooth")
+	var zs: Variant = _get_setting("zoom_smooth")
+	if cs != null: cam_smooth  = float(cs)
+	if zs != null: zoom_smooth = float(zs)
 
 	_spring_arm.rotation.y = lerp_angle(
 		_spring_arm.rotation.y, _target_yaw, cam_smooth * delta
@@ -131,9 +138,9 @@ func _get_touch() -> Node:
 	return nodes[0] if nodes.size() > 0 else null
 
 
-func _get_setting(key: String, default_val: Variant) -> Variant:
+# Gibt null zurück wenn nicht gefunden — Caller muss auf null prüfen
+func _get_setting(key: String) -> Variant:
 	var nodes: Array = get_tree().get_nodes_in_group("settings")
 	if nodes.size() > 0 and nodes[0].has_method("get_setting"):
 		return nodes[0].get_setting(key)
-	return default_val
-# Überschreibt die alte _get_setting mit null-safe Version
+	return null
