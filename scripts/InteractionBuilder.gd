@@ -31,19 +31,26 @@ class Task:
 		target.add_child(interactable)
 
 	func _execute_interaction():
-		# 1. Player einfrieren
-		States.set_state(States.PlayerState.BUSY)
-		GameEvents.log("Starte: " + label)
-		
-		# 2. Timer für die Dauer (Script-Only Lösung)
-		await target.get_tree().create_timer(duration).timeout
-		
-		# 3. Fertig: Callback ausführen & Player befreien
-		if on_done.is_valid():
-			on_done.call()
-		
-		States.set_state(States.PlayerState.FREE)
-		GameEvents.log(label + " beendet.")
+    States.set_state(States.PlayerState.BUSY)
+    
+    # 1. Balken über die Factory erstellen
+    var hud = target.get_tree().get_nodes_in_group("hud")[0] # HUD finden
+    var bar = Factory.create_progress_bar(250.0)
+    
+    # Balken mittig am Bildschirm positionieren
+    bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+    hud.add_child(bar)
+    
+    # 2. Timer & Update (Animation per Script)
+    var tween = target.get_tree().create_tween()
+    tween.tween_property(bar, "value", 100.0, duration).from(0.0)
+    
+    await target.get_tree().create_timer(duration).timeout
+    
+    # 3. Aufräumen
+    bar.queue_free()
+    if on_done.is_valid(): on_done.call()
+    States.set_state(States.PlayerState.FREE)
 
 func create(node: Node3D) -> Task:
 	return Task.new(node)
