@@ -1,11 +1,11 @@
 extends Node
 ## Main.gd — Bootstrap
 
-const WorldScript    := preload("res://scripts/World.gd")
-const PlayerScript   := preload("res://scripts/Player.gd")
-const TouchScript    := preload("res://scripts/TouchInput.gd")
-const HUDScript      := preload("res://scripts/HUD.gd")
-const SettingsScript := preload("res://scripts/Settings.gd")
+const WorldScript	:= preload("res://scripts/World.gd")
+const PlayerScript	:= preload("res://scripts/Player.gd")
+const TouchScript	:= preload("res://scripts/TouchInput.gd")
+const HUDScript		:= preload("res://scripts/HUD.gd")
+const SettingsScript	:= preload("res://scripts/Settings.gd")
 
 
 func _ready() -> void:
