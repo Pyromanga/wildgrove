@@ -10,8 +10,7 @@ const ZOOM_SMOOTH: float = 8.0
 
 var _spring_arm: SpringArm3D
 var _mesh: MeshInstance3D
-var _interact_hint_label: Label  # "E: Baum fällen" etc.
-var _current_interactable: Node  = null
+var _current_interactable: Node = null
 
 var _target_yaw: float   = 0.0
 var _target_pitch: float = deg_to_rad(-35.0)
@@ -60,18 +59,15 @@ func _build_camera() -> void:
 
 
 func _build_interact_hint() -> void:
-	# Schwebendes Label über dem Spieler (3D → 2D via CanvasLayer nicht nötig,
-	# wir nutzen ein Billboard-Label3D)
 	var lbl := Label3D.new()
 	lbl.name = "InteractHint"
 	lbl.text = ""
 	lbl.font_size = 48
-	lbl.modulate = Color(1, 1, 1, 0.9)
+	lbl.modulate = Color(1, 1, 0.2, 1.0)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.position = Vector3(0, 2.8, 0)
 	lbl.visible = false
 	add_child(lbl)
-	_interact_hint_label = null  # Label3D, nicht Label — separat referenziert
 
 
 # ── Interaktion ────────────────────────────────────────────────────────────
@@ -90,10 +86,9 @@ func hide_interact_hint() -> void:
 
 
 func try_interact() -> void:
-	# Nächstes Interactable in Reichweite suchen
 	var interactables: Array = get_tree().get_nodes_in_group("interactable")
 	var closest: Node3D = null
-	var closest_dist: float = 2.8
+	var closest_dist: float = 3.0
 
 	for node in interactables:
 		if node is Node3D:
@@ -104,6 +99,7 @@ func try_interact() -> void:
 
 	if closest and closest.has_method("interact"):
 		closest.interact(self)
+		_current_interactable = closest
 
 
 # ── Physik ─────────────────────────────────────────────────────────────────
@@ -123,15 +119,25 @@ func _handle_movement(touch: Node, delta: float) -> void:
 	if raw != null:
 		cam_relative = bool(raw)
 
+	# joystick_inverted: EIN = hoch → vorwärts (intuitiv), AUS = hoch → rückwärts
+	var inverted: bool = false
+	var inv_raw: Variant = _get_setting("joystick_inverted")
+	if inv_raw != null:
+		inverted = bool(inv_raw)
+
 	if input_vec.length() > 0.05:
 		var dir: Vector3
+		# Y-Achse: positiv = Joystick hoch
+		# Kamera schaut von hinten → vorwärts = -input_vec.y damit hoch = vorwärts
+		var forward_input: float = -input_vec.y if not inverted else input_vec.y
+
 		if cam_relative:
 			var basis: Basis   = _spring_arm.global_transform.basis
 			var fwd: Vector3   = Vector3(-basis.z.x, 0, -basis.z.z).normalized()
 			var right: Vector3 = Vector3( basis.x.x, 0,  basis.x.z).normalized()
-			dir = (fwd * input_vec.y + right * input_vec.x).normalized()
+			dir = (fwd * forward_input + right * input_vec.x).normalized()
 		else:
-			dir = Vector3(input_vec.x, 0, -input_vec.y).normalized()
+			dir = Vector3(input_vec.x, 0, forward_input).normalized()
 
 		velocity.x = dir.x * SPEED
 		velocity.z = dir.z * SPEED
@@ -181,7 +187,6 @@ func _handle_camera(touch: Node, delta: float) -> void:
 	)
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────
 func _get_touch() -> Node:
 	var nodes: Array = get_tree().get_nodes_in_group("touch_input")
 	return nodes[0] if nodes.size() > 0 else null

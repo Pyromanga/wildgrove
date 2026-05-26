@@ -7,6 +7,7 @@ var _panel: ColorRect
 var _values: Dictionary = {
 	"cam_relative":    true,
 	"fixed_joystick":  true,   # true = Joystick fix, 2. Finger = Kamera/Zoom
+	"joystick_inverted": false, # false = hoch→vorwärts (intuitiv)
 	"screen_rotation": 0,      # 0=frei, 1=nur hochkant, 2=nur quer, 3=180° erlaubt
 	"cam_smooth":      14.0,
 	"zoom_smooth":     8.0,
@@ -96,6 +97,13 @@ func _build_panel(vp: Vector2) -> void:
 	_section(content, "Joystick-Modus",
 		"EIN: Linker Finger bleibt fix, 2. Finger dreht Kamera/zoomt\nAUS: Joystick springt zu Fingertipp")
 	content.add_child(_make_toggle("fixed_joystick"))
+	_spacer(content, 20)
+	_hline(content)
+
+	# ── Joystick Y-Achse
+	_section(content, "Joystick Y-Achse umkehren",
+		"EIN: Joystick hoch = rückwärts\nAUS: Joystick hoch = vorwärts (Standard)")
+	content.add_child(_make_toggle("joystick_inverted"))
 	_spacer(content, 20)
 	_hline(content)
 
