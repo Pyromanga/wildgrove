@@ -7,7 +7,7 @@ func _ready() -> void:
     add_child(m)
 
     # 2. Interaktion via Kernel-Builder konfigurieren
-    # Wir benutzen hier die Lambda-Funktion direkt im on_complete
+    # WICHTIG: Die Einrückungen hier müssen exakt stimmen
     Kernel.builder.create(self)\
         .set_label("Eisenerz abbauen")\
         .set_duration(4.0)\
