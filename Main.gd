@@ -2,20 +2,21 @@ extends Node
 ## Main.gd — Bootstrap
 
 func _ready() -> void:
-	# Systeme zuerst
-	_add_script_node(Node.new(),           "res://scripts/SkillSystem.gd", "SkillSystem")
+	# 1. Globale Systeme zuerst laden
+	_add_script_node(Node.new(), "res://scripts/SkillSystem.gd", "SkillSystem")
+	_add_script_node(Node.new(), "res://scripts/InventorySystem.gd", "InventorySystem")
 
-	# Welt & Spieler
+	# 2. Welt & Spieler laden
 	_add_script_node(Node3D.new(),         "res://scripts/World.gd",       "World")
-	_add_script_node(CharacterBody3D.new(),"res://scripts/Player.gd",      "Player")
+	_add_script_node(CharacterBody3D.new(), "res://scripts/Player.gd",      "Player")
 
-	# UI deferred — Viewport-Größe erst dann korrekt
+	# UI deferred laden — Viewport-Größe ist erst dann korrekt
 	call_deferred("_build_ui")
 	call_deferred("_connect_signals")
 
 
 func _build_ui() -> void:
-	_add_script_node(Node.new(),        "res://scripts/TouchInput.gd", "TouchInput")
+	_add_script_node(Node.new(), "res://scripts/TouchInput.gd", "TouchInput")
 
 	var hud := CanvasLayer.new()
 	hud.layer = 10
@@ -47,15 +48,13 @@ func _on_xp_gained(skill: String, amount: int, _total: int) -> void:
 
 
 func _on_level_up(skill: String, new_level: int) -> void:
-	print("[Main] LEVEL UP: %s → %d" % [skill, new_level])
+	print("[Main] LEVEL UP in %s! Neues Level: %d" % [skill, new_level])
 
 
-# ── Hilfsfunktion — lädt Script zur Laufzeit, kein preload ────────────────
-func _add_script_node(node: Node, script_path: String, node_name: String) -> void:
-	var script: Script = load(script_path)
-	if script == null:
-		push_error("[Main] Script nicht gefunden: " + script_path)
-		return
-	node.set_script(script)
-	node.name = node_name
-	add_child(node)
+# Hilfsfunktion zum dynamischen Laden von Nodes mit Skripten
+func _add_script_node(base_node: Node, script_path: String, node_name: String) -> Node:
+	if ResourceLoader.exists(script_path):
+		base_node.set_script(load(script_path))
+	base_node.name = node_name
+	add_child(base_node)
+	return base_node
