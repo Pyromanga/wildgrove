@@ -1,7 +1,7 @@
 extends Node
 ## Kernel.gd — Der zentrale Service-Manager
 
-# 1. Alle Variablen sauber oben deklarieren
+# --- Service-Referenzen ---
 var world_factory: Node
 var ui_factory: Node
 var data: Node
@@ -13,7 +13,7 @@ var skill_system: Node
 var touch: Node
 
 func _ready() -> void:
-	# 2. Initialisierung in der Funktion
+	# Initialisierung der Services
 	events = _add_service("res://scripts/services/GameEvents.gd", "Events")
 	data = _add_service("res://scripts/services/DataService.gd", "Data")
 	states = _add_service("res://scripts/services/StateService.gd", "States")
@@ -26,6 +26,7 @@ func _ready() -> void:
 	builder = _add_service("res://scripts/services/InteractionBuilder.gd", "Builder")
 	skill_system = _add_service("res://scripts/services/SkillSystem.gd", "SkillSystem")
 
+## Hilfsfunktion zum Laden von Services
 func _add_service(path: String, node_name: String) -> Node:
 	var s = load(path).new()
 	s.name = node_name
