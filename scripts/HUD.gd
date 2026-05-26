@@ -87,7 +87,9 @@ func _build_top_buttons() -> void:
 	add_child(_settings_btn)
 
 func _build_debug_console() -> void:
-	_debug_panel = ColorRect.new()
+    _debug_panel = ColorRect.new()
+    _debug_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE # <--- DIESE ZEILE HINZUFÜGEN
+    # ... restlicher Code
 	_debug_panel.color = Color(0, 0, 0, 0.5)
 	_debug_panel.anchor_right = 1.0; _debug_panel.offset_bottom = 300
 	add_child(_debug_panel)
