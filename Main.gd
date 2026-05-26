@@ -5,7 +5,7 @@ func _ready() -> void:
 	# 1. Globale Systeme laden
 	# Falls SkillSystem und InventorySystem NICHT im Autoload (project.godot) stehen,
 	# werden sie hier manuell erstellt.
-	_add_script_node(Node.new(), "res://scripts/SkillSystem.gd", "SkillSystem")
+	_add_script_node(Node.new(), "res://scripts/Skillsystem.gd", "SkillSystem")
 	_add_script_node(Node.new(), "res://scripts/InventorySystem.gd", "InventorySystem")
 
 	# 2. Welt & Spieler laden
