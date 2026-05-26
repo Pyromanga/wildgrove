@@ -53,7 +53,9 @@ func toggle() -> void:
 
 
 func is_settings_open() -> bool:
-	return _panel != null and _panel.visible
+	if _panel == null: 
+		return false
+	return _panel.visible
 
 
 func get_setting(key: String) -> Variant:
@@ -62,6 +64,8 @@ func get_setting(key: String) -> Variant:
 
 func _build_panel(vp: Vector2) -> void:
 	_panel = ColorRect.new()
+	_panel.mouse_filter = Control.MOUSE_FILTER_STOP # Das Panel soll blockieren
+	# ... restlicher Code ...
 	_panel.color = Color(0.08, 0.08, 0.08, 0.95)
 	_panel.size = Vector2(680, vp.y * 0.85)
 	_panel.position = Vector2(vp.x * 0.5 - 340, vp.y * 0.075)
