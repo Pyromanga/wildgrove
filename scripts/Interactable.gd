@@ -25,4 +25,4 @@ func _ready() -> void:
                                                                         # Diese Funktion wird vom Player-Script aufgerufen, wenn er "Aktion" drückt
                                                                         func start_interaction() -> void:
                                                                         	if task:
-                                                                            		Kernel.builder.execute_interaction(task)extends
+                                                                            		Kernel.builder.execute_interaction(task)
