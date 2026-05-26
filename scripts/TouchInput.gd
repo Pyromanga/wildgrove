@@ -1,11 +1,5 @@
 extends Node
-## TouchInput.gd — Touch & Maus Input
-##
-## Steuerung:
-##   Linke Seite   → Joystick (Bewegung)
-##   Rechte Seite  → Kamera drehen (ein Finger)
-##   Rechte Seite  → Zoom (zwei Finger Pinch)
-##   Linker Finger zählt NIE für Kamera oder Zoom
+## TouchInput.gd — Bereinigte Version für die neue Player-Logik
 
 var js_vec: Vector2    = Vector2.ZERO
 var cam_delta: Vector2 = Vector2.ZERO
@@ -15,8 +9,8 @@ var _js_finger: int     = -1
 var _js_origin: Vector2 = Vector2.ZERO
 const JS_RADIUS: float  = 90.0
 
-# Rechte Seite — bis zu 2 Finger für Kamera/Zoom
-var _right_fingers: Dictionary = {}  # index → Vector2
+# Rechte Seite
+var _right_fingers: Dictionary = {} 
 var _pinch_last_dist: float    = 0.0
 var _cam_last: Vector2         = Vector2.ZERO
 var _cam_finger: int           = -1
@@ -24,31 +18,26 @@ var _cam_finger: int           = -1
 var _js_base: ColorRect = null
 var _js_knob: ColorRect = null
 
-
 func _ready() -> void:
 	add_to_group("touch_input")
-
 
 func register_joystick_visuals(base: ColorRect, knob: ColorRect) -> void:
 	_js_base = base
 	_js_knob = knob
 
-
 func _is_settings_open() -> bool:
-	var nodes: Array = get_tree().get_nodes_in_group("settings")
+	var nodes = get_tree().get_nodes_in_group("settings")
 	if nodes.size() > 0 and nodes[0].has_method("is_settings_open"):
 		return nodes[0].is_settings_open()
 	return false
 
-
 func _input(event: InputEvent) -> void:
 	if _is_settings_open():
-		js_vec     = Vector2.ZERO
-		cam_delta  = Vector2.ZERO
-		zoom_delta = 0.0
+		js_vec = Vector2.ZERO
+		cam_delta = Vector2.ZERO
 		return
 
-	var sw: float = get_viewport().get_visible_rect().size.x
+	var sw = get_viewport().get_visible_rect().size.x
 
 	if event is InputEventScreenTouch:
 		_handle_touch(event, sw)
@@ -59,89 +48,65 @@ func _input(event: InputEvent) -> void:
 			cam_delta += event.relative
 	elif event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			zoom_delta -= 0.5
+			zoom_delta -= 1.0
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			zoom_delta += 0.5
-
+			zoom_delta += 1.0
 
 func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
-	var pos: Vector2 = event.position
-	var is_left: bool = pos.x < sw * 0.5
-
 	if event.pressed:
-		if is_left:
-			# Linke Seite = immer Joystick
+		if event.position.x < sw * 0.5:
 			if _js_finger < 0:
 				_js_finger = event.index
-				_js_origin = pos
-				_update_js_visuals(pos, Vector2.ZERO)
+				_js_origin = event.position
+				_update_js_visuals(_js_origin, Vector2.ZERO)
 		else:
-			# Rechte Seite = Kamera oder Zoom
-			_right_fingers[event.index] = pos
+			_right_fingers[event.index] = event.position
 			if _right_fingers.size() == 1:
-				# Erster rechter Finger = Kamera
 				_cam_finger = event.index
-				_cam_last   = pos
+				_cam_last = event.position
 			elif _right_fingers.size() == 2:
-				# Zweiter rechter Finger = Pinch-Zoom starten
-				_cam_finger = -1  # kein Kamera-Swipe mehr während Pinch
-				var keys: Array = _right_fingers.keys()
-				_pinch_last_dist = (_right_fingers[keys[0]] as Vector2).distance_to(
-					_right_fingers[keys[1]] as Vector2
-				)
+				_cam_finger = -1
+				var keys = _right_fingers.keys()
+				_pinch_last_dist = _right_fingers[keys[0]].distance_to(_right_fingers[keys[1]])
 	else:
 		if event.index == _js_finger:
 			_js_finger = -1
-			js_vec     = Vector2.ZERO
+			js_vec = Vector2.ZERO
 			_reset_js_visuals()
 		if event.index in _right_fingers:
 			_right_fingers.erase(event.index)
-			_pinch_last_dist = 0.0
 			if _right_fingers.size() == 1:
-				# Zurück zu einem Finger = Kamera-Swipe
 				_cam_finger = _right_fingers.keys()[0]
-				_cam_last   = _right_fingers[_cam_finger]
-			elif _right_fingers.size() == 0:
+				_cam_last = _right_fingers[_cam_finger]
+			else:
 				_cam_finger = -1
 
-
 func _handle_drag(event: InputEventScreenDrag, sw: float) -> void:
-	var is_left: bool = event.index == _js_finger
-
-	if is_left:
-		var delta: Vector2   = event.position - _js_origin
-		var clamped: Vector2 = delta.limit_length(JS_RADIUS)
+	if event.index == _js_finger:
+		var delta = event.position - _js_origin
+		var clamped = delta.limit_length(JS_RADIUS)
 		js_vec = clamped / JS_RADIUS
 		_update_js_visuals(_js_origin, clamped)
-		return
-
-	# Rechte Seite
-	if event.index in _right_fingers:
+	elif event.index in _right_fingers:
 		_right_fingers[event.index] = event.position
-
-	if _right_fingers.size() == 2:
-		# Pinch-Zoom
-		var keys: Array = _right_fingers.keys()
-		var new_dist: float = (_right_fingers[keys[0]] as Vector2).distance_to(
-			_right_fingers[keys[1]] as Vector2
-		)
-		if _pinch_last_dist > 0.0:
-			zoom_delta += (_pinch_last_dist - new_dist) * 0.025
-		_pinch_last_dist = new_dist
-	elif event.index == _cam_finger:
-		# Kamera-Swipe
-		var d: Vector2 = event.position - _cam_last
-		_cam_last      = event.position
-		cam_delta     += d
-
+		if _right_fingers.size() == 2:
+			var keys = _right_fingers.keys()
+			var new_dist = _right_fingers[keys[0]].distance_to(_right_fingers[keys[1]])
+			if _pinch_last_dist > 0:
+				zoom_delta += (_pinch_last_dist - new_dist) * 0.05
+			_pinch_last_dist = new_dist
+		elif event.index == _cam_finger:
+			cam_delta += event.position - _cam_last
+			_cam_last = event.position
 
 func _update_js_visuals(origin: Vector2, offset: Vector2) -> void:
 	if _js_base:
-		_js_base.position = origin - Vector2(JS_RADIUS, JS_RADIUS)
+		# Nutze global_position für den Touch-Input, um Anchors zu ignorieren
+		_js_base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
 	if _js_knob:
-		_js_knob.position = origin + offset - Vector2(30, 30)
-
+		_js_knob.global_position = origin + offset - (_js_knob.size * 0.5)
 
 func _reset_js_visuals() -> void:
 	if _js_base and _js_knob:
-		_js_knob.position = _js_base.position + Vector2(JS_RADIUS - 30, JS_RADIUS - 30)
+		# Zentriert den Knob wieder im Base
+		_js_knob.global_position = _js_base.global_position + (Vector2(JS_RADIUS, JS_RADIUS)) - (_js_knob.size * 0.5)
