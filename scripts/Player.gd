@@ -126,3 +126,9 @@ func _handle_movement(touch: Node, delta: float) -> void:
 		# Modell sanft in Laufrichtung drehen
 		var target_rotation = atan2(move_dir.x, move_dir.z)
 		_mesh.rotation.y = lerp_angle(_mesh.rotation.y, target_rotation, LERP_VAL * delta)
+
+func _get_touch_input() -> Node:
+	var nodes = get_tree().get_nodes_in_group("touch_input")
+	if nodes.size() > 0:
+		return nodes[0]
+	return null
