@@ -1,12 +1,13 @@
 extends Node3D
 
-func _ready():
-    # Visuelles (Einfacher grauer Block)
-    var m = MeshInstance3D.new()
+func _ready() -> void:
+    # 1. Visuelles (Einfacher grauer Block)
+    var m := MeshInstance3D.new()
     m.mesh = BoxMesh.new()
     add_child(m)
 
-    # Interaktion 'bestellen' via Kernel
+    # 2. Interaktion via Kernel-Builder konfigurieren
+    # Wir benutzen hier die Lambda-Funktion direkt im on_complete
     Kernel.builder.create(self)\
         .set_label("Eisenerz abbauen")\
         .set_duration(4.0)\
