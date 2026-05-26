@@ -20,3 +20,22 @@ func get_tree_data(type: String) -> Dictionary:
 ## Sicheres Abrufen von Player-Stats
 func get_stat(stat_name: String) -> float:
 	return PLAYER_STATS.get(stat_name, 0.0)
+	
+	# In DataService.gd
+var settings = {
+    "cam_relative": true,
+    "fixed_joystick": true,
+    "joystick_inverted": false,
+    "screen_rotation": 0,
+    "cam_smooth": 14.0,
+    "zoom_smooth": 8.0,
+    "ui_offset_x": 0.0,
+    "ui_offset_y": 0.0,
+}
+
+func get_setting(key: String):
+    return settings.get(key)
+
+func set_setting(key: String, value):
+    settings[key] = value
+    Kernel.events.setting_changed.emit(key, value)
