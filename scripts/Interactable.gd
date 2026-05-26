@@ -1,58 +1,42 @@
 extends Node3D
-## Interactable.gd
 
-signal interaction_completed(src: Node3D, res: Dictionary)
+signal completed # Wird gefeuert, wenn der Balken voll ist
 
-@export var interaction_label: String = "Interagieren"
-@export var interaction_time: float   = 3.0
+@export var label: String = "Interagieren"
+@export var duration: float = 3.0
 
-var _is_busy: bool = false
-var _timer: float = 0.0
+var _is_active: bool = false
+var _time: float = 0.0
 var _bar: Node3D
 
 func _ready() -> void:
 	add_to_group("interactable")
-	# Factory erstellt den 3D Balken (Sicherstellen, dass Factory.gd als Autoload existiert!)
-	if has_node("/root/Factory"):
-		_bar = get_node("/root/Factory").create_3d_bar(self)
-	_setup_area()
+	_bar = Factory.create_3d_bar(self)
+	_setup_detection_area()
 
-func _setup_area() -> void:
-	var area := Area3D.new()
-	var col  := CollisionShape3D.new()
-	col.shape = SphereShape3D.new(); col.shape.radius = 3.5
+func _setup_detection_area() -> void:
+	var area = Area3D.new()
+	var col = CollisionShape3D.new()
+	col.shape = SphereShape3D.new()
+	col.shape.radius = 3.5
 	area.add_child(col)
 	add_child(area)
-	area.body_entered.connect(_on_entered)
-	area.body_exited.connect(_on_exited)
+	area.body_entered.connect(func(b): if b.is_in_group("player"): GameEvents.log("Nähe: " + label))
 
-func interact(_player: Node3D) -> void:
-	if _is_busy: return
-	_is_busy = true
-	_timer = 0.0
-	if _bar: _bar.visible = true
-	if has_node("/root/GameEvents"):
-		get_node("/root/GameEvents").log("Aktion gestartet: " + interaction_label)
+func start_interaction() -> void:
+	if _is_active: return
+	_is_active = true
+	_time = 0.0
+	_bar.visible = true
+	GameEvents.log("Starte " + label)
 
 func _process(delta: float) -> void:
-	if _is_busy:
-		_timer += delta
-		var p = clamp(_timer / interaction_time, 0.0, 1.0)
-		if _bar: _bar.get_node("Fill").scale.x = p
+	if _is_active:
+		_time += delta
+		var progress = clamp(_time / duration, 0.0, 1.0)
+		_bar.get_node("Fill").scale.x = progress
 		
-		if _timer >= interaction_time:
-			_is_busy = false
-			if _bar: _bar.visible = false
-			interaction_completed.emit(self, {})
-			if has_node("/root/GameEvents"):
-				get_node("/root/GameEvents").log("Erfolg: " + interaction_label)
-
-func _on_entered(body: Node3D) -> void:
-	if body.is_in_group("player"):
-		get_tree().call_group("hud_layer", "show_interact_button", interaction_label)
-
-func _on_exited(body: Node3D) -> void:
-	if body.is_in_group("player"):
-		_is_busy = false
-		if _bar: _bar.visible = false
-		get_tree().call_group("hud_layer", "hide_interact_button")
+		if _time >= duration:
+			_is_active = false
+			_bar.visible = false
+			completed.emit()
