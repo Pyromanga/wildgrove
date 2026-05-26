@@ -6,7 +6,7 @@ func _ready() -> void:
     m.mesh = BoxMesh.new()
     add_child(m)
 
-    # 2. Interaktion via Kernel-Builder konfigurieren
+    # 2. Interaktion via Kernel-Builder konfigurieren test
     # WICHTIG: Die Einrückungen hier müssen exakt stimmen
     Kernel.builder.create(self)\
         .set_label("Eisenerz abbauen")\
