@@ -6,73 +6,82 @@ func _ready() -> void:
     	_build_terrain()
         	_build_props()
 
-
             func _build_lighting() -> void:
-            	var sun := DirectionalLight3D.new()
-                	sun.rotation_degrees = Vector3(-55, 30, 0)
-                    	sun.light_energy = 1.2
-                        	add_child(sun)
+            	# Sonne (Directional Light)
+                	var sun := DirectionalLight3D.new()
+                    	sun.rotation_degrees = Vector3(-55, 30, 0)
+                        	sun.light_energy = 1.2
+                            	sun.shadow_enabled = true # Schatten machen alles hübscher!
+                                	add_child(sun)
 
-                            	var env_node := WorldEnvironment.new()
-                                	var env := Environment.new()
-                                    	env.background_mode = Environment.BG_COLOR
-                                        	env.background_color = Color(0.3, 0.6, 0.9)
-                                            	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-                                                	env.ambient_light_color = Color(1, 1, 1)
-                                                    	env.ambient_light_energy = 0.8
-                                                        	env_node.environment = env
-                                                            	add_child(env_node)
+                                    	# Welt-Umgebung (Himmel & Licht)
+                                        	var env_node := WorldEnvironment.new()
+                                            	var env := Environment.new()
+                                                	
+                                                    	env.background_mode = Environment.BG_COLOR
+                                                        	env.background_color = Color(0.3, 0.6, 0.9)
+                                                            	
+                                                                	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+                                                                    	env.ambient_light_color = Color(1, 1, 1)
+                                                                        	env.ambient_light_energy = 0.4 # Etwas reduziert, damit die Sonne besser knallt
+                                                                            	
+                                                                                	env_node.environment = env
+                                                                                    	add_child(env_node)
 
+                                                                                        func _build_terrain() -> void:
+                                                                                        	# Boden-Kollision
+                                                                                            	var body := StaticBody3D.new()
+                                                                                                	var col := CollisionShape3D.new()
+                                                                                                    	var shape := BoxShape3D.new()
+                                                                                                        	shape.size = Vector3(200, 0.2, 200)
+                                                                                                            	col.shape = shape
+                                                                                                                	body.position.y = -0.1
+                                                                                                                    	body.add_child(col)
+                                                                                                                        	add_child(body)
 
-                                                                func _build_terrain() -> void:
-                                                                	var body := StaticBody3D.new()
-                                                                    	var col := CollisionShape3D.new()
-                                                                        	var shape := BoxShape3D.new()
-                                                                            	shape.size = Vector3(200, 0.2, 200)
-                                                                                	col.shape = shape
-                                                                                    	body.position.y = -0.1
-                                                                                        	body.add_child(col)
-                                                                                            	add_child(body)
+                                                                                                                            	# Boden-Optik
+                                                                                                                                	var mesh_inst := MeshInstance3D.new()
+                                                                                                                                    	var plane := PlaneMesh.new()
+                                                                                                                                        	plane.size = Vector2(200, 200)
+                                                                                                                                            	mesh_inst.mesh = plane
+                                                                                                                                                	
+                                                                                                                                                    	var mat := StandardMaterial3D.new()
+                                                                                                                                                        	mat.albedo_color = Color(0.25, 0.6, 0.2)
+                                                                                                                                                            	mesh_inst.material_override = mat
+                                                                                                                                                                	add_child(mesh_inst)
 
-                                                                                                	var mesh_inst := MeshInstance3D.new()
-                                                                                                    	var plane := PlaneMesh.new()
-                                                                                                        	plane.size = Vector2(200, 200)
-                                                                                                            	mesh_inst.mesh = plane
-                                                                                                                	var mat := StandardMaterial3D.new()
-                                                                                                                    	mat.albedo_color = Color(0.25, 0.6, 0.2)
-                                                                                                                        	mesh_inst.material_override = mat
-                                                                                                                            	add_child(mesh_inst)
+                                                                                                                                                                    func _build_props() -> void:
+                                                                                                                                                                    	var positions: Array[Vector3] = [
+                                                                                                                                                                            		Vector3(5, 1, 5),   Vector3(-6, 1, 4),
+                                                                                                                                                                                    		Vector3(8, 1, -5),  Vector3(-4, 1, -8),
+                                                                                                                                                                                            		Vector3(3, 1, -3),  Vector3(-9, 1, 6),
+                                                                                                                                                                                                    		Vector3(12, 1, 2),  Vector3(-3, 1, 10),
+                                                                                                                                                                        ]
+                                                                                                                                                                        	
+                                                                                                                                                                            	for pos in positions:
+                                                                                                                                                                                		_spawn_box(pos)
 
+                                                                                                                                                                                        func _spawn_box(pos: Vector3) -> void:
+                                                                                                                                                                                        	var body := StaticBody3D.new()
+                                                                                                                                                                                            	body.position = pos
 
-                                                                                                                                func _build_props() -> void:
-                                                                                                                                	var positions: Array[Vector3] = [
-                                                                                                                                        		Vector3(5, 1, 5),   Vector3(-6, 1, 4),
-                                                                                                                                                		Vector3(8, 1, -5),  Vector3(-4, 1, -8),
-                                                                                                                                                        		Vector3(3, 1, -3),  Vector3(-9, 1, 6),
-                                                                                                                                                                		Vector3(12, 1, 2),  Vector3(-3, 1, 10),
-                                                                                                                                    ]
-                                                                                                                                    	for pos in positions:
-                                                                                                                                        		_spawn_box(pos)
+                                                                                                                                                                                                	# Kollision
+                                                                                                                                                                                                    	var col := CollisionShape3D.new()
+                                                                                                                                                                                                        	var shape := BoxShape3D.new()
+                                                                                                                                                                                                            	shape.size = Vector3(1.5, 2.0, 1.5)
+                                                                                                                                                                                                                	col.shape = shape
+                                                                                                                                                                                                                    	body.add_child(col)
 
+                                                                                                                                                                                                                        	# Mesh
+                                                                                                                                                                                                                            	var mesh_inst := MeshInstance3D.new()
+                                                                                                                                                                                                                                	var box := BoxMesh.new()
+                                                                                                                                                                                                                                    	box.size = Vector3(1.5, 2.0, 1.5)
+                                                                                                                                                                                                                                        	mesh_inst.mesh = box
+                                                                                                                                                                                                                                            	
+                                                                                                                                                                                                                                                	var mat := StandardMaterial3D.new()
+                                                                                                                                                                                                                                                    	mat.albedo_color = Color(0.15, 0.42, 0.1)
+                                                                                                                                                                                                                                                        	mesh_inst.material_override = mat
+                                                                                                                                                                                                                                                            	body.add_child(mesh_inst)
 
-                                                                                                                                                func _spawn_box(pos: Vector3) -> void:
-                                                                                                                                                	var body := StaticBody3D.new()
-
-                                                                                                                                                    	var col := CollisionShape3D.new()
-                                                                                                                                                        	var shape := BoxShape3D.new()
-                                                                                                                                                            	shape.size = Vector3(1.5, 2.0, 1.5)
-                                                                                                                                                                	col.shape = shape
-                                                                                                                                                                    	body.add_child(col)
-
-                                                                                                                                                                        	var mesh_inst := MeshInstance3D.new()
-                                                                                                                                                                            	var box := BoxMesh.new()
-                                                                                                                                                                                	box.size = Vector3(1.5, 2.0, 1.5)
-                                                                                                                                                                                    	mesh_inst.mesh = box
-                                                                                                                                                                                        	var mat := StandardMaterial3D.new()
-                                                                                                                                                                                            	mat.albedo_color = Color(0.15, 0.42, 0.1)
-                                                                                                                                                                                                	mesh_inst.material_override = mat
-                                                                                                                                                                                                    	body.add_child(mesh_inst)
-
-                                                                                                                                                                                                        	body.position = pos
-                                                                                                                                                                                                            	add_child(body)extends
-                                                                                                                                    ]
+                                                                                                                                                                                                                                                                	add_child(body)extends
+                                                                                                                                                                        ]

@@ -1,39 +1,43 @@
 extends Node
-## Main.gd — Bootstrap
 
-const WorldScript	:= preload("res://scripts/World.gd")
-const PlayerScript	:= preload("res://scripts/Player.gd")
-const TouchScript	:= preload("res://scripts/TouchInput.gd")
-const HUDScript		:= preload("res://scripts/HUD.gd")
-const SettingsScript	:= preload("res://scripts/Settings.gd")
+## Main.gd — Bootstrap (Pure Scripting Refactored)
 
+const WorldScript    := preload("res://scripts/World.gd")
+const PlayerScript   := preload("res://scripts/Player.gd")
+const TouchScript    := preload("res://scripts/TouchInput.gd")
+const HUDScript      := preload("res://scripts/HUD.gd")
+const SettingsScript := preload("res://scripts/Settings.gd")
+const SkillScript := preload("res://scripts/SkillSystem.gd")
 
 func _ready() -> void:
-	var world := Node3D.new()
-    	world.set_script(WorldScript)
-        	add_child(world)
+	# Die Reihenfolge der Initialisierung ist hier klar definiert
+    	var world    := _create_node(Node3D, WorldScript, "World")
+        	var player   := _create_node(CharacterBody3D, PlayerScript, "Player")
+            	var touch    := _create_node(Node, TouchScript, "TouchInput")
+                	
+                    	# UI braucht spezielle Behandlung wegen der Layer
+                        	var hud      := _create_canvas_node(HUDScript, "HUD", 10)
+                            	var settings := _create_canvas_node(SettingsScript, "Settings", 20)
 
-            	var player := CharacterBody3D.new()
-                	player.set_script(PlayerScript)
-                    	add_child(player)
-
-                        	call_deferred("_build_ui")
+                                	# Signale verbinden
+                                    	hud.settings_requested.connect(settings.toggle)
+                                        	settings.ui_offset_changed.connect(hud.apply_ui_offset)
 
 
-                            func _build_ui() -> void:
-                            	var touch := Node.new()
-                                	touch.set_script(TouchScript)
-                                    	add_child(touch)
+                                            ## Hilfsfunktion für Standard-Nodes
+                                            func _create_node(type: Variant, script: Script, node_name: String) -> Node:
+                                            	var n: Node = type.new()
+                                                	n.set_script(script)
+                                                    	n.name = node_name
+                                                        	add_child(n)
+                                                            	return n
 
-                                        	var hud := CanvasLayer.new()
-                                            	hud.layer = 10
-                                                	hud.set_script(HUDScript)
-                                                    	add_child(hud)
 
-                                                        	var sett := CanvasLayer.new()
-                                                            	sett.layer = 20
-                                                                	sett.set_script(SettingsScript)
-                                                                    	add_child(sett)
-
-                                                                        	hud.settings_requested.connect(sett.toggle)
-                                                                            	sett.ui_offset_changed.connect(hud.apply_ui_offset)extends
+                                                                ## Hilfsfunktion für CanvasLayer (wegen der Layer-Eigenschaft)
+                                                                func _create_canvas_node(script: Script, node_name: String, layer_idx: int) -> CanvasLayer:
+                                                                	var cl := CanvasLayer.new()
+                                                                    	cl.set_script(script)
+                                                                        	cl.name = node_name
+                                                                            	cl.layer = layer_idx
+                                                                                	add_child(cl)
+                                                                                    	return clextends
