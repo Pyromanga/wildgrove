@@ -1,68 +1,59 @@
 extends Node
-## Main.gd — Der zentrale Einstiegspunkt
+## Main.gd — Optimierter Manager für den Spielstart
 
 func _ready() -> void:
-	# 1. Systeme laden (Pfade fixen!)
-	# Wir achten auf Kleinschreibung bei Skillsystem.gd
-	_add_script_node(Node.new(), "res://scripts/Skillsystem.gd", "SkillSystem")
-	_add_script_node(Node.new(), "res://scripts/InventorySystem.gd", "InventorySystem")
-
-	# 2. Welt & Spieler laden
+	# 1. Welt laden (Basis für alles 3D)
 	_add_script_node(Node3D.new(), "res://scripts/World.gd", "World")
 	
-	# Player bekommt eine eigene Variable für spätere Setups
+	# 2. Spieler laden (Wartet auf World)
 	var player = _add_script_node(CharacterBody3D.new(), "res://scripts/Player.gd", "Player")
 
-	# 3. UI & Signale (deferred um Viewport-Errors zu vermeiden)
+	# 3. UI & Eingabe (muss über dem 3D liegen)
+	# TouchInput ist kein Singleton in der project.godot, daher hier laden!
+	_add_script_node(Node.new(), "res://scripts/TouchInput.gd", "TouchInput")
+	
+	# UI-Aufbau verzögert, um sicherzustellen, dass Singletons bereit sind
 	call_deferred("_build_ui")
 	call_deferred("_connect_signals")
 	
-	# Debug-Verbindung zum Bus
-	var ge = get_node_or_null("/root/GameEvents")
-	if ge:
-		ge.debug_log.connect(_on_debug_log)
-		ge.log("System-Bootstrap erfolgreich.")
+	# Debug-Check für den Bus (Singleton)
+	if GameEvents:
+		GameEvents.debug_log.connect(_on_debug_log)
+		GameEvents.log("System-Bootstrap erfolgreich.")
 
 func _build_ui() -> void:
-	# TouchInput laden (Wichtig für Player-Bewegung!)
-	_add_script_node(Node.new(), "res://scripts/TouchInput.gd", "TouchInput")
-
 	var hud := CanvasLayer.new()
 	hud.name = "HUD"
+	hud.add_to_group("hud") # Wichtig für Factory/Builder!
 	hud.set_script(load("res://scripts/HUD.gd"))
 	add_child(hud)
 
 	var sett := CanvasLayer.new()
 	sett.name = "Settings"
+	sett.add_to_group("settings")
 	sett.set_script(load("res://scripts/Settings.gd"))
 	add_child(sett)
 
-	# Brücke zwischen HUD und Settings
+	# Signale zwischen HUD und Settings verbinden
 	if hud.has_signal("settings_requested"):
 		hud.settings_requested.connect(sett.toggle)
 	if sett.has_signal("ui_offset_changed"):
 		sett.ui_offset_changed.connect(hud.apply_ui_offset)
 
 func _connect_signals() -> void:
-	# Skill-Signale über den Bus abfangen (Saubere Architektur!)
-	var ge = get_node_or_null("/root/GameEvents")
-	if ge:
-		# Wenn das Skillsystem XP meldet, loggen wir es in der Main
-		ge.xp_gained.connect(func(skill, amt): 
-			_on_debug_log("+%d %s XP erhalten" % [amt, skill])
-		)
+	# Hier verbinden wir globale Ereignisse mit der Main-Logik
+	GameEvents.xp_gained.connect(func(skill, amt): 
+		_on_debug_log("+%d %s XP erhalten" % [amt, skill])
+	)
 
 func _on_debug_log(msg: String) -> void:
 	print_rich("[color=cyan][Main][/color] ", msg)
 
-# Hilfsfunktion zum dynamischen Laden
 func _add_script_node(base_node: Node, script_path: String, node_name: String) -> Node:
 	base_node.name = node_name
 	if ResourceLoader.exists(script_path):
 		base_node.set_script(load(script_path))
 		add_child(base_node)
 	else:
-		# Wichtig für dich in der Pipeline: Fehlende Dateien sofort sehen!
-		push_error("KRITISCH: Script nicht gefunden unter: " + script_path)
-		add_child(base_node) # Node trotzdem laden um Abstürze zu vermeiden
+		push_error("FEHLER: Datei nicht gefunden: " + script_path)
 	return base_node
