@@ -22,23 +22,20 @@ class Task:
 	func build() -> void:
 		var interactable = Node3D.new()
 		interactable.add_to_group("interactable")
-		# Wir binden den Builder-Task an das Objekt
 		interactable.set_meta("task", self)
-		
-		# Wichtig: Der Player ruft diese Funktion auf
 		interactable.set_script(load("res://scripts/Interactable.gd"))
-		
 		target.add_child(interactable)
 
 # Wird vom Interactable-Script aufgerufen
 func execute_interaction(task: Task) -> void:
 	if not task.target or not is_instance_valid(task.target): return
 	
-	States.set_state(States.PlayerState.BUSY)
+	# Kernel-Referenzen nutzen
+	Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
 	
-	# UI-Factory Integration
+	# UI-Factory Integration über Kernel
 	var hud = task.target.get_tree().get_nodes_in_group("hud")[0]
-	var bar = Factory.create_progress_bar(250.0)
+	var bar = Kernel.ui_factory.create_progress_bar(250.0)
 	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	hud.add_child(bar)
 	
@@ -49,14 +46,14 @@ func execute_interaction(task: Task) -> void:
 	# Timer
 	await task.target.get_tree().create_timer(task.duration).timeout
 	
-	# Aufräumen (Safety-Check: Ist das Target noch da?)
+	# Aufräumen
 	if is_instance_valid(bar):
 		bar.queue_free()
 		
 	if task.on_done.is_valid():
 		task.on_done.call()
 		
-	States.set_state(States.PlayerState.FREE)
+	Kernel.states.set_state(Kernel.states.PlayerState.FREE)
 
 func create(node: Node3D) -> Task:
 	return Task.new(node)
