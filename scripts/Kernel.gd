@@ -1,7 +1,7 @@
 extends Node
 ## Kernel.gd — Der zentrale Service-Manager
 
-# Instanzen der Services
+# 1. Alle Variablen sauber oben deklarieren
 var world_factory: Node
 var ui_factory: Node
 var data: Node
@@ -10,9 +10,10 @@ var events: Node
 var utils: Node
 var builder: Node
 var skill_system: Node
+var touch: Node
 
 func _ready() -> void:
-	# Initialisiere alle Services als Kinder des Kernels
+	# 2. Initialisierung in der Funktion
 	events = _add_service("res://scripts/services/GameEvents.gd", "Events")
 	data = _add_service("res://scripts/services/DataService.gd", "Data")
 	states = _add_service("res://scripts/services/StateService.gd", "States")
@@ -21,7 +22,7 @@ func _ready() -> void:
 	world_factory = _add_service("res://scripts/factories/WorldFactory.gd", "WorldFactory")
 	ui_factory = _add_service("res://scripts/factories/UIFactory.gd", "UIFactory")
 	
-	# Jetzt sind sie innerhalb der Funktion korrekt zugewiesen
+	touch = _add_service("res://scripts/services/TouchInput.gd", "TouchInput")
 	builder = _add_service("res://scripts/services/InteractionBuilder.gd", "Builder")
 	skill_system = _add_service("res://scripts/services/SkillSystem.gd", "SkillSystem")
 
