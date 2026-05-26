@@ -197,3 +197,17 @@ func _get_setting(key: String) -> Variant:
 	if nodes.size() > 0 and nodes[0].has_method("get_setting"):
 		return nodes[0].get_setting(key)
 	return null
+
+func try_interact() -> void:
+	var interactables: Array = get_tree().get_nodes_in_group("interactable")
+	var closest: Node3D = null
+	var closest_dist: float = 4.0 # Radius etwas erhöht
+
+	for node in interactables:
+		var d: float = global_position.distance_to(node.global_position)
+		if d < closest_dist:
+			closest_dist = d
+			closest = node
+
+	if closest and closest.has_method("interact"):
+		closest.interact(self)
