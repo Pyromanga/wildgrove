@@ -1,29 +1,40 @@
 extends Node
-## UIFactory.gd — Erschafft UI-Elemente direkt per Script
+## UIFactory.gd — Zentrale Fabrik für UI-Elemente
 
-# Standard-Farben für dein Interface
-const COLOR_BG = Color(0, 0, 0, 0.4)
-const COLOR_PROGRESS = Color(0.2, 0.8, 0.3) # Grün
+# Design-Konstanten für ein einheitliches Look & Feel
+const COLOR_BG = Color(0, 0, 0, 0.6)
+const COLOR_ACCENT = Color(0.2, 0.8, 0.3) # Dein Mining-Grün
 
-func create_ui_pos(x: float, y: float) -> Vector2:
-	return Vector2(x, y)
+## 1. Haupt-HUD erstellen (wird von Main.gd aufgerufen)
+func create_hud() -> CanvasLayer:
+	var canvas := CanvasLayer.new()
+	canvas.add_to_group("hud")
+	
+	# Ein zentraler Container für Popups oder Fortschrittsbalken
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_top", 50)
+	canvas.add_child(margin)
+	
+	var v_box := VBoxContainer.new()
+	v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
+	margin.add_child(v_box)
+	
+	return canvas
 
-func create_world_pos(x: float, y: float, z: float) -> Vector3:
-	return Vector3(x, y, z)
-
-## Erstellt einen Fortschrittsbalken für Interaktionen (z.B. Hacken)
-func create_progress_bar(width: float = 200.0) -> ProgressBar:
+## 2. Fortschrittsbalken-Fabrik
+func create_progress_bar(width: float = 250.0) -> ProgressBar:
 	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(width, 20)
+	bar.custom_minimum_size = Vector2(width, 24)
 	bar.show_percentage = false
 	
-	# Styling per Script (ohne .tres Dateien)
+	# Stil-Definitionen
 	var sb_bg := StyleBoxFlat.new()
 	sb_bg.bg_color = COLOR_BG
 	sb_bg.set_corner_radius_all(4)
 	
 	var sb_fg := StyleBoxFlat.new()
-	sb_fg.bg_color = COLOR_PROGRESS
+	sb_fg.bg_color = COLOR_ACCENT
 	sb_fg.set_corner_radius_all(4)
 	
 	bar.add_theme_stylebox_override("background", sb_bg)
@@ -31,17 +42,26 @@ func create_progress_bar(width: float = 200.0) -> ProgressBar:
 	
 	return bar
 
-## Erstellt ein einfaches Label mit Hintergrund (für Item-Popups oder Namen)
+## 3. Beschriftungs-Fabrik (z.B. für Objektnamen)
 func create_label_box(text: String) -> PanelContainer:
 	var pc := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0, 0, 0, 0.6)
-	sb.set_content_margin_all(8)
+	sb.bg_color = COLOR_BG
+	sb.set_content_margin_all(10)
+	sb.set_corner_radius_all(6)
 	pc.add_theme_stylebox_override("panel", sb)
 	
 	var lbl := Label.new()
 	lbl.text = text
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 18)
 	pc.add_child(lbl)
 	
 	return pc
+
+## 4. Hilfs-Button Fabrik (für Menüs)
+func create_button(text: String, callback: Callable) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(150, 40)
+	btn.pressed.connect(callback)
+	return btn
