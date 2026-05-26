@@ -21,6 +21,12 @@ func _ready() -> void:
 	position = Vector3(0, 1.5, 0)
 
 func _physics_process(delta: float) -> void:
+	# NEU: Der Türsteher. Wenn BUSY, dann keine Bewegung/Input.
+	if not States.is_free(): 
+		return
+
+	var touch = Utils.get_touch_node()
+	# ... restlicher Code
 	# Delegation 1: Wir lassen Utils den Touch-Input suchen
 	var touch = Utils.get_touch_node()
 	if not touch: return
