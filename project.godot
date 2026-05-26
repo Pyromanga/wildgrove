@@ -19,7 +19,6 @@ config/features=PackedStringArray("4.3", "Mobile")
 
 window/size/viewport_width=1080
 window/size/viewport_height=1920
-window/size/mode=0
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=0
@@ -32,7 +31,6 @@ pointing/emulate_mouse_from_touch=true
 [physics]
 
 3d/default_gravity=9.8
-3d/default_gravity_vector=Vector3(0, -1, 0)
 
 [rendering]
 
@@ -41,14 +39,7 @@ renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=0
 lights_and_shadows/directional_shadow/size=2048
-environment/defaults/default_clear_color=Color(0.2, 0.4, 0.25, 1)
 
 [autoload]
 
-GameEvents="*res://scripts/GameEvents.gd"
-Utils="*res://scripts/Utils.gd"
-Data="*res://scripts/DataService.gd"
-Factory="*res://scripts/Factory.gd"
-Builder="*res://scripts/InteractionBuilder.gd"
-States="*res://scripts/StateService.gd"
-SkillSystem="*res://scripts/Skillsystem.gd"
+Kernel="*res://scripts/Kernel.gd"
