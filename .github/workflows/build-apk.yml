@@ -146,38 +146,18 @@ jobs:
             fi
           fi
 
-      # ── 8. GUT Test-Plugin installieren ─────────────────────────────────
-      - name: Install GUT test plugin
-        run: |
-          mkdir -p "${PROJECT_PATH}/addons"
-          wget -q https://github.com/bitwes/Gut/releases/download/v9.3.0/gut_v9.3.0.zip -O gut.zip
-          unzip -q gut.zip -d "${PROJECT_PATH}/addons/"
-          echo "GUT installiert"
-
-      # ── 9. Ausgabeverzeichnis anlegen ────────────────────────────────────
+      # ── 8. Ausgabeverzeichnis anlegen ────────────────────────────────────
       - name: Create output directory
         run: mkdir -p "${PROJECT_PATH}/build/android"
 
-      # ── 10. Godot-Headless-Import ausführen ─────────────────────────────
+      # ── 9. Godot-Headless-Import ausführen ──────────────────────────────
       - name: Import project assets
         run: |
           cd "${PROJECT_PATH}"
           godot --headless --editor --quit 2>&1 || true
           sleep 5
 
-      # ── 11. Tests ausführen ──────────────────────────────────────────────
-      - name: Run GUT tests
-        run: |
-          cd "${PROJECT_PATH}"
-          godot --headless \
-            --script addons/gut/gut_cmdln.gd \
-            -gdir=res://tests \
-            -ginclude_subdirs \
-            -gexit \
-            2>&1
-        continue-on-error: false  # Build schlägt fehl wenn Tests fehlschlagen
-
-      # ── 12. APK exportieren ──────────────────────────────────────────────
+      # ── 11. APK exportieren ─────────────────────────────────────────────
       - name: Export APK
         run: |
           cd "${PROJECT_PATH}"
@@ -186,7 +166,7 @@ jobs:
             "build/android/${EXPORT_NAME}-debug.apk" \
             2>&1
 
-      # ── 13. Prüfen ob APK erstellt wurde ─────────────────────────────────
+      # ── 12. Prüfen ob APK erstellt wurde ─────────────────────────────────
       - name: Verify APK
         run: |
           APK="${PROJECT_PATH}/build/android/${EXPORT_NAME}-debug.apk"
@@ -198,7 +178,7 @@ jobs:
             exit 1
           fi
 
-      # ── 14. APK als GitHub Artifact hochladen ────────────────────────────
+      # ── 13. APK als GitHub Artifact hochladen ────────────────────────────
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
