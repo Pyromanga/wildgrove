@@ -1,6 +1,7 @@
 extends Node3D
 ## Tree.gd — Interagierbarer Baum
 ## Gibt Holzfällen-XP und log_normal ins Inventar
+# Test
 
 const InteractableScript := preload("res://scripts/Interactable.gd")
 
