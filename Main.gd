@@ -14,6 +14,7 @@ func _ready() -> void:
 	call_deferred("_build_ui")
 	call_deferred("_connect_signals")
 
+	GameEvents.debug_log.connect(log_msg) # Das verbindet den Bus mit deiner Konsole
 
 func _build_ui() -> void:
 	_add_script_node(Node.new(), "res://scripts/TouchInput.gd", "TouchInput")
