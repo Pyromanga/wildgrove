@@ -8,9 +8,8 @@ var skills = {
 }
 
 func _ready() -> void:
-	add_to_group("skill_system")
-	# Wir hören auf den globalen Bus
-	GameEvents.xp_gained.connect(add_xp)
+	# Wir hören auf den globalen Bus über den Kernel
+	Kernel.events.xp_gained.connect(add_xp)
 
 func add_xp(skill_name: String, amount: int) -> void:
 	if not skills.has(skill_name): return
@@ -18,15 +17,17 @@ func add_xp(skill_name: String, amount: int) -> void:
 	skills[skill_name]["xp"] += amount
 	_check_level_up(skill_name)
 	
-	GameEvents.log("XP erhalten: +%d %s" % [amount, skill_name])
+	# Zugriff über Kernel.events
+	Kernel.events.log("XP erhalten: +%d %s" % [amount, skill_name])
 
 func _check_level_up(skill_name: String) -> void:
 	var current_xp = skills[skill_name]["xp"]
 	var current_lvl = skills[skill_name]["level"]
 	
-	# Nutze Utils für die Berechnung (Manager-Prinzip!)
-	var next_level_xp = Utils.get_xp_for_level(current_lvl + 1)
+	# Zugriff über Kernel.utils für die Berechnung
+	var next_level_xp = Kernel.utils.get_xp_for_level(current_lvl + 1)
 	
 	if current_xp >= next_level_xp:
 		skills[skill_name]["level"] += 1
-		GameEvents.log("LEVEL UP! %s ist jetzt Level %d" % [skill_name, skills[skill_name]["level"]])
+		# Zugriff über Kernel.events
+		Kernel.events.log("LEVEL UP! %s ist jetzt Level %d" % [skill_name, skills[skill_name]["level"]])
