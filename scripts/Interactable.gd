@@ -33,8 +33,11 @@ func start_interaction() -> void:
 func _process(delta: float) -> void:
 	if _is_active:
 		_time += delta
-		var progress = clamp(_time / duration, 0.0, 1.0)
-		_bar.get_node("Fill").scale.x = progress
+		var progress = _time / duration
+		
+		# Nutze die Factory-Logik statt direktem get_node()
+		if _bar.has_meta("update_bar"):
+			_bar.get_meta("update_bar").call(progress)
 		
 		if _time >= duration:
 			_is_active = false
