@@ -48,3 +48,5 @@ environment/defaults/default_clear_color=Color(0.2, 0.4, 0.25, 1)
 GameEvents="*res://scripts/GameEvents.gd"
 Factory="*res://scripts/Factory.gd"
 SkillSystem="*res://scripts/Skillsystem.gd"
+Utils="*res://scripts/Utils.gd"
+Data="*res://scripts/DataService.gd"
