@@ -1,97 +1,94 @@
 extends Node3D
-## Tree.gd — Interagierbarer Baum
+## Tree.gd — Baum mit Krone und Nachwachs-Logik
 
 const InteractableScript := preload("res://scripts/Interactable.gd")
 
-# Welches Holz & XP abhängig vom Baum-Typ
-@export var tree_type: String = "normal"  # normal, oak, willow, maple
+@export var tree_type: String = "normal"
+@export var respawn_time: float = 10.0 # Sekunden bis er nachwächst
 
 const TREE_DATA: Dictionary = {
-	"normal": { "item": "log_normal", "xp": 25,  "req_level": 1,  "time": 4.0,
-				"label": "Baum fällen", "color": Color(0.12, 0.48, 0.15) },
-	"oak":    { "item": "log_oak",    "xp": 37,  "req_level": 15, "time": 6.0,
-				"label": "Eiche fällen", "color": Color(0.08, 0.38, 0.10) },
-	"willow": { "item": "log_willow", "xp": 67,  "req_level": 30, "time": 8.0,
-				"label": "Weide fällen", "color": Color(0.15, 0.55, 0.20) },
-	"maple":  { "item": "log_maple",  "xp": 100, "req_level": 45, "time": 12.0,
-				"label": "Ahorn fällen", "color": Color(0.05, 0.25, 0.08) }
+	"normal": { "item": "Holz", "xp": 25, "req_level": 1, "time": 3.0, "color": Color(0.1, 0.4, 0.1) },
+	"oak":    { "item": "Eichenholz", "xp": 45, "req_level": 15, "time": 5.0, "color": Color(0.05, 0.3, 0.05) }
 }
 
 var _data: Dictionary
+var _visuals: Node3D
 var _interactable: Node3D
-
+var _is_felled: bool = false
 
 func _ready() -> void:
 	_data = TREE_DATA.get(tree_type, TREE_DATA["normal"])
-	_build_visuals()
+	_build_tree()
 	_setup_interactable()
 
+func _build_tree() -> void:
+	if _visuals: _visuals.queue_free()
+	_visuals = Node3D.new()
+	add_child(_visuals)
 
-func _build_visuals() -> void:
-	# Stamm
-	var body := StaticBody3D.new()
-	var mesh_inst := MeshInstance3D.new()
+	# STAMM
+	var trunk := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.2
-	cyl.bottom_radius = 0.25
-	cyl.height = 1.8
-	mesh_inst.mesh = cyl
-	
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.45, 0.24, 0.08)
-	mesh_inst.material_override = mat
-	mesh_inst.position.y = 0.9
-	body.add_child(mesh_inst)
-	
+	cyl.top_radius = 0.2; cyl.bottom_radius = 0.25; cyl.height = 1.8
+	trunk.mesh = cyl
+	var trunk_mat := StandardMaterial3D.new()
+	trunk_mat.albedo_color = Color(0.4, 0.2, 0.1)
+	trunk.material_override = trunk_mat
+	trunk.position.y = 0.9
+	_visuals.add_child(trunk)
+
+	# KRONE (Die fehlenden Blätter)
+	var crown := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 1.2; sphere.height = 2.4
+	crown.mesh = sphere
+	var leaf_mat := StandardMaterial3D.new()
+	leaf_mat.albedo_color = _data["color"]
+	crown.material_override = leaf_mat
+	crown.position.y = 2.5
+	_visuals.add_child(crown)
+
+	# Kollision
+	var body := StaticBody3D.new()
 	var col := CollisionShape3D.new()
 	var caps := CapsuleShape3D.new()
-	caps.radius = 0.22
-	caps.height = 1.8
+	caps.radius = 0.3; caps.height = 2.0
 	col.shape = caps
-	col.position.y = 0.9
+	col.position.y = 1.0
 	body.add_child(col)
-	add_child(body)
-
+	_visuals.add_child(body)
 
 func _setup_interactable() -> void:
 	_interactable = Node3D.new()
 	_interactable.set_script(InteractableScript)
-	_interactable.interaction_label  = _data["label"]
-	_interactable.interaction_radius = 2.5
-	_interactable.requires_tool      = "axe"
-	_interactable.interaction_time   = _data["time"]
+	_interactable.interaction_label = _data["item"] + " fällen"
+	_interactable.interaction_time = _data["time"]
 	add_child(_interactable)
-	
 	_interactable.interaction_completed.connect(_on_chopped)
-	_interactable.interaction_failed.connect(_on_failed)
 
+func _on_chopped(_src, _res) -> void:
+	if _is_felled: return
 
-func _on_chopped(_src: Node3D, _result: Dictionary) -> void:
-	# 1. Level-Check (MUSS zuerst kommen!)
-	var skill_nodes: Array = get_tree().get_nodes_in_group("skill_system")
-	if skill_nodes.size() > 0:
-		var ss: Node = skill_nodes[0]
-		if not ss.meets_requirement("woodcutting", _data["req_level"]):
-			print("[Tree] Holzfällen Level %d benötigt! Du hast Level %d" % [_data["req_level"], ss.get_level("woodcutting")])
-			return
-		
-		# Erst wenn das Level stimmt, gibt es XP
+	# 1. Belohnung
+	var ss = get_tree().get_first_node_in_group("skill_system")
+	var inv = get_tree().get_first_node_in_group("inventory_system")
+	
+	if ss and ss.meets_requirement("woodcutting", _data["req_level"]):
 		ss.add_xp("woodcutting", _data["xp"])
+		if inv: inv.add_item(_data["item"], 1)
+		_start_respawn()
 	else:
-		print("[Tree] Warnung: Kein SkillSystem gefunden.")
+		print("Level zu niedrig!")
 
-	# 2. Item ins neue Inventar-System legen
-	var inv_nodes: Array = get_tree().get_nodes_in_group("inventory_system")
-	if inv_nodes.size() > 0:
-		var inv: Node = inv_nodes[0]
-		if inv.has_method("add_item"):
-			inv.add_item(_data["item"], 1)
-	else:
-		print("[Tree] Fehler: Kein InventorySystem in Gruppe 'inventory_system' gefunden!")
-
-	# 3. Baum zerstören / entfernen
-	queue_free()
-
-
-func _on_failed(_src: Node3D, reason: String) -> void:
-	print("[Tree] Interaktion fehlgeschlagen: ", reason)
+func _start_respawn() -> void:
+	_is_felled = true
+	_visuals.visible = false
+	# Kollisionen ausschalten (einfachste Methode: Node entfernen)
+	_visuals.process_mode = PROCESS_MODE_DISABLED 
+	
+	await get_tree().create_timer(respawn_time).timeout
+	
+	_is_felled = false
+	_visuals.visible = true
+	_visuals.process_mode = PROCESS_MODE_INHERIT
+	print("Baum ist nachgewachsen!")
