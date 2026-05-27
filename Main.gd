@@ -1,19 +1,16 @@
 extends Node
-## Main.gd — Der Orchestrator (nur noch Szenen-Verwaltung)
+## Main.gd — Der Orchestrator
 
 func _ready() -> void:
-	# 1. Pipeline-Check
 	Kernel.events.log("Spiel-Bootstrap gestartet.")
 	
-	# 2. Welt laden
-	var world = load("res://scenes/World.tscn").instantiate()
+	# Welt über die Factory erstellen, nicht direkt laden!
+	var world = Kernel.world_factory.create_world()
 	add_child(world)
 	
-	# 3. UI-Aufbau über die UI-Factory
 	var hud = Kernel.ui_factory.create_hud()
 	add_child(hud)
 	
-	# 4. Signale verbinden
 	Kernel.events.xp_gained.connect(_on_xp_gained)
 
 func _on_xp_gained(skill: String, amt: int) -> void:
