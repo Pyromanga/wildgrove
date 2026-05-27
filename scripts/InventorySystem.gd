@@ -39,7 +39,8 @@ func add_item(item_id: String, amount: int = 1) -> void:
 		_inventory_data.append({ "item_id": item_id, "quantity": amount })
 	
 	inventory_changed.emit()
-	Kernel.events.log("Inventory updated: " + item_id)
+	if is_instance_valid(Kernel) and Kernel.events:
+        Kernel.events.log("Inventory updated: " + item_id)
 
 func clear_inventory() -> void:
 	_inventory_data.clear()
