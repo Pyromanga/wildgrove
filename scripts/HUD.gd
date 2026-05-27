@@ -5,7 +5,7 @@ var _debug_label: Label
 var _lines: Array[String] = []
 
 func _ready() -> void:
-	add_to_group("hud_layer")
+	add_to_group("hud")
 	_build_ui()
 	_connect_bus()
 
