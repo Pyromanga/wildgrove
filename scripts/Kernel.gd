@@ -34,3 +34,9 @@ func get_service(service_name: String) -> Node:
 ## Hilfsmethode, um zu prüfen, ob ein Service schon da ist
 func has_service(service_name: String) -> bool:
 	return services.has(service_name.to_lower())
+
+func unregister_service(node: Node) -> void:
+	var s_name = node.name.to_lower()
+	if services.has(s_name):
+		services.erase(s_name)
+		Logger.log_debug("Service entfernt: " + node.name, "Kernel")
