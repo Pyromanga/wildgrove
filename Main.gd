@@ -1,4 +1,4 @@
-extends Node3D
+extends Node
 ## Main.gd — Der Orchestrator (nur noch Szenen-Verwaltung)
 
 func _ready() -> void:
