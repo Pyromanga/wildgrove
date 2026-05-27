@@ -42,8 +42,9 @@ jobs:
 
       - name: Run GDFormat
         run: |
-          # Formatiert alle .gd Dateien rekursiv, lässt 'addons' in Ruhe
-          gdformat . --exclude addons/
+          # Liste alle .gd Dateien auf, filtere 'addons/' aus, 
+          # und pipe die Liste an xargs, um sie einzeln an gdformat zu übergeben
+          find . -name "*.gd" | grep -v "addons/" | xargs gdformat
         shell: bash
 
       - name: Force Import
@@ -82,8 +83,9 @@ jobs:
 
       - name: Run GDFormat
         run: |
-          # Formatiert alle .gd Dateien rekursiv, lässt 'addons' in Ruhe
-          gdformat . --exclude addons/
+          # Liste alle .gd Dateien auf, filtere 'addons/' aus, 
+          # und pipe die Liste an xargs, um sie einzeln an gdformat zu übergeben
+          find . -name "*.gd" | grep -v "addons/" | xargs gdformat
         shell: bash
 
       # ── 2. Java 17 installieren (Godot 4 braucht ≥ 17) ─────────────────
