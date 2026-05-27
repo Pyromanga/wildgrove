@@ -1,13 +1,12 @@
 # HUD.gd
-func _ready() -> void:
-    # Nur für das Spiel, nicht für Tests (oder als Default)
-    initialize()
+extends CanvasLayer
 
-func initialize() -> void:
-    add_to_group("hud")
-    _build_ui()
-    _connect_bus()
-    # Sicherstellen, dass wir nicht doppelt verbinden
-    if not Kernel.inventory.inventory_changed.is_connected(_refresh_inventory_ui):
-        Kernel.inventory.inventory_changed.connect(_refresh_inventory_ui)
-    _refresh_inventory_ui()
+var _inventory_label: Label
+
+# Die passive Schnittstelle: Das HUD nimmt an, was es braucht
+func update_inventory_display(items: Array) -> void:
+    var text = "Inventar:\n"
+    for item in items:
+        # Hier gehen wir davon aus, dass 'item' ein Dictionary oder Objekt ist
+        text += "- " + item.name + ": " + str(item.quantity) + "\n"
+    _inventory_label.text = text
