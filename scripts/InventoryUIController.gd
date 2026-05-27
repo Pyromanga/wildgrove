@@ -1,5 +1,5 @@
-# res://scripts/InventoryUIController.gd
 extends Node
+class_name InventoryUIController
 
 var _hud: CanvasLayer # Dein passives HUD
 var _inventory: Inventory # Dein Inventory-System
