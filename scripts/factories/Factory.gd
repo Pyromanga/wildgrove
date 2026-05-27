@@ -1,11 +1,11 @@
 extends Node
 ## Factory.gd — Erschafft visuelle Hilfsmittel im 3D-Raum
 
-# Erzeugt einen Fortschrittsbalken im 3D Raum
+## Erzeugt einen Fortschrittsbalken im 3D-Raum
 func create_3d_bar(parent: Node3D) -> Node3D:
 	var root = Node3D.new()
 	root.name = "ProgressBar"
-	root.position.y = 2.5 # Über dem Objekt
+	root.position.y = 2.5  # Über dem Objekt
 	root.visible = false
 	parent.add_child(root)
 	
@@ -16,15 +16,12 @@ func create_3d_bar(parent: Node3D) -> Node3D:
 	# Füllung (Gelb/Grün)
 	var fill = _create_mesh(Vector2(1.1, 0.15), Color.YELLOW)
 	fill.name = "Fill"
-	fill.position.z = 0.01 # Leicht vor den Hintergrund setzen
+	fill.position.z = 0.01  # Leicht vor den Hintergrund
 	root.add_child(fill)
 	
-	# Hilfsfunktion zum Updaten der Bar (wird vom Builder genutzt)
-	# Wir hängen die Funktion als Meta-Daten an, damit der Builder sie leicht findet
+	# Update-Funktion als Meta-Daten anhängen (wird vom Builder genutzt)
 	root.set_meta("update_bar", func(percent: float):
-		# Wir skalieren nur die X-Achse der Füllung
 		fill.scale.x = clamp(percent, 0.0, 1.0)
-		# Optional: Verschiebe die Füllung nach links, damit sie von links nach rechts wächst
 		fill.position.x = (fill.scale.x - 1.0) * (1.1 / 2.0)
 	)
 	
@@ -37,11 +34,8 @@ func _create_mesh(size: Vector2, color: Color) -> MeshInstance3D:
 	
 	var mat = StandardMaterial3D.new()
 	mat.albedo_color = color
-	# Unshaded sorgt dafür, dass die Bar auch im Dunkeln leuchtet (UI-Stil)
 	mat.shading_mode = StandardMaterial3D.SHADING_MODE_UNSHADED
-	# Billboard sorgt dafür, dass die Bar IMMER zur Kamera schaut
 	mat.billboard_mode = StandardMaterial3D.BILLBOARD_ENABLED
-	# Transparency aktivieren, falls du später abgerundete Ecken willst
 	mat.transparency = StandardMaterial3D.TRANSPARENCY_ALPHA
 	
 	mi.material_override = mat
