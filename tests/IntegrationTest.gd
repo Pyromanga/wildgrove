@@ -13,3 +13,5 @@ func before_all():
 func after_all():
     if is_instance_valid(kernel):
         kernel.queue_free()
+
+# KEIN after_each, das Kinder löscht, wenn der Kernel darin liegt!
