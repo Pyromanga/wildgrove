@@ -37,17 +37,14 @@ func _ready() -> void:
     log_init("Alle Services erfolgreich initialisiert.")
 
 func log_init(msg: String) -> void:
-    # Holt sich den Callstack
     var stack = get_stack()
-    # stack[0] ist diese Funktion selbst, stack[1] ist der Aufrufer
-    var caller = stack[1] if stack.size() > 1 else {"function": "unknown"}
+    var caller = stack[1] if stack.size() > 1 else {"function": "unknown", "source": "unknown"}
+    
+    # Sicherer Zugriff mit .get()
+    var source_path = caller.get("source", "unknown")
     
     print_rich("[color=cyan][Kernel][/color] ", msg)
-    print("  -> Aufgerufen von: ", caller.function, " in ", caller.source)
-    
-    # Den gesamten Stack trace ausgeben, falls ein Fehler vorliegt
-    if msg.contains("Fehler") or msg.contains("Konnte"):
-        print_stack()
+    print("  -> Aufgerufen von: ", caller.function, " in ", source_path)
 
 ## Hilfsfunktion zum Laden und Einbinden von Services
 func _add_service(path: String, node_name: String) -> Node:
