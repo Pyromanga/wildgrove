@@ -69,9 +69,8 @@ func create(node: Node3D) -> Task:
 func is_interactable(node: Node) -> bool:
     return node.is_in_group("interactable")
 
-# Diese Methode fehlte bisher
 func trigger_interaction(target: Node3D) -> void:
     if is_interactable(target):
-        # Hier triggern wir die Interaktion direkt
-        var task = create(target).set_duration(1.0)
+        var task = create(target).set_duration(0.1)
+        Kernel.events.interaction_started.emit(task.label, task.duration)
         execute_interaction(task)
