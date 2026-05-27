@@ -1,6 +1,6 @@
 extends "res://tests/IntegrationTest.gd"
 
-var MainScene = preload("res://Main.tscn")
+var MainScene = preload("res://scenes/Main.tscn")
 var main_node: Node
 
 func before_each():
