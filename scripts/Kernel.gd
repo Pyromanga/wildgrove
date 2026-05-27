@@ -42,6 +42,12 @@ func _add_service(path: String, node_name: String) -> Node:
 		return null
 		
 	var s = res.new()
-	s.name = node_name
-	add_child(s)
-	return s
+	
+	# Prüfung: Ist es überhaupt ein Node?
+	if s is Node:
+		s.name = node_name
+		add_child(s)
+		return s
+	else:
+		push_error("Kernel: Service " + node_name + " ist kein Node und kann nicht hinzugefügt werden!")
+		return s # Gibt es trotzdem zurück, damit die Variable nicht null ist
