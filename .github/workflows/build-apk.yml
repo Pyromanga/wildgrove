@@ -72,6 +72,12 @@ jobs:
         with:
           lfs: true
 
+      - name: Normalize Indentation
+        run: |
+          # Findet alle .gd Dateien und wandelt Tabs in 4 Leerzeichen um
+          find . -name "*.gd" -type f -exec bash -c 'expand -t 4 "$1" > temp && mv temp "$1"' _ {} \;
+        shell: bash
+
       # ── 2. Java 17 installieren (Godot 4 braucht ≥ 17) ─────────────────
       - name: Set up Java 17
         uses: actions/setup-java@v4
