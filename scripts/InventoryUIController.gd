@@ -26,3 +26,8 @@ func _update_view() -> void:
     
     # 3. UI füttern (Präsentation)
     _hud.update_inventory_display(display_data)
+    
+    # InventoryUIController.gd
+func _exit_tree() -> void:
+    if _inventory.inventory_changed.is_connected(_update_view):
+        _inventory.inventory_changed.disconnect(_update_view)
