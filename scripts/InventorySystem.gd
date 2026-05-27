@@ -6,10 +6,9 @@ class_name InventorySystem
 signal inventory_changed
 
 # Speichert Items als Liste von Dictionaries, wie vom HUD erwartet
-# [{ "item_id": "log_normal", "quantity": 5 }, ...]
 var _inventory_data: Array = []
 
-# Datenbank für Item-Infos (Name, Icon, etc.)
+# Datenbank für Item-Infos
 const ITEM_DATABASE = {
 	"log_normal": { "name": "Holz" },
 	"log_oak":    { "name": "Eichenholz" },
@@ -43,11 +42,11 @@ func add_item(item_id: String, amount: int = 1) -> void:
 	Kernel.events.log("Inventory updated: " + item_id)
 
 func clear_inventory() -> void:
-    _inventory_data.clear()
-    inventory_changed.emit()
+	_inventory_data.clear()
+	inventory_changed.emit()
 
 func get_quantity(item_id: String) -> int:
-    for entry in _inventory_data:
-        if entry["item_id"] == item_id:
-            return entry["quantity"]
-    return 0
+	for entry in _inventory_data:
+		if entry["item_id"] == item_id:
+			return entry["quantity"]
+	return 0
