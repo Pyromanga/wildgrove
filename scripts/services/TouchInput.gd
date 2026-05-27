@@ -58,8 +58,10 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
 				_js_finger = event.index
 				_js_origin = event.position
 				
-				if _js_base: _js_base.visible = true
-        if _js_knob: _js_knob.visible = true
+        if _js_base:
+            _js_base.visible = true
+        if _js_knob: 
+          _js_knob.visible = true
         
 				_update_js_visuals(_js_origin, Vector2.ZERO)
 		else:
@@ -76,8 +78,11 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
 			_js_finger = -1
 			js_vec = Vector2.ZERO
 			
-			if _js_base: _js_base.visible = false
-      if _js_knob: _js_knob.visible = false
+			if _js_base: 
+        _js_base.visible = false
+      if _js_knob:
+        _js_knob.visible = false
+        
 			_reset_js_visuals()
 		if event.index in _right_fingers:
 			_right_fingers.erase(event.index)
