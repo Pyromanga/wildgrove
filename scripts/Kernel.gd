@@ -16,8 +16,12 @@ var skill_system: Node
 var touch: Node
 var inventory: Node
 var hud: Node
+var _is_initialized: bool = false
 
 func _ready() -> void:
+    if _is_initialized: return
+    _is_initialized = true
+
     # 1. Logging starten
     log_init("Kernel-Bootstrap gestartet.")
     
