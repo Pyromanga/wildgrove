@@ -3,14 +3,13 @@ extends Node
 
 # Design-Konstanten für ein einheitliches Look & Feel
 const COLOR_BG = Color(0, 0, 0, 0.6)
-const COLOR_ACCENT = Color(0.2, 0.8, 0.3) # Dein Mining-Grün
+const COLOR_ACCENT = Color(0.2, 0.8, 0.3) # Mining-Grün
 
 ## 1. Haupt-HUD erstellen (wird von Main.gd aufgerufen)
 func create_hud() -> CanvasLayer:
 	var canvas := CanvasLayer.new()
 	canvas.add_to_group("hud")
 	
-	# Ein zentraler Container für Popups oder Fortschrittsbalken
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_top", 50)
@@ -20,6 +19,10 @@ func create_hud() -> CanvasLayer:
 	v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
 	margin.add_child(v_box)
 	
+	# XP-Bar als erstes HUD-Element
+	var xp_bar = create_progress_bar()
+	v_box.add_child(xp_bar)
+	
 	return canvas
 
 ## 2. Fortschrittsbalken-Fabrik
@@ -28,7 +31,6 @@ func create_progress_bar(width: float = 250.0) -> ProgressBar:
 	bar.custom_minimum_size = Vector2(width, 24)
 	bar.show_percentage = false
 	
-	# Stil-Definitionen
 	var sb_bg := StyleBoxFlat.new()
 	sb_bg.bg_color = COLOR_BG
 	sb_bg.set_corner_radius_all(4)
