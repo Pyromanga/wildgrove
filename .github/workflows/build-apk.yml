@@ -20,6 +20,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install GUT Addon
+        run: |
+          mkdir -p addons
+          wget -q https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.zip -O gut.zip
+          unzip -q gut.zip
+          mv Gut-9.3.0/addons/gut addons/
+          rm -rf gut.zip Gut-9.3.0
+
       - name: Download Godot
         run: |
           wget -q "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
