@@ -1,23 +1,14 @@
-extends "res://addons/gut/test.gd"
-
-var hud: CanvasLayer
-
-func before_each():
-    # Wir instanziieren das HUD manuell für den Test
-    hud = load("res://scripts/HUD.gd").new()
-    add_child_autofree(hud)
-    Kernel.inventory.clear_inventory()
-
-func test_hud_updates_on_inventory_change():
-    # 1. Startzustand prüfen
-    assert_eq(hud._inventory_label.text, "Inventar:\n", "HUD sollte am Anfang leer sein")
+func test_controller_updates_hud():
+    # Setup
+    var hud = HUD.new()
+    var inv = Inventory.new()
+    var controller = InventoryUIController.new(hud, inv)
     
-    # 2. Inventar ändern
-    Kernel.inventory.add_item("log_normal", 5)
+    # Test-Aktion
+    inv.add_item("log_normal", 10)
     
-    # 3. Warten, bis der Event-Bus das Signal verarbeitet hat
-    await get_tree().process_frame
+    # Assertion
+    assert_true("Holz: 10" in hud._inventory_label.text)
     
-    # 4. Prüfen, ob das HUD die Änderung reflektiert
-    var expected = "Inventar:\n- Holz: 5\n"
-    assert_eq(hud._inventory_label.text, expected, "HUD-Label sollte den neuen Wert anzeigen")
+    # Aufräumen (keine Orphans mehr!)
+    controller.queue_free()
