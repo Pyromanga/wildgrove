@@ -1,7 +1,12 @@
 extends Node
 ## Utils.gd — Mathematische Hilfsfunktionen
 
-## Sucht den nächsten Knoten in einer Gruppe
+## XP-Formel: klassische RuneScape-ähnliche Kurve
+func get_xp_for_level(level: int) -> int:
+	# Formel: ~100 XP für Level 2, exponentiell steigend
+	return int(0.25 * floor(level + 300.0 * pow(2.0, level / 7.0)))
+
+## Sucht den nächsten Knoten aus einer Liste
 func get_closest_node_from_list(origin: Vector3, nodes: Array, max_dist: float) -> Node3D:
 	var closest: Node3D = null
 	var min_d = max_dist
