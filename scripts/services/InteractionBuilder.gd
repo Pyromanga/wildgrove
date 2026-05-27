@@ -25,8 +25,8 @@ class Task:
 	func build() -> Node3D:
 		var interactable = Node3D.new()
 		interactable.add_to_group("interactable")
+		interactable.set_script(load("res://scripts/Interactable.gd"))
 		interactable.set_meta("task", self)
-		interactable.set_script(load("res://scripts/Interactable.gd"))  # VOR add_child
 		target.add_child(interactable)
 		return interactable
 
