@@ -7,7 +7,7 @@ var _services_to_wait_for: Array
 func _ready() -> void:
 	# 1. Konfiguration initialisieren: Hier legst du fest, wer VIP ist.
 	# Wenn du einen Service nicht brauchst, löschst du ihn einfach aus dieser Liste.
-	_config = GameConfig.new(["debug_service", "data", "world_factory"])
+	_config = GameConfig.new(["debug_service", "events"])
 	
 	# 2. Kopie der Liste für den Abgleich
 	_services_to_wait_for = _config.required_services.duplicate()
