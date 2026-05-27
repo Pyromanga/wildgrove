@@ -59,7 +59,9 @@ func execute_interaction(task: Task) -> void:
 
 	if is_instance_valid(bar):
 		bar.queue_free()
-
+		
+  await get_tree().process_frame
+  
 	if task.on_done.is_valid():
 		task.on_done.call()
 
