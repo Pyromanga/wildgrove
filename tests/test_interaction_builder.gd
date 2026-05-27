@@ -1,6 +1,11 @@
 extends "res://addons/gut/test.gd"
 
 func test_interaction_executes_successfully():
+    # 1. Setup: Stelle sicher, dass Kernel bereit ist
+    if not Kernel.hud:
+        Kernel.hud = CanvasLayer.new()
+        add_child_autofree(Kernel.hud)
+        
     var target = Node3D.new()
     add_child_autofree(target)
     
@@ -11,7 +16,11 @@ func test_interaction_executes_successfully():
         
     Kernel.builder.execute_interaction(task)
     
-    # Warte kurz, bis der Tween/Timer fertig ist
-    await get_tree().create_timer(0.2).timeout
+    # 2. Warten: Timer + ein Frame Puffer
+    await get_tree().create_timer(0.15).timeout
+    await get_tree().process_frame 
     
-    assert_true(interaction_finished, "Interaktion sollte nach der Zeit als 'done' markiert werden")
+    assert_true(interaction_finished, "Interaktion sollte fertig sein")
+    
+    # Cleanup
+    Kernel.hud = null
