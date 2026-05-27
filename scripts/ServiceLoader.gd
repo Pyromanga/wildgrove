@@ -1,10 +1,9 @@
 class_name ServiceLoader extends RefCounted
 
-# Wir übergeben die 'main_node', damit wir wissen, wo wir die Services dranhängen
 func setup_services(main_node: Node) -> void:
-    _create_service(main_node, "debug_service", "res://scripts/services/DebugService.gd")
+    # Pfade anpassen, damit sie zu deiner Ordnerstruktur passen
+    _create_service(main_node, "debug_service", "res://scripts/DebugService.gd")
     _create_service(main_node, "events", "res://scripts/services/GameEvents.gd")
-    # Hier kannst du einfach weitere Zeilen hinzufügen, ohne die Main anzufassen!
 
 func _create_service(parent: Node, service_name: String, path: String) -> void:
     var service_node = Node.new()
