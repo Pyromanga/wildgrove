@@ -12,7 +12,10 @@ var system := SystemEvents.new()
 # da sie automatisch gelöscht werden, wenn sie nicht mehr gebraucht werden.
 class PlayerEvents extends RefCounted:
 	signal xp_gained(skill: String, amt: int)
-	signal level_up(skill: String, new_lvl: int)
+	
+	func emit_xp(skill: String, amt: int) -> void:
+		Logger.log_debug("XP erhalten: " + skill + " (" + str(amt) + ")", "Events")
+		xp_gained.emit(skill, amt)
 
 class WorldEvents extends RefCounted:
 	signal interaction_started(label: String, duration: float)
