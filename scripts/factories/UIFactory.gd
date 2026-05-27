@@ -69,3 +69,15 @@ func create_button(text: String, callback: Callable) -> Button:
 	btn.custom_minimum_size = Vector2(150, 40)
 	btn.pressed.connect(callback)
 	return btn
+
+func create_joystick_visuals() -> Array:
+    var base := ColorRect.new()
+    base.custom_minimum_size = Vector2(180, 180) # 2 * JS_RADIUS
+    base.color = Color(1, 1, 1, 0.2)
+    base.set_deferred("visible", false) # Erst bei Touch sichtbar machen
+    
+    var knob := ColorRect.new()
+    knob.custom_minimum_size = Vector2(60, 60)
+    knob.color = Color(1, 1, 1, 0.8)
+    
+    return [base, knob]
