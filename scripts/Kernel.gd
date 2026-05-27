@@ -12,6 +12,7 @@ var builder: Node
 var skill_system: Node
 var touch: Node
 var inventory: Node
+var hud: Node
 
 func _ready() -> void:
 	# Initialisierung der Services in logischer Abhängigkeits-Reihenfolge
@@ -29,6 +30,7 @@ func _ready() -> void:
 	touch = _add_service("res://scripts/services/TouchInput.gd", "TouchInput")
 	builder = _add_service("res://scripts/services/InteractionBuilder.gd", "Builder")
 	skill_system = _add_service("res://scripts/services/SkillSystem.gd", "SkillSystem")
+	hud = _add_service("res://scripts/HUD.gd", "HUD")
 	
 	print_rich("[color=green]Kernel:[/color] Alle Services erfolgreich initialisiert.")
 
