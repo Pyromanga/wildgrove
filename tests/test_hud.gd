@@ -1,3 +1,5 @@
+extends "res://addons/gut/test.gd
+
 func test_controller_updates_hud():
     # Setup
     var hud = HUD.new()
