@@ -10,6 +10,6 @@ func before_all():
     # Kurz warten, damit _ready() durchlaufen kann
     await get_tree().process_frame
 
-func after_all():
-    if is_instance_valid(kernel):
-        kernel.queue_free()
+func after_each():
+    for child in get_children():
+        child.queue_free()
