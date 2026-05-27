@@ -6,6 +6,7 @@ signal debug_log(message: String)
 signal interaction_started(label: String, duration: float)
 signal interaction_finished(label: String)
 signal xp_gained(skill: String, amount: int)
+signal setting_changed(key: String, value: Variant)
 
 ## Globales Logging (mit visuellem Feedback)
 func log(msg: String) -> void:
