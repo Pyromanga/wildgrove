@@ -14,7 +14,12 @@ var touch: Node
 var inventory: Node
 var hud: Node
 
+static func log_init(msg: String, caller: Object = null) -> void:
+    var caller_name = caller.get_script().resource_path if caller else "Unknown"
+    print_rich("[color=cyan][Kernel-Init][/color] ", caller_name, " -> ", msg)
+    
 func _ready() -> void:
+  Kernel.log_init("Lade X", self)
 	# Initialisierung der Services in logischer Abhängigkeits-Reihenfolge
 	# 1. Basis-Services (werden von anderen Diensten benötigt)
 	events = _add_service("res://scripts/services/GameEvents.gd", "Events")
