@@ -29,7 +29,7 @@ func get_item_info(item_id: String) -> Dictionary:
 ## Löscht den gesamten Inventar-Inhalt (nützlich für Tests und Reset)
 func clear_inventory() -> void:
     _inventory_data.clear()
-    emit_signal("inventory_changed")
+    inventory_changed.emit()
     
 ## Fügt Items hinzu oder stapelt sie
 func add_item(item_id: String, amount: int = 1) -> void:
@@ -43,7 +43,7 @@ func add_item(item_id: String, amount: int = 1) -> void:
 	if not found:
 		_inventory_data.append({ "item_id": item_id, "quantity": amount })
 	
-	emit_signal("inventory_changed")
+	inventory_changed.emit()
 
 func clear_inventory() -> void:
     _inventory_data.clear()
