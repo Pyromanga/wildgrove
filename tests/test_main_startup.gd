@@ -1,6 +1,6 @@
 extends "res://addons/gut/test.gd"
 
-var main_scene = load("res://Main.tscn")
+var main_scene = load("res://scenes/Main.tscn")
 var main_node: Node
 
 func before_each():
