@@ -1,4 +1,5 @@
 extends "res://addons/gut/test.gd"
+extends "res://addons/gut/test.gd"
 
 func test_interaction_logic():
     var builder = Kernel.builder
