@@ -70,7 +70,7 @@ func create_tree(pos: Vector3, parent: Node) -> void:
 	parent.add_child(tree)
 
 func create_player(parent: Node) -> void:
-    var player = Node3D.new() # Oder deine Player.tscn: load("res://scenes/Player.tscn").instantiate()
+    var player = CharacterBody3D.new() # Oder deine Player.tscn: load("res://scenes/Player.tscn").instantiate()
     player.name = "Player"    # WICHTIG: Hier setzt du den Namen für den Test!
     player.set_script(load("res://scripts/Player.gd"))
     player.position = Vector3(0, 1, 0)
