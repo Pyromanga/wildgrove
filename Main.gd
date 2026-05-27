@@ -5,6 +5,7 @@ extends Node
 var inventory_ui_controller: InventoryUIController
 
 func _ready() -> void:
+  await Kernel.services_ready
 	Kernel.events.log("Spiel-Bootstrap gestartet.")
 	
 	# 1. Welt erstellen
