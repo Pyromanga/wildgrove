@@ -1,23 +1,20 @@
-extends Node
-## GameEvents.gd — Der globale Nachrichten-Bus
+# GameEvents.gd (Service)
+extends ServiceBase
+class_name GameEvents
 
-signal debug_log(message: String)
-signal interaction_started(label: String, duration: float)
-signal interaction_finished(label: String)
-signal xp_gained(skill: String, amount: int)
-signal setting_changed(key: String, value: Variant)
-signal state_changed(new_state: int)
+var player := PlayerEvents.new()
+var world := WorldEvents.new()
+var system := SystemEvents.new()
 
-func log(msg: String) -> void:
-	debug_log.emit(msg)
-	print_rich("[color=yellow][Bus][/color] ", msg)
+# Beispiele für die Aufteilung
+class PlayerEvents:
+	signal xp_gained(skill: String, amt: int)
+	signal level_up(skill: String, new_lvl: int)
 
-func emit_xp(skill: String, amt: int) -> void:
-    print("Bus: Sende XP für ", skill, ": ", amt)
-    xp_gained.emit(skill, amt)
+class WorldEvents:
+	signal interaction_started(label: String, duration: float)
+	signal interaction_finished(label: String)
 
-func emit_interaction_start(label: String, duration: float) -> void:
-	interaction_started.emit(label, duration)
-
-func emit_interaction_finished(label: String) -> void:
-	interaction_finished.emit(label)
+class SystemEvents:
+	signal debug_log(msg: String)
+	signal setting_changed(key: String, value: Variant)
