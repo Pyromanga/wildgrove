@@ -25,12 +25,7 @@ func get_all_items() -> Array:
 ## HUD-Kompatibel: Gibt Infos wie den Namen zurück
 func get_item_info(item_id: String) -> Dictionary:
 	return ITEM_DATABASE.get(item_id, { "name": "Unbekannt" })
-
-## Löscht den gesamten Inventar-Inhalt (nützlich für Tests und Reset)
-func clear_inventory() -> void:
-    _inventory_data.clear()
-    inventory_changed.emit()
-    
+  
 ## Fügt Items hinzu oder stapelt sie
 func add_item(item_id: String, amount: int = 1) -> void:
 	var found = false
