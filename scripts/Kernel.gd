@@ -35,6 +35,7 @@ func _ready() -> void:
     hud          = _add_service("res://scripts/HUD.gd", "HUD")
     
     log_init("Alle Services erfolgreich initialisiert.")
+    services_ready.emit()
 
 func log_init(msg: String) -> void:
     var stack = get_stack()
