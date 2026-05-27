@@ -8,26 +8,19 @@ var skills = {
 }
 
 func _ready() -> void:
-	# Wir hören auf den globalen Bus über den Kernel
 	Kernel.events.xp_gained.connect(add_xp)
 
 func add_xp(skill_name: String, amount: int) -> void:
-	if not skills.has(skill_name): return
-	
+	if not skills.has(skill_name):
+		return
 	skills[skill_name]["xp"] += amount
 	_check_level_up(skill_name)
-	
-	# Zugriff über Kernel.events
 	Kernel.events.log("XP erhalten: +%d %s" % [amount, skill_name])
 
 func _check_level_up(skill_name: String) -> void:
 	var current_xp = skills[skill_name]["xp"]
 	var current_lvl = skills[skill_name]["level"]
-	
-	# Zugriff über Kernel.utils für die Berechnung
 	var next_level_xp = Kernel.utils.get_xp_for_level(current_lvl + 1)
-	
 	if current_xp >= next_level_xp:
 		skills[skill_name]["level"] += 1
-		# Zugriff über Kernel.events
 		Kernel.events.log("LEVEL UP! %s ist jetzt Level %d" % [skill_name, skills[skill_name]["level"]])
