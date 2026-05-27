@@ -1,80 +1,68 @@
 extends Node
-## WorldFactory.gd — Erzeugt alles, was im 3D-Raum existiert
+## WorldFactory.gd — Zentrale Fabrik für die 3D-Welt
 
-# --- Konstanten ---
-const TREE_POSITIONS = [
-	Vector3(3, 0, 2),
-	Vector3(-4, 0, 5),
-	Vector3(6, 0, -3),
-	Vector3(-2, 0, -6),
-	Vector3(8, 0, 1),
-]
-
-## Erstellt die komplette Spielwelt mit Terrain und Bäumen
 func create_world() -> Node3D:
+	# Wir erstellen das World-Objekt und hängen das Skript an
 	var world = Node3D.new()
+	world.set_script(load("res://scripts/World.gd"))
 	world.name = "World"
 	
-	# Terrain
-	var terrain = _create_terrain()
-	world.add_child(terrain)
+	# Initialisierung der Welt-Komponenten
+	_build_lighting(world)
+	_build_terrain(world)
+	_build_props(world)
 	
-	# Bäume
-	for pos in TREE_POSITIONS:
-		create_tree(pos, world)
-	
-	Kernel.events.log("WorldFactory: Welt erstellt mit " + str(TREE_POSITIONS.size()) + " Bäumen.")
+	Kernel.events.log("WorldFactory: Welt vollständig konfiguriert.")
 	return world
 
-## Erstellt ein einfaches Terrain (Placeholder-Mesh)
-func _create_terrain() -> Node3D:
-	var terrain = Node3D.new()
-	terrain.name = "Terrain"
-	
-	var mesh_instance = MeshInstance3D.new()
-	var plane = PlaneMesh.new()
-	plane.size = Vector2(50, 50)
-	mesh_instance.mesh = plane
-	
-	# Collision
-	var body = StaticBody3D.new()
-	var col = CollisionShape3D.new()
-	var shape = BoxShape3D.new()
-	shape.size = Vector3(50, 0.1, 50)
-	col.shape = shape
-	body.add_child(col)
-	
-	terrain.add_child(mesh_instance)
-	terrain.add_child(body)
-	return terrain
+func _build_lighting(parent: Node) -> void:
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-55, 30, 0)
+	sun.light_energy = 1.2
+	sun.shadow_enabled = true
+	parent.add_child(sun)
 
-## Spawnt einen Baum an der gegebenen Position
-func create_tree(pos: Vector3, parent: Node) -> Node3D:
+	var env_node := WorldEnvironment.new()
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.4, 0.6, 0.9)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(1, 1, 1)
+	env.ambient_light_energy = 0.5
+	env_node.environment = env
+	parent.add_child(env_node)
+
+func _build_terrain(parent: Node) -> void:
+	var body := StaticBody3D.new()
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(200, 1.0, 200)
+	col.shape = shape
+	body.position.y = -0.5
+	body.add_child(col)
+	parent.add_child(body)
+
+	var mesh_inst := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(200, 200)
+	mesh_inst.mesh = plane
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.2, 0.5, 0.2)
+	mesh_inst.material_override = mat
+	parent.add_child(mesh_inst)
+
+func _build_props(parent: Node) -> void:
+	var tree_positions: Array[Vector3] = [
+		Vector3(5, 0, 5),   Vector3(-6, 0, 4),
+		Vector3(8, 0, -5),  Vector3(-4, 0, -8),
+		Vector3(12, 0, 2),  Vector3(-3, 0, 10),
+	]
+	for pos in tree_positions:
+		create_tree(pos, parent)
+
+func create_tree(pos: Vector3, parent: Node) -> void:
 	var tree = Node3D.new()
 	tree.name = "Tree"
-	tree.set_script(load("res://scripts/Tree.gd"))  # Script VOR add_child
+	tree.set_script(load("res://scripts/Tree.gd"))
 	tree.position = pos
 	parent.add_child(tree)
-	return tree
-
-## Erstellt ein interagierbares Objekt
-func create_interactable(pos: Vector3, parent: Node, type: String) -> Node3D:
-	var obj = Node3D.new()
-	obj.name = "Interactable_" + type
-	obj.set_script(null)
-	obj.position = pos
-	parent.add_child(obj)
-	
-	var data = Kernel.data.get_tree_data(type)
-	
-	var on_finish = func():
-		Kernel.events.emit_xp(type, data.get("xp", 10))
-		obj.queue_free()
-	
-	Kernel.builder.create(obj)\
-		.set_label(data.get("label", "Unbekannt"))\
-		.set_duration(data.get("time", 2.0))\
-		.on_complete(on_finish)\
-		.build()
-	
-	return obj
