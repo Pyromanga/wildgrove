@@ -58,7 +58,7 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
 				_js_finger = event.index
 				_js_origin = event.position
 				
-        if _js_base:
+				if _js_base:
             _js_base.visible = true
         if _js_knob: 
           _js_knob.visible = true
