@@ -39,7 +39,6 @@ func add_item(item_id: String, amount: int = 1) -> void:
 	if not found:
 		_inventory_data.append({ "item_id": item_id, "quantity": amount })
 	
-	# Korrekte Einrückung: Diese Zeilen müssen auf Ebene 1 sein (genau wie 'if not found')
 	inventory_changed.emit()
 	Kernel.events.log("Inventory updated: " + item_id)
 
