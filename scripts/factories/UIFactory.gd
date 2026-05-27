@@ -6,9 +6,9 @@ const COLOR_ACCENT = Color(0.2, 0.8, 0.3) # Mining-Grün
 
 ## 1. Haupt-HUD erstellen (wird von Main.gd aufgerufen)
 
-func create_hud() -> CanvasLayer:
-	var canvas := CanvasLayer.new()
-	canvas.name = "HUD"
+func create_hud() -> HUD:
+  var canvas := HUD.new()
+  canvas.name = "HUD"
 	canvas.add_to_group("hud")
 	
 	var margin := MarginContainer.new()
