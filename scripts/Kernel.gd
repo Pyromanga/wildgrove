@@ -1,6 +1,9 @@
 extends Node
 ## Kernel.gd — Der zentrale Service-Manager
 
+# Signal, das feuert, sobald der Bootstrap komplett fertig ist
+signal services_ready
+
 # --- Service-Referenzen ---
 var world_factory: Node
 var ui_factory: Node
@@ -19,7 +22,6 @@ func _ready() -> void:
     log_init("Kernel-Bootstrap gestartet.")
     
     # 2. Services nacheinander laden
-    # Hinweis: Wenn ein Service einen anderen braucht, muss er hier unten drunter stehen
     events       = _add_service("res://scripts/services/GameEvents.gd", "Events")
     data         = _add_service("res://scripts/services/DataService.gd", "Data")
     states       = _add_service("res://scripts/services/StateService.gd", "States")
@@ -35,13 +37,14 @@ func _ready() -> void:
     hud          = _add_service("res://scripts/HUD.gd", "HUD")
     
     log_init("Alle Services erfolgreich initialisiert.")
+    
+    # Signal emittieren, nachdem alle Services da sind
     services_ready.emit()
 
 func log_init(msg: String) -> void:
     var stack = get_stack()
     var caller = stack[1] if stack.size() > 1 else {"function": "unknown", "source": "unknown"}
     
-    # Sicherer Zugriff mit .get()
     var source_path = caller.get("source", "unknown")
     
     print_rich("[color=cyan][Kernel][/color] ", msg)
@@ -60,10 +63,8 @@ func _add_service(path: String, node_name: String) -> Node:
     if service_instance is Node:
         service_instance.name = node_name
         add_child(service_instance)
-        print_stack()
         return service_instance
     else:
         push_error("Kernel: " + node_name + " erbt nicht von Node!")
-        print_stack()
         service_instance.free()
         return null
