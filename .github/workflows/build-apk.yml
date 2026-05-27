@@ -37,14 +37,8 @@ jobs:
 
       - name: Normalize Indentation
         run: |
-          find . -name "*.gd" -type f -exec bash -c '
-            # 1. Tabs in 4 Leerzeichen umwandeln
-            expand -t 4 "$1" > temp_expanded
-            # 2. Alle Zeilenumbrüche und Einrückungen durch "sed" jagen
-            # Dies entfernt führende Leerzeichen und baut sie konsistent auf
-            sed "s/^\t*/    /" temp_expanded > "$1"
-            rm temp_expanded
-          ' _ {} \;
+          # Nur Skripte außerhalb von 'addons' normalisieren
+          find . -path ./addons -prune -o -name "*.gd" -type f -exec bash -c 'expand -t 4 "$1" > temp && mv temp "$1"' _ {} \;
         shell: bash
 
       - name: Force Import
@@ -80,14 +74,8 @@ jobs:
 
       - name: Normalize Indentation
         run: |
-          find . -name "*.gd" -type f -exec bash -c '
-            # 1. Tabs in 4 Leerzeichen umwandeln
-            expand -t 4 "$1" > temp_expanded
-            # 2. Alle Zeilenumbrüche und Einrückungen durch "sed" jagen
-            # Dies entfernt führende Leerzeichen und baut sie konsistent auf
-            sed "s/^\t*/    /" temp_expanded > "$1"
-            rm temp_expanded
-          ' _ {} \;
+          # Nur Skripte außerhalb von 'addons' normalisieren
+          find . -path ./addons -prune -o -name "*.gd" -type f -exec bash -c 'expand -t 4 "$1" > temp && mv temp "$1"' _ {} \;
         shell: bash
 
       # ── 2. Java 17 installieren (Godot 4 braucht ≥ 17) ─────────────────
