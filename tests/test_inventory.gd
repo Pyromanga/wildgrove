@@ -1,5 +1,7 @@
 extends "res://addons/gut/test.gd"
-
+func before_each():
+    Kernel.inventory.clear_inventory()
+    
 func test_add_item_creates_new_entry():
     var inv = Kernel.inventory
     inv._inventory_data = [] # Sicherstellen, dass es leer ist
@@ -20,6 +22,17 @@ func test_add_item_stacks_existing():
     var items = inv.get_all_items()
     assert_eq(items.size(), 1, "Inventar sollte nach dem Stacken immer noch nur einen Eintrag haben")
     assert_eq(items[0]["quantity"], 8, "Menge sollte sich auf 8 addiert haben")
+ 
+func test_add_negative_amount():
+    var inv = Kernel.inventory
+    inv.add_item("wood", 10)
+    inv.add_item("wood", -5)
+    assert_eq(inv.get_quantity("wood"), 5, "Negative Werte sollten korrekt subtrahiert werden")
+
+func test_get_unknown_item():
+    var inv = Kernel.inventory
+    var info = inv.get_item_info("non_existent_id")
+    assert_eq(info["name"], "Unbekannt", "Sollte bei unbekannten Items einen Default-Wert liefern")
 
 func test_signal_emission():
     var inv = Kernel.inventory
