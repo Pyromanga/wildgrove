@@ -12,6 +12,8 @@ func create_world() -> Node3D:
 	_build_terrain(world)
 	_build_props(world)
 	
+	create_player(world)
+	
 	Kernel.events.log("WorldFactory: Welt vollständig konfiguriert.")
 	return world
 
@@ -66,3 +68,10 @@ func create_tree(pos: Vector3, parent: Node) -> void:
 	tree.set_script(load("res://scripts/Tree.gd"))
 	tree.position = pos
 	parent.add_child(tree)
+
+func create_player(parent: Node) -> void:
+    var player = Node3D.new() # Oder deine Player.tscn: load("res://scenes/Player.tscn").instantiate()
+    player.name = "Player"    # WICHTIG: Hier setzt du den Namen für den Test!
+    player.set_script(load("res://scripts/Player.gd"))
+    player.position = Vector3(0, 1, 0)
+    parent.add_child(player)
