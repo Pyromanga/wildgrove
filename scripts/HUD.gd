@@ -13,13 +13,27 @@ func _ready() -> void:
     _refresh_inventory_ui()
   
 func _build_ui() -> void:
+    # 1. Haupt-Container für das gesamte HUD
+    var root_container = Control.new()
+    root_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    root_container.mouse_filter = Control.MOUSE_FILTER_IGNORE # Wichtig: HUD soll Klicks durchlassen
+    add_child(root_container)
+    
+    # 2. Joystick Container (immer oben drüber)
+    var joystick_container = Control.new()
+    joystick_container.name = "JoystickContainer"
+    joystick_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    root_container.add_child(joystick_container)
+    
+    # 3. Labels (jetzt Kinder von root_container)
     _debug_label = Label.new()
     _debug_label.add_theme_font_size_override("font_size", 20)
     _debug_label.add_theme_color_override("font_color", Color.GREEN)
-    add_child(_debug_label)
+    root_container.add_child(_debug_label) # Hinzufügen zu root_container statt zu HUD
+    
     _inventory_label = Label.new()
     _inventory_label.position = Vector2(20, 250)
-    add_child(_inventory_label)
+    root_container.add_child(_inventory_label) # Hinzufügen zu root_container statt zu HUD
     
 func _refresh_inventory_ui() -> void:
     var items = Kernel.inventory.get_all_items()
