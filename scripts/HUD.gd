@@ -1,16 +1,21 @@
 extends CanvasLayer
 class_name HUD
 
-# Ersetze den Pfad "$Label" durch den tatsächlichen Pfad zu deinem Label-Node
-# Falls das Label direkt unter dem HUD liegt, ist es "$LabelName"
-@onready var _inventory_label: Label = $Label 
+var _inventory_label: Label
+
+func _ready() -> void:
+    # Hier erzwingst du die Struktur. Wenn hier etwas schiefgeht,
+    # ist das HUD kaputt – und das soll es auch!
+    _build_ui()
+
+func _build_ui() -> void:
+    _inventory_label = Label.new()
+    _inventory_label.name = "InventoryLabel" # Eindeutiger Name
+    add_child(_inventory_label)
+    # Weitere Elemente...
 
 func update_inventory_display(items: Array) -> void:
-    # Sicherheitsabfrage, falls das Label aus irgendeinem Grund noch nicht da ist
-    if not is_instance_valid(_inventory_label):
-        push_warning("HUD: Label nicht gefunden!")
-        return
-        
+    # Jetzt kannst du dich sicher auf _inventory_label verlassen
     var text = "Inventar:\n"
     for item in items:
         text += "- " + item.name + ": " + str(item.quantity) + "\n"
