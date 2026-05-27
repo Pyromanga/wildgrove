@@ -36,11 +36,11 @@ func execute_interaction(task: Task) -> void:
 
 	Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
 
-	var hud = get_tree().get_first_node_in_group("hud")
-	if not hud:
-		push_warning("InteractionBuilder: Kein HUD gefunden!")
-		Kernel.states.set_state(Kernel.states.PlayerState.FREE)
-		return
+	var hud = Kernel.hud 
+    if not hud:
+        push_warning("InteractionBuilder: Kein HUD in Kernel registriert!")
+        Kernel.states.set_state(Kernel.states.PlayerState.FREE)
+        return
 
 	var bar = Kernel.ui_factory.create_progress_bar(250.0)
 	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
