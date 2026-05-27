@@ -13,14 +13,19 @@ func _ready() -> void:
     add_child(hud_instance)
     Kernel.hud = hud_instance
     
-    # --- NEU: Joystick-Verbindung ---
+    # --- Joystick-Verbindung ---
     var visuals = Kernel.ui_factory.create_joystick_visuals()
-    # Joystick-Visuals dem HUD unterordnen, damit sie mit dem HUD verschwinden/erscheinen
+    # Joystick-Visuals dem HUD unterordnen
     hud_instance.add_child(visuals[0]) # Base
     hud_instance.add_child(visuals[1]) # Knob
     
     # Dem Touch-Service die Visuals übergeben
     Kernel.touch.register_joystick_visuals(visuals[0], visuals[1])
-    # --------------------------------
     
+    # Signale verbinden
     Kernel.events.xp_gained.connect(_on_xp_gained)
+
+## Callback für das XP-Signal
+func _on_xp_gained(skill: String, amt: int) -> void:
+    print("Main: XP erhalten für " + skill + ": " + str(amt))
+    # Optional: Hier könnte man das HUD anweisen, einen Text-Popup zu zeigen
