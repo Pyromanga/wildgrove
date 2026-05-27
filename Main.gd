@@ -17,10 +17,10 @@ func _ready() -> void:
 	Kernel.hud = hud_instance
 	
 	# 3. Controller einbinden (Der Klebstoff zwischen Inventory und HUD)
-	# Dies beendet die direkte Kopplung zwischen UI und Logik-Systemen
-	inventory_ui_controller = InventoryUIController.new()
-	inventory_ui_controller.setup(hud_instance, Kernel.inventory)
-	add_child(inventory_ui_controller)
+	var controller = InventoryUIController.new()
+    add_child(controller) # Jetzt ist er im Baum!
+    inventory_ui_controller = controller
+    inventory_ui_controller.setup(hud_instance, Kernel.inventory)
 	
 	# --- Joystick-Verbindung ---
 	var visuals = Kernel.ui_factory.create_joystick_visuals()
