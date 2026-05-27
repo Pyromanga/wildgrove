@@ -7,6 +7,10 @@ func get_xp_for_level(level: int) -> int:
 	return int(0.25 * floor(level + 300.0 * pow(2.0, level / 7.0)))
 
 ## Sucht den nächsten Knoten aus einer Liste
+func get_closest_node(origin: Vector3, group: String, max_dist: float) -> Node3D:
+	var nodes = get_tree().get_nodes_in_group(group)
+	return get_closest_node_from_list(origin, nodes, max_dist)
+
 func get_closest_node_from_list(origin: Vector3, nodes: Array, max_dist: float) -> Node3D:
 	var closest: Node3D = null
 	var min_d = max_dist
