@@ -38,9 +38,8 @@ func execute_interaction(task: Task) -> void:
 
 	var hud = Kernel.hud 
     if not hud:
-        push_warning("InteractionBuilder: Kein HUD in Kernel registriert!")
-        Kernel.states.set_state(Kernel.states.PlayerState.FREE)
-        return
+        hud = CanvasLayer.new()
+        get_tree().root.add_child(hud)
 
 	var bar = Kernel.ui_factory.create_progress_bar(250.0)
 	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
