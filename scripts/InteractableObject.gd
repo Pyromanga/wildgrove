@@ -23,6 +23,7 @@ func _ready() -> void:
 func _handle_completion() -> void:
   # Hier nutzen wir die Instanz-Variablen der spezifischen Klasse
   Kernel.events.emit_xp(xp_type, xp_amount)
+  Kernel.inventory.add_item("log_normal", 3)
 	
   # Optional: Falls die Kind-Klasse noch etwas beim Abschluss tun muss
   _on_interaction_finished()
