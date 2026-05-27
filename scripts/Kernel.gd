@@ -11,6 +11,7 @@ var utils: Node
 var builder: Node
 var skill_system: Node
 var touch: Node
+var inventory: Node
 
 func _ready() -> void:
 	# Initialisierung der Services in logischer Abhängigkeits-Reihenfolge
@@ -19,7 +20,7 @@ func _ready() -> void:
 	data = _add_service("res://scripts/services/DataService.gd", "Data")
 	utils = _add_service("res://scripts/services/Utils.gd", "Utils")
 	states = _add_service("res://scripts/services/StateService.gd", "States")
-	
+	inventory = _add_service("res://scripts/services/InventorySystem.gd", "Inventory")
 	# 2. Fabriken (erzeugen Spiel-Elemente)
 	world_factory = _add_service("res://scripts/factories/WorldFactory.gd", "WorldFactory")
 	ui_factory = _add_service("res://scripts/factories/UIFactory.gd", "UIFactory")
