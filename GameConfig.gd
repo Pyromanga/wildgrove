@@ -1,4 +1,6 @@
-extends Resource
-class_name GameConfig
+class_name GameConfig extends RefCounted
 
-@export var required_services: Array[String]
+var required_services: Array[String]
+
+func _init(services: Array[String] = []) -> void:
+	required_services = services
