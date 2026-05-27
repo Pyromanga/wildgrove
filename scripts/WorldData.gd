@@ -1,4 +1,4 @@
-# res://scripts/WorldData.gd
+extends Node
 class_name WorldData
 
 var tree_positions: Array[Vector3] = []
