@@ -13,7 +13,8 @@ func log(msg: String) -> void:
 	print_rich("[color=yellow][Bus][/color] ", msg)
 
 func emit_xp(skill: String, amt: int) -> void:
-	xp_gained.emit(skill, amt)
+    print("Bus: Sende XP für ", skill, ": ", amt)
+    xp_gained.emit(skill, amt)
 
 func emit_interaction_start(label: String, duration: float) -> void:
 	interaction_started.emit(label, duration)
