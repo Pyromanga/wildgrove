@@ -1,3 +1,5 @@
+extends "res://addons/gut/test.gd"
+
 func test_signal_emission():
     var inv = Kernel.inventory
     var signal_received = false
