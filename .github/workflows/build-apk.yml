@@ -35,6 +35,11 @@ jobs:
           mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
           chmod +x /usr/local/bin/godot
 
+      - name: Force Import
+        run: |
+          # Öffnet Godot kurz im Headless-Modus, um alle Assets zu scannen
+          godot --headless --editor --quit
+          
       - name: Run Tests
         run: |
           # Ruft GUT im Headless-Modus auf
