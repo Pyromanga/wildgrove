@@ -1,5 +1,5 @@
 extends Node
-
+class_name WorldFactory
 # Diese Funktion baut die Logik-Objekte (Daten)
 func create_world_data() -> WorldData:
     var data = WorldData.new()
