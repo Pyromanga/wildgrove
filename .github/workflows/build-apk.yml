@@ -53,11 +53,9 @@ jobs:
           
       - name: Run Tests
         run: |
-          # Ruft GUT im Headless-Modus auf
-          # -gdir: Ordner mit den Tests
-          # -gexit: Beendet Godot nach dem Testlauf
-          # -gjunitxml: Erstellt einen Report für GitHub
-          godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit -gjunitxml=results.xml
+          # Wir nutzen das GUT-Argument ohne das Gleichheitszeichen, 
+          # falls das die Ursache für den Parsing-Fehler ist.
+          godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit -gjunitxml results.xml
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
