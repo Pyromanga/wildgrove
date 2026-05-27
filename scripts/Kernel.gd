@@ -38,16 +38,18 @@ func _ready() -> void:
 func _add_service(path: String, node_name: String) -> Node:
 	var res = load(path)
 	if not res:
-		push_error("Kernel: Konnte Service nicht laden: " + path)
+		push_error("Kernel: Konnte Datei nicht laden: " + path)
 		return null
 		
 	var s = res.new()
 	
-	# Prüfung: Ist es überhaupt ein Node?
+	# WICHTIG: Hier prüfen wir hart
 	if s is Node:
 		s.name = node_name
 		add_child(s)
 		return s
 	else:
-		push_error("Kernel: Service " + node_name + " ist kein Node und kann nicht hinzugefügt werden!")
-		return s # Gibt es trotzdem zurück, damit die Variable nicht null ist
+		# Hier stoppen wir, anstatt Schrott zurückzugeben
+		push_error("Kernel: Service " + node_name + " in " + path + " erbt NICHT von Node!")
+		s.free() # Objekt löschen, da es nicht im Tree landen kann
+		return null # WICHTIG: Gib null zurück, wenn es kein Node ist!
