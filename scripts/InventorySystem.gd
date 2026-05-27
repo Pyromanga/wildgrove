@@ -1,4 +1,6 @@
 extends Node
+class_name InventorySystem
+
 ## InventorySystem.gd — Passend für dein HUD-Grid
 
 signal inventory_changed
