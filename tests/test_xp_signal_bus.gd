@@ -1,3 +1,5 @@
+extends "res://addons/gut/test.gd"
+
 func test_xp_signal_propagation():
     var received_xp = 0
     # Lambda-Funktion als Empfänger
