@@ -35,10 +35,15 @@ jobs:
           mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
           chmod +x /usr/local/bin/godot
 
-      - name: Normalize Indentation
+      - name: Setup GDFormat
         run: |
-          # Nur Skripte außerhalb von 'addons' normalisieren
-          find . -path ./addons -prune -o -name "*.gd" -type f -exec bash -c 'expand -t 4 "$1" > temp && mv temp "$1"' _ {} \;
+          pip install gdtoolkit
+        shell: bash
+
+      - name: Run GDFormat
+        run: |
+          # Formatiert alle .gd Dateien rekursiv, lässt 'addons' in Ruhe
+          gdformat . --exclude addons/
         shell: bash
 
       - name: Force Import
@@ -72,10 +77,15 @@ jobs:
         with:
           lfs: true
 
-      - name: Normalize Indentation
+      - name: Setup GDFormat
         run: |
-          # Nur Skripte außerhalb von 'addons' normalisieren
-          find . -path ./addons -prune -o -name "*.gd" -type f -exec bash -c 'expand -t 4 "$1" > temp && mv temp "$1"' _ {} \;
+          pip install gdtoolkit
+        shell: bash
+
+      - name: Run GDFormat
+        run: |
+          # Formatiert alle .gd Dateien rekursiv, lässt 'addons' in Ruhe
+          gdformat . --exclude addons/
         shell: bash
 
       # ── 2. Java 17 installieren (Godot 4 braucht ≥ 17) ─────────────────
