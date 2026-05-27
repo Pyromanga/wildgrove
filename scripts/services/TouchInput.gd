@@ -62,7 +62,6 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
             _js_base.visible = true
         if _js_knob: 
           _js_knob.visible = true
-        
 				_update_js_visuals(_js_origin, Vector2.ZERO)
 		else:
 			_right_fingers[event.index] = event.position
