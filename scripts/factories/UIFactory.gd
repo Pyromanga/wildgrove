@@ -1,5 +1,4 @@
 extends Node
-## UIFactory.gd — Zentrale Fabrik für UI-Elemente
 
 # Design-Konstanten für ein einheitliches Look & Feel
 const COLOR_BG = Color(0, 0, 0, 0.6)
