@@ -1,6 +1,14 @@
 extends "res://addons/gut/test.gd"
+
 func before_each():
-    Kernel.inventory.clear_inventory()
+    # Wir prüfen vorher, ob der Service geladen ist
+    if Kernel.inventory != null:
+        Kernel.inventory.clear_inventory()
+
+func test_add_item():
+    assert_not_null(Kernel.inventory, "Service nicht geladen!")
+    Kernel.inventory.add_item("log_normal", 5)
+    assert_eq(Kernel.inventory.get_quantity("log_normal"), 5)
     
 func test_add_item_creates_new_entry():
     var inv = Kernel.inventory
