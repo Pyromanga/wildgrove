@@ -69,3 +69,12 @@ func execute_interaction(task: Task) -> void:
 
 func create(node: Node3D) -> Task:
 	return Task.new(node)
+	
+func is_interactable(node: Node) -> bool:
+    return node.is_in_group("interactable")
+
+# Diese Methode fehlte bisher
+func trigger_interaction(target_name: String) -> void:
+    # Hier müsstest du eine Logik implementieren, die ein Objekt findet
+    # Falls das Target existiert, sende das Signal
+    Kernel.events.interaction_started.emit("Interaktion", 2.0)
