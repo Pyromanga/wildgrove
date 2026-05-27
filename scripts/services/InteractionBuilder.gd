@@ -31,41 +31,37 @@ class Task:
 		return interactable
 
 func execute_interaction(task: Task) -> void:
-	if not task.target or not is_instance_valid(task.target):
-		return
+    if not is_instance_valid(task.target):
+        return
 
-	Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
+    Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
 
-	var hud = Kernel.hud 
-    if not hud:
-        hud = CanvasLayer.new()
-        get_tree().root.add_child(hud)
+    # 1. Sicherer HUD-Zugriff (Fallback falls Kernel.hud null ist)
+    var hud = Kernel.hud if Kernel.hud else get_tree().root
+    
+    # 2. UI erstellen (UIFactory MUSS existieren, sonst Absturz)
+    var bar = Kernel.ui_factory.create_progress_bar(250.0)
+    bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+    hud.add_child(bar)
 
-	var bar = Kernel.ui_factory.create_progress_bar(250.0)
-	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	hud.add_child(bar)
+    # 3. Tween ausführen
+    var tween = bar.create_tween()
+    tween.tween_property(bar, "value", 100.0, task.duration).from(0.0)
 
-	var tween = bar.create_tween()
-	tween.tween_property(bar, "value", 100.0, task.duration).from(0.0)
+    await get_tree().create_timer(task.duration).timeout
 
-	await get_tree().create_timer(task.duration).timeout
+    # 4. Aufräumen (Sicherheits-Check für Validität)
+    if is_instance_valid(bar):
+        bar.queue_free()
 
-	# Nach dem Timer: Objekt noch gültig?
-	if not is_instance_valid(task.target):
-		if is_instance_valid(bar):
-			bar.queue_free()
-		Kernel.states.set_state(Kernel.states.PlayerState.FREE)
-		return
+    # 5. Korrekt eingerücktes await
+    await get_tree().process_frame
+    
+    # 6. Callback ausführen
+    if task.on_done.is_valid():
+        task.on_done.call()
 
-	if is_instance_valid(bar):
-		bar.queue_free()
-		
-  await get_tree().process_frame
-  
-	if task.on_done.is_valid():
-		task.on_done.call()
-
-	Kernel.states.set_state(Kernel.states.PlayerState.FREE)
+    Kernel.states.set_state(Kernel.states.PlayerState.FREE)
 
 func create(node: Node3D) -> Task:
 	return Task.new(node)
