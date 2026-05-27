@@ -1,6 +1,11 @@
 extends Node
 class_name WorldFactory
 # Diese Funktion baut die Logik-Objekte (Daten)
+
+func create_world() -> Node3D:
+    var data = create_world_data()
+    return build_world_nodes(data)
+
 func create_world_data() -> WorldData:
     var data = WorldData.new()
     data.player_position = Vector3(0, 1, 0)
