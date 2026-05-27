@@ -4,12 +4,14 @@ extends Node3D
 var task = null
 
 func _ready() -> void:
-	# Task-Daten sicher abrufen
-	if has_meta("task"):
-		task = get_meta("task")
-		_setup_detection_area()
-	else:
-		push_error("Interactable: Kein 'task' Meta gefunden!")
+  # Versuche das Meta zu holen
+  if has_meta("task"):
+      task = get_meta("task")
+      _setup_detection_area()
+  else:
+      # Falls es nicht da ist, suchen wir vielleicht in einer public Variable?
+      # Wenn du es über den Builder baust, MUSS es da sein.
+      push_error("Interactable: Kein 'task' Meta gefunden!")
 
 func _setup_detection_area() -> void:
 	var area := Area3D.new()
