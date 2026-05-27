@@ -9,8 +9,7 @@ var _js_finger: int     = -1
 var _js_origin: Vector2 = Vector2.ZERO
 const JS_RADIUS: float  = 90.0
 
-# Rechte Seite
-var _right_fingers: Dictionary = {} 
+var _right_fingers: Dictionary = {}
 var _pinch_last_dist: float    = 0.0
 var _cam_last: Vector2         = Vector2.ZERO
 var _cam_finger: int           = -1
@@ -101,12 +100,10 @@ func _handle_drag(event: InputEventScreenDrag, sw: float) -> void:
 
 func _update_js_visuals(origin: Vector2, offset: Vector2) -> void:
 	if _js_base:
-		# Nutze global_position für den Touch-Input, um Anchors zu ignorieren
 		_js_base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
 	if _js_knob:
 		_js_knob.global_position = origin + offset - (_js_knob.size * 0.5)
 
 func _reset_js_visuals() -> void:
 	if _js_base and _js_knob:
-		# Zentriert den Knob wieder im Base
-		_js_knob.global_position = _js_base.global_position + (Vector2(JS_RADIUS, JS_RADIUS)) - (_js_knob.size * 0.5)
+		_js_knob.global_position = _js_base.global_position + Vector2(JS_RADIUS, JS_RADIUS) - (_js_knob.size * 0.5)
