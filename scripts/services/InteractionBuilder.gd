@@ -70,7 +70,8 @@ func is_interactable(node: Node) -> bool:
     return node.is_in_group("interactable")
 
 # Diese Methode fehlte bisher
-func trigger_interaction(target_name: String) -> void:
-    # Hier müsstest du eine Logik implementieren, die ein Objekt findet
-    # Falls das Target existiert, sende das Signal
-    Kernel.events.interaction_started.emit("Interaktion", 2.0)
+func trigger_interaction(target: Node3D) -> void:
+    if is_interactable(target):
+        # Hier triggern wir die Interaktion direkt
+        var task = create(target).set_duration(1.0)
+        execute_interaction(task)
