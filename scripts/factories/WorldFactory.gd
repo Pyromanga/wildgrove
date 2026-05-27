@@ -1,4 +1,4 @@
-# res://scripts/WorldFactory.gd
+extends Node
 
 # Diese Funktion baut die Logik-Objekte (Daten)
 func create_world_data() -> WorldData:
