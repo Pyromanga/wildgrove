@@ -36,20 +36,19 @@ func _ready() -> void:
 
 ## Hilfsfunktion zum Laden und Einbinden von Services
 func _add_service(path: String, node_name: String) -> Node:
-	var res = load(path)
-	if not res:
-		push_error("Kernel: Konnte Datei nicht laden: " + path)
-		return null
-		
-	var s = res.new()
-	
-	# WICHTIG: Hier prüfen wir hart
-	if s is Node:
-		s.name = node_name
-		add_child(s)
-		return s
-	else:
-		# Hier stoppen wir, anstatt Schrott zurückzugeben
-		push_error("Kernel: Service " + node_name + " in " + path + " erbt NICHT von Node!")
-		s.free() # Objekt löschen, da es nicht im Tree landen kann
-		return null # WICHTIG: Gib null zurück, wenn es kein Node ist!
+    var res = load(path)
+    if not res:
+        return null
+        
+    var s = res.new()
+    
+    if s is Node:
+        s.name = node_name
+        # Wir fügen den Service erst hinzu, wenn er existiert
+        add_child(s) 
+        return s
+    else:
+        push_error("Kernel: Service " + node_name + " in " + path + " erbt NICHT von Node!")
+        s.free()
+        return null 
+
