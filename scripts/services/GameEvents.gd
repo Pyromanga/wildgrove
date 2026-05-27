@@ -1,20 +1,23 @@
-# GameEvents.gd (Service)
 extends ServiceBase
 class_name GameEvents
+
+## GameEvents.gd — Der zentrale, modulare Nachrichten-Bus
+## Zugriff via: Kernel.events.player.xp_gained.emit(...)
 
 var player := PlayerEvents.new()
 var world := WorldEvents.new()
 var system := SystemEvents.new()
 
-# Beispiele für die Aufteilung
-class PlayerEvents:
+# RefCounted Objekte sind perfekt für Daten-Container/Bus-Strukturen,
+# da sie automatisch gelöscht werden, wenn sie nicht mehr gebraucht werden.
+class PlayerEvents extends RefCounted:
 	signal xp_gained(skill: String, amt: int)
 	signal level_up(skill: String, new_lvl: int)
 
-class WorldEvents:
+class WorldEvents extends RefCounted:
 	signal interaction_started(label: String, duration: float)
 	signal interaction_finished(label: String)
 
-class SystemEvents:
+class SystemEvents extends RefCounted:
 	signal debug_log(msg: String)
 	signal setting_changed(key: String, value: Variant)
