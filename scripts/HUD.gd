@@ -1,12 +1,17 @@
-# HUD.gd
 extends CanvasLayer
+class_name HUD
 
-var _inventory_label: Label
+# Ersetze den Pfad "$Label" durch den tatsächlichen Pfad zu deinem Label-Node
+# Falls das Label direkt unter dem HUD liegt, ist es "$LabelName"
+@onready var _inventory_label: Label = $Label 
 
-# Die passive Schnittstelle: Das HUD nimmt an, was es braucht
 func update_inventory_display(items: Array) -> void:
+    # Sicherheitsabfrage, falls das Label aus irgendeinem Grund noch nicht da ist
+    if not is_instance_valid(_inventory_label):
+        push_warning("HUD: Label nicht gefunden!")
+        return
+        
     var text = "Inventar:\n"
     for item in items:
-        # Hier gehen wir davon aus, dass 'item' ein Dictionary oder Objekt ist
         text += "- " + item.name + ": " + str(item.quantity) + "\n"
     _inventory_label.text = text
