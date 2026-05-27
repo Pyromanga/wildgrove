@@ -1,10 +1,20 @@
-# ServiceBase.gd
 extends Node
 class_name ServiceBase
 
-signal service_ready(service_name: String)
+## ServiceBase.gd
+## Basisklasse für alle Services. Registriert sich automatisch beim Kernel
+## und meldet sich beim Löschen sauber wieder ab.
 
 func _ready() -> void:
-    Kernel.register_service(self)
-    # Sobald der Node im Baum ist, feuern wir ein Signal
-    service_ready.emit(self.name.to_lower())
+	# Automatisches Registrieren beim Start
+	if Kernel:
+		Kernel.register_service(self)
+		Logger.log_debug(self.name + " registriert.", "Service")
+	else:
+		push_error("ServiceBase: Kernel nicht gefunden! Autoload-Reihenfolge prüfen.")
+
+func _exit_tree() -> void:
+	# Automatisches Abmelden beim Zerstören (Verhindert Memory Leaks/Dangling Pointers)
+	if Kernel:
+		Kernel.unregister_service(self)
+		Logger.log_debug(self.name + " abgemeldet.", "Service")
