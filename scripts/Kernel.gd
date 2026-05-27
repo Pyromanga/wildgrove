@@ -56,10 +56,14 @@ func log_init(msg: String) -> void:
 
 ## Hilfsfunktion zum Laden und Einbinden von Services
 func _add_service(path: String, node_name: String) -> Node:
+    # --- NEU: Prüfen, ob der Service bereits als Kind existiert ---
+    if has_node(node_name):
+        return get_node(node_name)
+    
+    # Wenn er nicht da ist, laden wir ihn
     var script_res = load(path)
     if not script_res:
         push_error("Kernel: Konnte Skript nicht finden: " + path)
-        print_stack()
         return null
         
     var service_instance = script_res.new()
