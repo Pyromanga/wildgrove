@@ -1,17 +1,14 @@
-extends Node3D
+extends InteractableObject
 
 func _ready() -> void:
-    # 1. Visuelles (Einfacher grauer Block)
+    # Variablen für das Erz setzen, bevor super()._ready() aufgerufen wird
+    label = "Eisenerz abbauen"
+    duration = 4.0
+    xp_type = "mining"
+    xp_amount = 40
+    super._ready() # Ruft das _ready() aus InteractableObject auf
+
+func _setup_visuals() -> void:
     var m := MeshInstance3D.new()
     m.mesh = BoxMesh.new()
     add_child(m)
-
-    # 2. Interaktion via Kernel-Builder konfigurieren test
-    # WICHTIG: Die Einrückungen hier müssen exakt stimmen
-    Kernel.builder.create(self)\
-        .set_label("Eisenerz abbauen")\
-        .set_duration(4.0)\
-        .on_complete(func(): 
-            Kernel.events.emit_xp("mining", 40)
-            queue_free()
-        ).build()
