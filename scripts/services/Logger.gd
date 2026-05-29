@@ -1,5 +1,4 @@
 extends Node
-class_name Logger
 
 signal on_log(msg: String)
 
