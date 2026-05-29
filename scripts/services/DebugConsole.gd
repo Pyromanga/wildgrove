@@ -76,8 +76,10 @@ func _on_log(msg: String) -> void:
         parent.custom_minimum_size.y = _container.size.y + 56
 
 func _copy_log() -> void:
+    _on_log(">>> Copy gedrückt! Buffer: " + str(_log_buffer.size()) + " Zeilen")
     var text := "\n".join(_log_buffer)
     DisplayServer.clipboard_set(text)
+    _on_log(">>> Clipboard gesetzt!")
 
 func _toggle() -> void:
     _visible = not _visible
