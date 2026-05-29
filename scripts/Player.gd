@@ -11,6 +11,7 @@ var _target_pitch: float = deg_to_rad(-35.0)
 
 var _spring_arm: SpringArm3D
 var _mesh: MeshInstance3D
+var _touch: TouchInput
 
 func _ready() -> void:
     add_to_group("player")
@@ -24,7 +25,7 @@ func _physics_process(delta: float) -> void:
         move_and_slide()
         return
 
-    var touch = Kernel.touch
+    var touch := _touch
     _handle_camera(touch, delta)
     _handle_movement(touch, delta)
 
@@ -94,3 +95,9 @@ func _build_player_nodes() -> void:
     var cam := Camera3D.new()
     cam.current = true
     _spring_arm.add_child(cam)
+    
+    var touch_input := Node.new()
+    touch_input.name = "touch_input"
+    touch_input.set_script(load("res://scripts/player/TouchInput.gd"))
+    add_child(touch_input)
+    _touch = touch_input as TouchInput
