@@ -1,4 +1,6 @@
-extends Node
+extends ServiceBase
+class_name InteractionBuilder
+# (Rest bleibt identisch)
 ## InteractionBuilder.gd — Der Manager für Interaktions-Logik
 
 class Task:
