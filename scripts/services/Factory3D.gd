@@ -1,8 +1,5 @@
 extends ServiceBase
 class_name Factory3D
-# (Rest von Factory.gd identisch)
-
-extends Node
 ## Factory.gd — Erschafft visuelle Hilfsmittel im 3D-Raum
 
 ## Erzeugt einen Fortschrittsbalken im 3D-Raum
