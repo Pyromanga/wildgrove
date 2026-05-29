@@ -14,9 +14,32 @@ var _mesh: MeshInstance3D
 var _touch: TouchInput
 
 func _ready() -> void:
+    Logger.log_debug("Player _ready() start", "Player")
     add_to_group("player")
     _build_player_nodes()
     position = Vector3(0, 1.5, 0)
+    Logger.log_debug("Player _ready() fertig, touch: " + str(_touch), "Player")
+
+func _setup_joystick_visuals() -> void:
+    Logger.log_debug("_setup_joystick_visuals() start", "Player")
+    var hud_nodes := get_tree().get_nodes_in_group("hud")
+    Logger.log_debug("HUD nodes gefunden: " + str(hud_nodes.size()), "Player")
+    if hud_nodes.is_empty():
+        Logger.log_error("Kein HUD gefunden!", "Player")
+        get_tree().node_added.connect(_on_node_added)
+        return
+    _attach_joystick_to_hud(hud_nodes[0])
+
+func _attach_joystick_to_hud(hud: Node) -> void:
+    Logger.log_debug("_attach_joystick_to_hud() start", "Player")
+    var visuals: Array = Kernel.ui_factory.create_joystick_visuals()
+    Logger.log_debug("Visuals erstellt: " + str(visuals.size()), "Player")
+    var base: ColorRect = visuals[0]
+    var knob: ColorRect = visuals[1]
+    hud.add_child(base)
+    hud.add_child(knob)
+    _touch.register_joystick_visuals(base, knob)
+    Logger.log_debug("Joystick registriert!", "Player")
 
 func _physics_process(delta: float) -> void:
     if not Kernel.states.is_free(): 
