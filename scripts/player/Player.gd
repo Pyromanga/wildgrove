@@ -94,6 +94,10 @@ func try_interact() -> void:
             target.interact(self)
 
 func _build_player_nodes() -> void:
+func _build_player_nodes() -> void:
+    Logger.log_debug("_build_player_nodes() START", "Player")
+    # ... rest
+    
     var col := CollisionShape3D.new()
     col.shape = CapsuleShape3D.new()
     col.position.y = 1.0
@@ -124,3 +128,6 @@ func _build_player_nodes() -> void:
     touch_input.set_script(load("res://scripts/player/TouchInput.gd"))
     add_child(touch_input)
     _touch = touch_input as TouchInput
+    
+    call_deferred("_setup_joystick_visuals")
+    Logger.log_debug("_build_player_nodes() ENDE", "Player")
