@@ -42,4 +42,4 @@ lights_and_shadows/directional_shadow/size=2048
 
 [autoload]
 Logger="*res://scripts/services/Logger.gd"
-Kernel="*res://scripts/Kernel.gd"
+Kernel="*res://scripts/core/Kernel.gd"
