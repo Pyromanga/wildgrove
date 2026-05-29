@@ -12,11 +12,12 @@ func _ready() -> void:
     ])
     _services_to_wait_for = _config.required_services.duplicate()
     Kernel.service_registered.connect(_on_service_registered)
-    Logger.log_debug("ServiceLoader wird gestartet...", "Main")
     ServiceLoader.new().setup_services(self)
-    Logger.log_debug("ServiceLoader fertig", "Main")
-    Logger.log_debug("Registrierte Services: " + str(Kernel.services.keys()), "Main")
-    Logger.log_debug("Erwartet: " + str(_services_to_wait_for), "Main")
+    
+    # TEMP: Sofort prüfen was da ist und was nicht
+    Logger.log_debug("=== SERVICE CHECK ===", "Main")
+    Logger.log_debug("Im Kernel: " + str(Kernel.services.keys()), "Main")
+    Logger.log_debug("Noch offen: " + str(_services_to_wait_for), "Main")
 
 func _on_service_registered(service_name: String) -> void:
     _services_to_wait_for.erase(service_name)
