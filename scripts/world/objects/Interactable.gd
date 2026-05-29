@@ -17,15 +17,15 @@ func _setup_detection_area() -> void:
 	var col := CollisionShape3D.new()
 	col.shape = SphereShape3D.new()
 	col.shape.radius = 2.0
-	
 	area.add_child(col)
 	add_child(area)
-	
-	# Korrekt in die Funktion integriert:
-	area.body_entered.connect(func(b):
-    if b.is_in_group("player"):
-      Logger.log_debug(">>> SPIELER IN INTERACTIONS-REICHWEITE: " + task.label + " bei " + str(global_position), "Interactable")
-  )
+
+	# Lambda über mehrere Zeilen mit richtiger Einrückung
+	area.body_entered.connect(
+		func(b: Node3D):
+			if b.is_in_group("player"):
+				Logger.log_debug(">>> SPIELER IN INTERACTIONS-REICHWEITE: " + task.label + " bei " + str(global_position), "Interactable")
+	)
 
 # Schnittstelle für den Player
 func start_interaction() -> void:
