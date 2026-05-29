@@ -1,5 +1,4 @@
 extends Node
-class_name Logger
 
 # Logging direkt beim Laden der Engine
 func _init() -> void:
