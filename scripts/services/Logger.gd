@@ -16,11 +16,10 @@ func log_error(msg: String, context: String = "System") -> void:
     var line := "[%d] [ERROR] [%s] %s" % [time, context, msg]
     print(line)
     on_log.emit(line)
-    
-    # Stacktrace
+
     var stack := get_stack()
     for i in stack.size():
-        var frame := stack[i]
+        var frame: Dictionary = stack[i]
         var frame_line := "  #%d %s:%d @ %s()" % [
             i,
             frame.get("source", "?"),
