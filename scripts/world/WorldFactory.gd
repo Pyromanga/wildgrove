@@ -2,8 +2,12 @@ extends RefCounted
 class_name WorldFactory
 
 func create_world() -> Node3D:
+    Logger.log_debug("create_world() start", "WorldFactory")
     var data := create_world_data()
-    return build_world_nodes(data)
+    Logger.log_debug("WorldData erstellt: " + str(data.get_tree_count()) + " Bäume", "WorldFactory")
+    var world := build_world_nodes(data)
+    Logger.log_debug("create_world() fertig", "WorldFactory")
+    return world
 
 func create_world_data() -> WorldData:
     var data := WorldData.new()
@@ -16,15 +20,19 @@ func build_world_nodes(data: WorldData) -> Node3D:
     var world := Node3D.new()
     world.name = "World"
 
+    Logger.log_debug("Environment wird gebaut...", "WorldFactory")
     _add_environment(world)
+    Logger.log_debug("Boden wird gebaut...", "WorldFactory")
     _add_ground(world)
+    Logger.log_debug("Player wird gebaut...", "WorldFactory")
     _add_player(world, data.player_position)
+    Logger.log_debug("Bäume werden gebaut...", "WorldFactory")
     _add_trees(world, data.tree_positions)
+    Logger.log_debug("build_world_nodes() fertig", "WorldFactory")
 
     return world
 
 func _add_environment(world: Node3D) -> void:
-    # Sonnenlicht
     var sun := DirectionalLight3D.new()
     sun.name = "Sun"
     sun.rotation_degrees = Vector3(-45, 30, 0)
@@ -32,14 +40,13 @@ func _add_environment(world: Node3D) -> void:
     sun.shadow_enabled = true
     world.add_child(sun)
 
-    # Himmel / Environment
     var env_node := WorldEnvironment.new()
     env_node.name = "WorldEnvironment"
     var env := Environment.new()
     env.background_mode = Environment.BG_SKY
     var sky := Sky.new()
     var sky_mat := ProceduralSkyMaterial.new()
-    sky_mat.sky_top_color    = Color(0.2, 0.5, 0.9)
+    sky_mat.sky_top_color     = Color(0.2, 0.5, 0.9)
     sky_mat.sky_horizon_color = Color(0.6, 0.8, 1.0)
     sky_mat.ground_horizon_color = Color(0.4, 0.6, 0.3)
     sky_mat.ground_bottom_color  = Color(0.2, 0.3, 0.1)
@@ -49,6 +56,7 @@ func _add_environment(world: Node3D) -> void:
     env.ambient_light_energy = 0.5
     env_node.environment = env
     world.add_child(env_node)
+    Logger.log_debug("Environment OK", "WorldFactory")
 
 func _add_ground(world: Node3D) -> void:
     var ground := StaticBody3D.new()
@@ -71,6 +79,7 @@ func _add_ground(world: Node3D) -> void:
 
     ground.position.y = -0.1
     world.add_child(ground)
+    Logger.log_debug("Boden OK", "WorldFactory")
 
 func _add_player(world: Node3D, pos: Vector3) -> void:
     var player := CharacterBody3D.new()
@@ -78,10 +87,12 @@ func _add_player(world: Node3D, pos: Vector3) -> void:
     player.set_script(load("res://scripts/player/Player.gd"))
     player.position = pos
     world.add_child(player)
+    Logger.log_debug("Player OK bei " + str(pos), "WorldFactory")
 
 func _add_trees(world: Node3D, positions: Array) -> void:
-    for pos in positions:
+    for i in positions.size():
         var tree := Node3D.new()
         tree.set_script(load("res://scripts/world/objects/OakTree.gd"))
-        tree.position = pos
+        tree.position = positions[i]
         world.add_child(tree)
+        Logger.log_debug("Baum " + str(i) + " OK bei " + str(positions[i]), "WorldFactory")
