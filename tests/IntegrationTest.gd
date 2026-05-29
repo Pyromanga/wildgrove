@@ -1,22 +1,22 @@
 extends "res://addons/gut/test.gd"
 
-var kernel = null
+# Wir nutzen das globale Kernel-Singleton direkt.
+# Falls du ihn lokal tracken willst, nenne die Variable anders als das Singleton!
+var _test_kernel = null 
 
 func before_all():
-    var kernel_scene = load("res://scripts/Kernel.gd")
-    kernel = kernel_scene.new()
-    kernel.name = "Kernel"
-    add_child(kernel)
-    # Warte auf das neue Signal, das wir eingebaut haben
-    await kernel.services_ready
+	# Wenn Kernel ein Autoload ist, ist er bereits im Tree.
+	# Wir prüfen nur, ob er bereit ist.
+	if not Kernel.is_inside_tree():
+		# Falls GUT den Autoload nicht automatisch lädt (selten):
+		_test_kernel = Kernel
+	
+	if not Kernel._is_initialized:
+		await Kernel.services_ready
 
-func before_each():
-    # Warte kurz, bis der Kernel fertig ist, falls er gerade erst bootet
-    if not Kernel._is_initialized:
-        await Kernel.services_ready
-        
-func after_all():
-    if is_instance_valid(kernel):
-        kernel.queue_free()
+func test_check_kernel_integrity():
+	assert_not_null(Kernel, "Kernel Singleton sollte existieren")
+	assert_true(Kernel._is_initialized, "Kernel sollte initialisiert sein")
 
-# KEIN after_each, das Kinder löscht, wenn der Kernel darin liegt!
+# after_all: Wenn du den echten Kernel nutzt, NICHT löschen!
+# Sonst sind alle folgenden Tests kaputt.
