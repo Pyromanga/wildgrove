@@ -4,14 +4,13 @@ extends Node3D
 var task = null
 
 func _ready() -> void:
-	# Versuche das Meta zu holen
+	Logger.log_debug("Interactable._ready() START für Parent: " + str(get_parent().name), "Interactable")
 	if has_meta("task"):
 		task = get_meta("task")
 		_setup_detection_area()
+		Logger.log_debug("Interactable: Task gefunden, Area erstellt. Label: " + task.label, "Interactable")
 	else:
-		# Falls es nicht da ist, suchen wir vielleicht in einer public Variable?
-		# Wenn du es über den Builder baust, MUSS es da sein.
-		push_error("Interactable: Kein 'task' Meta gefunden!")
+		Logger.log_error("Interactable: Kein 'task' Meta gefunden!", "Interactable")
 
 func _setup_detection_area() -> void:
 	var area := Area3D.new()
@@ -24,9 +23,9 @@ func _setup_detection_area() -> void:
 	
 	# Korrekt in die Funktion integriert:
 	area.body_entered.connect(func(b):
-		if b.is_in_group("player"):
-			Logger.log_debug("Interaktion möglich: " + task.label, "Interactable")
-	)
+    if b.is_in_group("player"):
+      Logger.log_debug(">>> SPIELER IN INTERACTIONS-REICHWEITE: " + task.label + " bei " + str(global_position), "Interactable")
+  )
 
 # Schnittstelle für den Player
 func start_interaction() -> void:
