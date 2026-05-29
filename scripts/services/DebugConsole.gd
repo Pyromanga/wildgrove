@@ -44,8 +44,8 @@ func _build_ui() -> void:
     btn_row.add_child(toggle_btn)
 
     var copy_btn := Button.new()
-    copy_btn.text = "📋 Copy"
-    copy_btn.custom_minimum_size = Vector2(100, 38)
+    copy_btn.text = "📋 Copy Log"
+    copy_btn.custom_minimum_size = Vector2(200, 60)
     copy_btn.pressed.connect(_copy_log)
     btn_row.add_child(copy_btn)
 
