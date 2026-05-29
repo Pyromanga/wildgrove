@@ -1,16 +1,16 @@
-extends Node
-## StateService.gd — Zentraler Zustandsverwalter
+extends ServiceBase
+class_name StateService
 
 enum PlayerState { FREE, BUSY, MENU }
 var current_state: PlayerState = PlayerState.FREE
 
 func set_state(new_state: PlayerState) -> void:
-	current_state = new_state
-	Kernel.events.log("Player Status: " + PlayerState.keys()[new_state])
-	Kernel.events.state_changed.emit(new_state)
+    current_state = new_state
+    Logger.log_debug("Player Status: " + PlayerState.keys()[new_state], "StateService")
+    Kernel.events.system.state_changed.emit(new_state)
 
 func is_free() -> bool:
-	return current_state == PlayerState.FREE
+    return current_state == PlayerState.FREE
 
 func get_state() -> PlayerState:
-	return current_state
+    return current_state
