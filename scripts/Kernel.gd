@@ -1,5 +1,4 @@
 extends Node
-class_name Kernel
 
 ## Kernel.gd — Die Service-Registry
 ## Zentraler Hub für alle Services. Services registrieren sich selbst via ServiceBase.
