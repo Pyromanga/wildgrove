@@ -1,4 +1,5 @@
-extends Node
+extends ServiceBase
+class_name Utils
 ## Utils.gd — Mathematische Hilfsfunktionen
 
 ## XP-Formel: klassische RuneScape-ähnliche Kurve
