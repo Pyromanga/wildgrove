@@ -5,7 +5,7 @@ var _services_to_wait_for: Array[String]
 
 func _ready() -> void:
     _config = GameConfig.new([
-        "debug_service", "events", "data", "states",
+        "debug_console", "debug_service", "events", "data", "states",
         "utils", "builder", "ui_factory", "factory3d",
         "inventory", "skill_system"
     ])
