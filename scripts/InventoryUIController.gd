@@ -16,13 +16,11 @@ func setup(hud_ref: HUD, inv_ref: InventorySystem) -> void:
     _update_view()
 
 func _update_view() -> void:
-    # Hier knallt es zu Recht, wenn das HUD noch nicht bereit ist - 
-    # das zeigt uns einen Fehler in unserer Test-Logik auf!
     if not is_instance_valid(_hud): return
     
     var display_data = []
     for entry in _inventory.get_all_items():
-        var info = _inventory.get_item_info(entry.item_id)
-        display_data.append({"name": info.name, "quantity": entry.quantity})
+        var info = _inventory.get_item_info(entry["item_id"])
+        display_data.append({"name": info["name"], "quantity": entry["quantity"]})
     
     _hud.update_inventory_display(display_data)
