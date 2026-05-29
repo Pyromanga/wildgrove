@@ -1,0 +1,41 @@
+extends ServiceBase
+class_name InventorySystem
+
+signal inventory_changed
+
+var _inventory_data: Array = []
+
+const ITEM_DATABASE = {
+    "log_normal": {"name": "Holz"},
+    "log_oak":    {"name": "Eichenholz"},
+    "log_willow": {"name": "Weidenholz"},
+    "log_maple":  {"name": "Ahornholz"}
+}
+
+func get_all_items() -> Array:
+    return _inventory_data
+
+func get_item_info(item_id: String) -> Dictionary:
+    return ITEM_DATABASE.get(item_id, {"name": "Unbekannt"})
+
+func add_item(item_id: String, amount: int = 1) -> void:
+    var found := false
+    for entry in _inventory_data:
+        if entry["item_id"] == item_id:
+            entry["quantity"] += amount
+            found = true
+            break
+    if not found:
+        _inventory_data.append({"item_id": item_id, "quantity": amount})
+    inventory_changed.emit()
+    Logger.log_debug("Inventory: +" + str(amount) + " " + item_id, "Inventory")
+
+func clear_inventory() -> void:
+    _inventory_data.clear()
+    inventory_changed.emit()
+
+func get_quantity(item_id: String) -> int:
+    for entry in _inventory_data:
+        if entry["item_id"] == item_id:
+            return entry["quantity"]
+    return 0
