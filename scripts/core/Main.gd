@@ -15,6 +15,8 @@ func _ready() -> void:
     Logger.log_debug("ServiceLoader wird gestartet...", "Main")
     ServiceLoader.new().setup_services(self)
     Logger.log_debug("ServiceLoader fertig", "Main")
+    Logger.log_debug("Registrierte Services: " + str(Kernel.services.keys()), "Main")
+    Logger.log_debug("Erwartet: " + str(_services_to_wait_for), "Main")
 
 func _on_service_registered(service_name: String) -> void:
     _services_to_wait_for.erase(service_name)
