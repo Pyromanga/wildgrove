@@ -25,18 +25,20 @@ class Task:
 
     func build() -> Node3D:
         var interactable := Node3D.new()
-        # Gruppe NICHT hier setzen – liegt auf InteractableObject selbst
-        interactable.set_script(load("res://scripts/world/objects/Interactable.gd"))  # ← objects
+        interactable.set_script(load("res://scripts/world/objects/Interactable.gd"))
         interactable.set_meta("task", self)
         target.add_child(interactable)
         return interactable
 
 
 func execute_interaction(task: Task) -> void:
-    Logger.log_debug("START execute_interaction für: " + task.label, "Builder")
-    if Kernel.states.get_state() == Kernel.states.PlayerState.BUSY:
+    # Guard: kein Spam wenn bereits BUSY
+    if not Kernel.states.is_free():
         Logger.log_debug("ABBRUCH: Spieler bereits BUSY", "Builder")
         return
+
+    Logger.log_debug("START execute_interaction für: " + task.label, "Builder")
+
     if not is_instance_valid(task.target):
         Logger.log_error("ABBRUCH: Target Instanz nicht mehr valide!", "Builder")
         return
@@ -47,7 +49,9 @@ func execute_interaction(task: Task) -> void:
     Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
     Logger.log_debug("Spieler ist jetzt BUSY", "Builder")
 
-    var hud_root: Node = Kernel.hud if Kernel.hud else get_tree().root
+    # HUD über Gruppe holen statt Kernel.hud
+    var hud_nodes = get_tree().get_nodes_in_group("hud")
+    var hud_root: Node = hud_nodes[0] if hud_nodes.size() > 0 else get_tree().root
 
     var bar: ProgressBar = Kernel.ui_factory.create_progress_bar(250.0)
     bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
