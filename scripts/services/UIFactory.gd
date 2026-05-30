@@ -102,10 +102,12 @@ func _create_action_button(
 ) -> Dictionary:
     var container := Control.new()
     container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    container.mouse_filter = Control.MOUSE_FILTER_IGNORE   # <-- HIER
 
     var btn := Button.new()
     btn.text = text
     btn.custom_minimum_size = Vector2(size, size)
+    # ... Rest unverändert ...
     btn.anchor_left   = 1.0
     btn.anchor_top    = 1.0
     btn.anchor_right  = 1.0
