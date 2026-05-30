@@ -34,25 +34,27 @@ func _process(_delta: float) -> void:
         if not _player:
             return
 
-    # Nächstes Interactable finden (Methode existiert im Player)
     var target: Node = null
     if _player.has_method("_get_closest_interactable"):
         target = _player._get_closest_interactable()
 
     var has_target = target != null
-    _interact_button.disabled = not has_target
-    _context_button.disabled = not has_target
 
-    # Stil für deaktivierte Buttons
-    if not has_target:
-        var disabled_style = StyleBoxFlat.new()
-        disabled_style.bg_color = Color(0.3, 0.3, 0.3, 0.5)
-        disabled_style.set_corner_radius_all(40)
-        _interact_button.add_theme_stylebox_override("disabled", disabled_style)
-        _context_button.add_theme_stylebox_override("disabled", disabled_style)
-    else:
+    # Nur das Aussehen ändern, aber die Buttons bleiben klickbar
+    if has_target:
+        # Normalzustand: Styles zurücksetzen (entfernt ggf. vorhandene "disabled"-Styles)
+        _interact_button.remove_theme_stylebox_override("normal")
+        _context_button.remove_theme_stylebox_override("normal")
+        # "disabled"-Style löschen, falls er noch existiert
         _interact_button.remove_theme_stylebox_override("disabled")
         _context_button.remove_theme_stylebox_override("disabled")
+    else:
+        # Grauer Look, aber Button bleibt aktiv
+        var grey_style = StyleBoxFlat.new()
+        grey_style.bg_color = Color(0.3, 0.3, 0.3, 0.5)
+        grey_style.set_corner_radius_all(40)
+        _interact_button.add_theme_stylebox_override("normal", grey_style)
+        _context_button.add_theme_stylebox_override("normal", grey_style)
 
 func update_inventory_display(items: Array) -> void:
     var text = "Inventar:\n"
