@@ -22,8 +22,8 @@ func create_hud() -> HUD:
     v_box.add_child(xp_bar)
 
     # Interact-Button unten rechts
-    var interact_btn := _create_interact_button()
-    canvas.add_child(interact_btn)
+    var interact_container := _create_interact_button()
+    canvas.add_child(interact_container)
     
     return canvas
 
