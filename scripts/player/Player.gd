@@ -23,7 +23,6 @@ func _physics_process(delta: float) -> void:
     if _touch == null:
         return
     if not Kernel.states.is_free():
-        # NEU: Bewegung während BUSY = Abbruch
         if _touch.js_vec.length() > 0.3:
             Kernel.builder.cancel_interaction()
         velocity.x = 0
@@ -61,13 +60,20 @@ func _handle_movement(touch: Node, delta: float) -> void:
         velocity.z = move_toward(velocity.z, 0, speed)
     move_and_slide()
 
-func try_interact() -> void:
-    var target = Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
-    if target:
-        if target.has_method("start_interaction"):
-            target.start_interaction()
-        elif target.has_method("interact"):
-            target.interact(self)
+func try_default_interact() -> void:
+    var target = _get_closest_interactable()
+    if target and target.has_method("start_default_interaction"):
+        target.start_default_interaction()
+
+func try_open_context_menu() -> void:
+    var target = _get_closest_interactable()
+    if target and target.has_method("get_actions"):
+        var actions = target.get_actions()
+        if actions.size() > 0:
+            Kernel.ui_factory.show_context_menu(actions)
+
+func _get_closest_interactable() -> Node3D:
+    return Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
 
 func _build_player_nodes() -> void:
     Logger.log_debug("_build_player_nodes() START", "Player")
