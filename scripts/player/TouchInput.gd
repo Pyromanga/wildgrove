@@ -1,7 +1,6 @@
 extends Node
 class_name TouchInput
 
-## --- 1. MEMBER-VARIABLEN ---
 var js_vec: Vector2    = Vector2.ZERO
 var cam_delta: Vector2 = Vector2.ZERO
 var zoom_delta: float  = 0.0
@@ -14,12 +13,11 @@ var _right_fingers: Dictionary = {}
 var _pinch_last_dist: float    = 0.0
 var _cam_last: Vector2         = Vector2.ZERO
 var _cam_finger: int           = -1
-var _right_press_pos: Dictionary = {}  # Startposition für Tap-Erkennung
+var _right_press_pos: Dictionary = {}
 
 var _js_base: ColorRect = null
 var _js_knob: ColorRect = null
 
-## --- 2. LIFECYCLE & SCHNITTSTELLEN ---
 func _ready() -> void:
     add_to_group("touch_input")
 
@@ -27,13 +25,24 @@ func register_joystick_visuals(base: ColorRect, knob: ColorRect) -> void:
     _js_base = base
     _js_knob = knob
 
+func reset() -> void:
+    js_vec = Vector2.ZERO
+    cam_delta = Vector2.ZERO
+    zoom_delta = 0.0
+    _js_finger = -1
+    _right_fingers.clear()
+    _right_press_pos.clear()
+    _cam_finger = -1
+    _pinch_last_dist = 0.0
+    if _js_base: _js_base.visible = false
+    if _js_knob: _js_knob.visible = false
+
 func _is_settings_open() -> bool:
     var nodes = get_tree().get_nodes_in_group("settings")
     if nodes.size() > 0 and nodes[0].has_method("is_settings_open"):
         return nodes[0].is_settings_open()
     return false
 
-## --- 3. INPUT-VERARBEITUNG ---
 func _input(event: InputEvent) -> void:
     if _is_settings_open():
         js_vec = Vector2.ZERO
@@ -68,7 +77,7 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
                 _update_js_visuals(_js_origin, Vector2.ZERO)
         else:
             _right_fingers[event.index] = event.position
-            _right_press_pos[event.index] = event.position  # Startpos merken
+            _right_press_pos[event.index] = event.position
             if _right_fingers.size() == 1:
                 _cam_finger = event.index
                 _cam_last = event.position
@@ -84,7 +93,6 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
             if _js_knob: _js_knob.visible = false
             _reset_js_visuals()
         if event.index in _right_fingers:
-            # Tap-Erkennung: wenig Bewegung seit Press = Interact
             var start_pos = _right_press_pos.get(event.index, event.position)
             var moved = event.position.distance_to(start_pos)
             _right_press_pos.erase(event.index)
