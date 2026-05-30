@@ -42,25 +42,32 @@ func execute_interaction(task: Task) -> void:
 	if not task.on_done.is_valid():
 		Logger.log_warn("Kein gültiger Callback für '%s' – nur BUSY-Zeit wird abgewartet." % task.label, "Builder")
 
+	# Spieler auf BUSY setzen
 	Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
 	Logger.log_debug("Spieler ist jetzt BUSY", "Builder")
 
-	# Typannotationen verhindern Parse-Fehler
+	# HUD-Root bestimmen (HUD erbt von CanvasLayer, daher als Node verwendbar)
 	var hud_root: Node = Kernel.hud if Kernel.hud else get_tree().root
-	var bar: Control = Kernel.ui_factory.create_progress_bar(250.0)
+
+	# ProgressBar erstellen (Rückgabetyp ProgressBar laut UIFactory)
+	var bar: ProgressBar = Kernel.ui_factory.create_progress_bar(250.0)
 	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	hud_root.add_child(bar)
 
+	# Tween für die Balken-Animation (jetzt sicher typisiert)
 	var tween: Tween = bar.create_tween()
 	tween.tween_property(bar, "value", 100.0, task.duration).from(0.0)
 	await tween.finished
 
+	# Balken entfernen
 	bar.queue_free()
 
+	# Callback ausführen, falls vorhanden
 	if task.on_done.is_valid():
 		Logger.log_debug("Rufe Callback auf...", "Builder")
 		task.on_done.call()
 
+	# Spieler wieder freigeben
 	Kernel.states.set_state(Kernel.states.PlayerState.FREE)
 	Logger.log_debug("Interaktion beendet, Spieler wieder FREE", "Builder")
 
