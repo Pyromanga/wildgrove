@@ -11,7 +11,7 @@ func set_state(new_state: PlayerState) -> void:
     if new_state == PlayerState.FREE:
         var touch_nodes = get_tree().get_nodes_in_group("touch_input")
         if touch_nodes.size() > 0:
-            touch_nodes[0].js_vec = Vector2.ZERO
+            touch_nodes[0].reset()
 
 func is_free() -> bool:
     return current_state == PlayerState.FREE
