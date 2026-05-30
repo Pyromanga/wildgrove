@@ -13,6 +13,15 @@ func _ready() -> void:
         Logger.log_error("Interactable: Kein 'task' Meta gefunden!", "Interactable")
 
 func _setup_detection_area() -> void:
+    var label := Label3D.new()
+    label.text = task.label
+    label.position = Vector3(0, 2.5, 0)
+    label.pixel_size = 0.01
+    label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+    label.modulate = Color(1, 1, 0)  # Gelb, gut sichtbar
+    label.visible = false
+    add_child(label)
+
     var area := Area3D.new()
     var col := CollisionShape3D.new()
     col.shape = SphereShape3D.new()
@@ -23,7 +32,13 @@ func _setup_detection_area() -> void:
     area.body_entered.connect(
         func(b: Node3D):
             if b.is_in_group("player"):
+                label.visible = true
                 Logger.log_debug(">>> SPIELER IN INTERACTIONS-REICHWEITE: " + task.label + " bei " + str(global_position), "Interactable")
+    )
+    area.body_exited.connect(
+        func(b: Node3D):
+            if b.is_in_group("player"):
+                label.visible = false
     )
 
 func start_interaction() -> void:
