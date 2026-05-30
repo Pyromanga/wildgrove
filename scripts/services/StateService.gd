@@ -8,6 +8,10 @@ func set_state(new_state: PlayerState) -> void:
     current_state = new_state
     Logger.log_debug("Player Status: " + PlayerState.keys()[new_state], "StateService")
     Kernel.events.system.state_changed.emit(new_state)
+    if new_state == PlayerState.FREE:
+        var touch_nodes = get_tree().get_nodes_in_group("touch_input")
+        if touch_nodes.size() > 0:
+            touch_nodes[0].js_vec = Vector2.ZERO
 
 func is_free() -> bool:
     return current_state == PlayerState.FREE
