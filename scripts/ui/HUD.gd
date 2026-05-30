@@ -40,9 +40,18 @@ func _process(_delta: float) -> void:
 
     var has_target = target != null
 
-    # Buttons nur deaktivieren, wenn kein Ziel – so bleiben sie immer klickbar
-    _interact_button.disabled = not has_target
-    _context_button.disabled = not has_target
+    # NIEMALS disabled setzen – nur die Optik ändern
+    if has_target:
+        # Normalzustand: ursprüngliche Styles wiederherstellen
+        _interact_button.remove_theme_stylebox_override("normal")
+        _context_button.remove_theme_stylebox_override("normal")
+    else:
+        # Grauer Look, aber Button bleibt klickbar
+        var grey_style = StyleBoxFlat.new()
+        grey_style.bg_color = Color(0.3, 0.3, 0.3, 0.6)
+        grey_style.set_corner_radius_all(_interact_button.custom_minimum_size.x / 2)
+        _interact_button.add_theme_stylebox_override("normal", grey_style)
+        _context_button.add_theme_stylebox_override("normal", grey_style)
 
 func update_inventory_display(items: Array) -> void:
     var text = "Inventar:\n"
