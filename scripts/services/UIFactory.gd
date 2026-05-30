@@ -294,7 +294,11 @@ func create_joystick_visuals() -> Array:
     base.custom_minimum_size = Vector2(180, 180)
     base.color = Color(1, 1, 1, 0.2)
     base.set_deferred("visible", false)
+    base.mouse_filter = Control.MOUSE_FILTER_IGNORE   # NEU
+
     var knob := ColorRect.new()
     knob.custom_minimum_size = Vector2(60, 60)
     knob.color = Color(1, 1, 1, 0.8)
+    knob.mouse_filter = Control.MOUSE_FILTER_IGNORE   # NEU
+
     return [base, knob]
