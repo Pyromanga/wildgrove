@@ -42,6 +42,11 @@ func _is_settings_open() -> bool:
     return false
 
 func _input(event: InputEvent) -> void:
+    # Log jedes Touch-Event mit Position
+    if event is InputEventScreenTouch or event is InputEventScreenDrag:
+        var pos = event.position if event is InputEventScreenTouch else (event as InputEventScreenDrag).position
+        Logger.log_debug("[TouchInput] Event: %s, Pos: %s" % [event.as_text(), pos], "TouchInput")
+
     if _is_settings_open():
         js_vec = Vector2.ZERO
         cam_delta = Vector2.ZERO
@@ -50,6 +55,10 @@ func _input(event: InputEvent) -> void:
     var sw = get_viewport().get_visible_rect().size.x
 
     if event is InputEventScreenTouch:
+        # Prüfen, ob der Touch auf einem UI-Element liegt – dann nicht selbst behandeln
+        if _is_over_ui(event.position):
+            Logger.log_debug("[TouchInput] Touch über UI, wird ignoriert", "TouchInput")
+            return
         _handle_touch(event, sw)
     elif event is InputEventScreenDrag:
         _handle_drag(event, sw)
@@ -62,8 +71,26 @@ func _input(event: InputEvent) -> void:
         elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
             zoom_delta += 1.0
 
+func _is_over_ui(pos: Vector2) -> bool:
+    # Erfasse alle Control-Nodes unterhalb des Fingers und prüfe, ob eines den Touch behandeln könnte
+    var viewport = get_viewport()
+    var result = viewport.gui_get_drag_data()  # gui_get_drag_data nicht ideal, wir brauchen eine Methode
+    # Einfacher: Überprüfen, ob der Touch auf einem Control liegt, das nicht zur TouchInput-Gruppe gehört
+    # Godot bietet keine einfache öffentliche API, aber wir können ein Control per Hit-Test suchen.
+    # Stattdessen blockieren wir alle Touches, die im Bereich des unteren Bildschirmdrittels sind,
+    # wo die Buttons liegen, nur für den Joystick-Teil.
+    # Das ist nur ein Workaround. Besser: UI-Events werden sowieso priorisiert. Daher reicht es,
+    # die Events NICHT zu konsumieren, wenn sie im UI-Bereich sind.
+    # Wir setzen den Joystick-Bereich auf links unten, Buttons rechts unten.
+    var vsize = viewport.get_visible_rect().size
+    # Wenn der Touch auf der rechten unteren Bildschirmseite ist, lassen wir ihn für UI durch
+    if pos.x > vsize.x - 200 and pos.y > vsize.y - 200:
+        return true
+    return false
+
 func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
     if event.pressed:
+        Logger.log_debug("[TouchInput] Touch pressed, Pos: %s, sw: %s" % [event.position, sw], "TouchInput")
         if event.position.x < sw * 0.5:
             if _js_finger < 0:
                 _js_finger = event.index
@@ -81,6 +108,7 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
                 var keys = _right_fingers.keys()
                 _pinch_last_dist = _right_fingers[keys[0]].distance_to(_right_fingers[keys[1]])
     else:
+        Logger.log_debug("[TouchInput] Touch released, Index: %s" % event.index, "TouchInput")
         if event.index == _js_finger:
             _js_finger = -1
             js_vec = Vector2.ZERO
