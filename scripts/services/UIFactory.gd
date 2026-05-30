@@ -5,10 +5,24 @@ const COLOR_BG = Color(0, 0, 0, 0.6)
 const COLOR_ACCENT = Color(0.2, 0.8, 0.3)
 
 func create_hud() -> HUD:
-    var canvas := HUD.new()
+    Logger.log_debug("[UIFactory] create_hud() START", "UIFactory")
+
+    # Prüfen, ob das HUD-Skript geladen werden kann
+    var HUDClass = load("res://scripts/ui/HUD.gd")
+    if not HUDClass:
+        Logger.log_error("[UIFactory] HUD.gd konnte nicht geladen werden!", "UIFactory")
+        return null
+
+    var canvas: HUD = HUDClass.new()
+    if not canvas:
+        Logger.log_error("[UIFactory] HUD.new() schlug fehl!", "UIFactory")
+        return null
+
     canvas.name = "HUD"
     canvas.add_to_group("hud")
+    Logger.log_debug("[UIFactory] HUD erstellt", "UIFactory")
 
+    # MarginContainer und VBox
     var margin := MarginContainer.new()
     margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     margin.add_theme_constant_override("margin_top", 50)
@@ -18,11 +32,19 @@ func create_hud() -> HUD:
     v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
     margin.add_child(v_box)
 
+    # XP-Bar
     var xp_bar = create_progress_bar()
     v_box.add_child(xp_bar)
+    Logger.log_debug("[UIFactory] XP-Bar hinzugefügt", "UIFactory")
 
-    var viewport_size = canvas.get_viewport().get_visible_rect().size
+    # Bildschirmgröße sicher ermitteln
+    var viewport = canvas.get_viewport()
+    if not viewport:
+        Logger.log_error("[UIFactory] Kein Viewport verfügbar!", "UIFactory")
+        return null
+    var viewport_size = viewport.get_visible_rect().size
     var btn_size = clamp(viewport_size.x * 0.09, 80.0, 120.0)
+    Logger.log_debug("[UIFactory] Viewport-Size: %s, btn_size: %s" % [viewport_size, btn_size], "UIFactory")
 
     # Interact-Button
     var interact_data = _create_action_button(
@@ -40,6 +62,7 @@ func create_hud() -> HUD:
     )
     var interact_btn: Button = interact_data["button"]
     canvas.add_child(interact_data["container"])
+    Logger.log_debug("[UIFactory] Interact-Button erstellt", "UIFactory")
 
     # Kontext-Button
     var context_data = _create_action_button(
@@ -57,8 +80,12 @@ func create_hud() -> HUD:
     )
     var context_btn: Button = context_data["button"]
     canvas.add_child(context_data["container"])
+    Logger.log_debug("[UIFactory] Kontext-Button erstellt", "UIFactory")
 
+    # Buttons an HUD melden
     canvas.setup_buttons(interact_btn, context_btn)
+    Logger.log_debug("[UIFactory] setup_buttons aufgerufen, create_hud() ENDE", "UIFactory")
+
     return canvas
 
 func _create_action_button(
@@ -102,7 +129,6 @@ func _create_action_button(
 
     return {"container": container, "button": btn}
 
-# show_context_menu mit Logs und ohne typisiertes Array:
 func show_context_menu(actions: Array) -> void:
     Logger.log_debug("[UIFactory] show_context_menu aufgerufen mit %d Aktionen" % actions.size(), "UIFactory")
     var existing = get_tree().get_nodes_in_group("context_menu")
@@ -162,20 +188,18 @@ func show_context_menu(actions: Array) -> void:
     )
     Logger.log_debug("[UIFactory] Kontextmenü erstellt und angezeigt", "UIFactory")
 
+# --- unveränderte Hilfsmethoden ---
 func show_popup(text: String) -> void:
     var hud_nodes = get_tree().get_nodes_in_group("hud")
     if hud_nodes.is_empty():
         return
     var hud_root = hud_nodes[0]
-
     var existing = get_tree().get_nodes_in_group("popup_message")
     for n in existing:
         n.queue_free()
-
     var container := Control.new()
     container.add_to_group("popup_message")
     container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
     var panel := PanelContainer.new()
     panel.anchor_left   = 0.5
     panel.anchor_right  = 0.5
@@ -185,23 +209,19 @@ func show_popup(text: String) -> void:
     panel.offset_right  = 200.0
     panel.offset_top    = -40.0
     panel.offset_bottom = 40.0
-
     var sb := StyleBoxFlat.new()
     sb.bg_color = Color(0, 0, 0, 0.8)
     sb.set_content_margin_all(12)
     sb.set_corner_radius_all(8)
     panel.add_theme_stylebox_override("panel", sb)
-
     var lbl := Label.new()
     lbl.text = text
     lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     lbl.add_theme_font_size_override("font_size", 18)
     panel.add_child(lbl)
-
     container.add_child(panel)
     hud_root.add_child(container)
-
     get_tree().create_timer(3.0).timeout.connect(func():
         if is_instance_valid(container):
             container.queue_free()
@@ -211,15 +231,12 @@ func create_progress_bar(width: float = 250.0) -> ProgressBar:
     var bar := ProgressBar.new()
     bar.custom_minimum_size = Vector2(width, 24)
     bar.show_percentage = false
-
     var sb_bg := StyleBoxFlat.new()
     sb_bg.bg_color = COLOR_BG
     sb_bg.set_corner_radius_all(4)
-
     var sb_fg := StyleBoxFlat.new()
     sb_fg.bg_color = COLOR_ACCENT
     sb_fg.set_corner_radius_all(4)
-
     bar.add_theme_stylebox_override("background", sb_bg)
     bar.add_theme_stylebox_override("fill", sb_fg)
     return bar
@@ -231,7 +248,6 @@ func create_label_box(text: String) -> PanelContainer:
     sb.set_content_margin_all(10)
     sb.set_corner_radius_all(6)
     pc.add_theme_stylebox_override("panel", sb)
-
     var lbl := Label.new()
     lbl.text = text
     lbl.add_theme_font_size_override("font_size", 18)
@@ -250,9 +266,7 @@ func create_joystick_visuals() -> Array:
     base.custom_minimum_size = Vector2(180, 180)
     base.color = Color(1, 1, 1, 0.2)
     base.set_deferred("visible", false)
-
     var knob := ColorRect.new()
     knob.custom_minimum_size = Vector2(60, 60)
     knob.color = Color(1, 1, 1, 0.8)
-
     return [base, knob]
