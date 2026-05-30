@@ -7,7 +7,6 @@ const COLOR_ACCENT = Color(0.2, 0.8, 0.3)
 func create_hud() -> HUD:
     Logger.log_debug("[UIFactory] create_hud() START", "UIFactory")
 
-    # Prüfen, ob das HUD-Skript geladen werden kann
     var HUDClass = load("res://scripts/ui/HUD.gd")
     if not HUDClass:
         Logger.log_error("[UIFactory] HUD.gd konnte nicht geladen werden!", "UIFactory")
@@ -22,7 +21,6 @@ func create_hud() -> HUD:
     canvas.add_to_group("hud")
     Logger.log_debug("[UIFactory] HUD erstellt", "UIFactory")
 
-    # MarginContainer und VBox
     var margin := MarginContainer.new()
     margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     margin.add_theme_constant_override("margin_top", 50)
@@ -32,23 +30,22 @@ func create_hud() -> HUD:
     v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
     margin.add_child(v_box)
 
-    # XP-Bar
     var xp_bar = create_progress_bar()
     v_box.add_child(xp_bar)
     Logger.log_debug("[UIFactory] XP-Bar hinzugefügt", "UIFactory")
 
-        # Bildschirmgröße aus den Projekteinstellungen holen (funktioniert ohne Viewport)
-    var viewport_width = ProjectSettings.get_setting("display/window/size/viewport_width", 1080)
-    var viewport_height = ProjectSettings.get_setting("display/window/size/viewport_height", 1920)
-    var viewport_size = Vector2(viewport_width, viewport_height)
-    var btn_size = clamp(viewport_size.x * 0.09, 80.0, 120.0)
-    Logger.log_debug("[UIFactory] Viewport-Size (aus Settings): %s, btn_size: %s" % [viewport_size, btn_size], "UIFactory")
+    # Bildschirmgröße für Skalierung verwenden (echte Fenstergröße)
+    var screen_size = DisplayServer.window_get_size()
+    var btn_size = clamp(screen_size.x * 0.12, 100.0, 160.0)
+    var margin_right = screen_size.x * 0.03   # 3% Abstand vom rechten Rand
+    var margin_bottom = screen_size.y * 0.02  # 2% Abstand vom unteren Rand
+    Logger.log_debug("[UIFactory] Screen-Size: %s, btn_size: %.1f" % [screen_size, btn_size], "UIFactory")
 
-    # Interact-Button
+    # Interact-Button (!) – Positionen dynamisch
     var interact_data = _create_action_button(
         "!",
         Color(0.2, 0.8, 0.3, 0.85),
-        -110.0, -110.0, -30.0, -30.0,
+        -btn_size - margin_right, -btn_size * 1.5, -margin_right, -btn_size * 0.5,
         btn_size,
         func():
             Logger.log_debug("[UIFactory] Interact-Button gedrückt!", "UIFactory")
@@ -62,11 +59,11 @@ func create_hud() -> HUD:
     canvas.add_child(interact_data["container"])
     Logger.log_debug("[UIFactory] Interact-Button erstellt", "UIFactory")
 
-    # Kontext-Button
+    # Kontext-Button (☰)
     var context_data = _create_action_button(
         "☰",
         Color(0.2, 0.5, 0.9, 0.85),
-        -200.0, -110.0, -120.0, -30.0,
+        -btn_size * 2 - margin_right * 2, -btn_size * 1.5, -btn_size - margin_right * 2, -btn_size * 0.5,
         btn_size,
         func():
             Logger.log_debug("[UIFactory] Kontext-Button gedrückt!", "UIFactory")
@@ -80,7 +77,6 @@ func create_hud() -> HUD:
     canvas.add_child(context_data["container"])
     Logger.log_debug("[UIFactory] Kontext-Button erstellt", "UIFactory")
 
-    # Buttons an HUD melden
     canvas.setup_buttons(interact_btn, context_btn)
     Logger.log_debug("[UIFactory] setup_buttons aufgerufen, create_hud() ENDE", "UIFactory")
 
