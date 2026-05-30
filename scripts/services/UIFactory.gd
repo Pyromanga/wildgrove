@@ -125,12 +125,6 @@ func _create_action_button(
     sb_pressed.set_corner_radius_all(size / 2)
     btn.add_theme_stylebox_override("pressed", sb_pressed)
 
-    # --- NEU: disabled-Style für ausgegrauten Zustand ---
-    var sb_disabled := StyleBoxFlat.new()
-    sb_disabled.bg_color = Color(0.3, 0.3, 0.3, 0.6)
-    sb_disabled.set_corner_radius_all(size / 2)
-    btn.add_theme_stylebox_override("disabled", sb_disabled)
-
     btn.add_theme_font_size_override("font_size", int(size * 0.4))
     btn.pressed.connect(callback)
     container.add_child(btn)
