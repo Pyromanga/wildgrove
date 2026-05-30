@@ -32,12 +32,20 @@ class Task:
 		target.add_child(interactable)
 		return interactable
 
-func execute_interaction(task: Task) -> void:
-    # --- CHECK 1: Existiert das Target noch? ---
+  func execute_interaction(task: Task) -> void:
+    Logger.log_debug("START execute_interaction für: " + task.label, "Builder")
+    
     if not is_instance_valid(task.target):
+        Logger.log_error("ABBRUCH: Target Instanz nicht mehr valide!", "Builder")
+        return
+
+    # Check ob Callback da ist
+    if not task.on_done.is_valid():
+        Logger.log_error("ABBRUCH: Callback (on_done) ist ungültig für " + task.label, "Builder")
         return
 
     Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
+    Logger.log_debug("Player ist jetzt BUSY", "Builder")
 
     # 1. Sicherer HUD-Zugriff
     var hud = Kernel.hud if Kernel.hud else get_tree().root
@@ -54,12 +62,18 @@ func execute_interaction(task: Task) -> void:
     await get_tree().create_timer(task.duration).timeout
 
     # 4. Aufräumen (Sicherheits-Check für Validität der Bar)
-    if is_instance_valid(bar):
-        bar.queue_free()
+    Logger.log_debug("Starte Timer/Tween für " + str(task.duration) + "s", "Builder")
 
-    # --- CHECK 2: Existiert das Target noch nach der Wartezeit? ---
-    if not is_instance_valid(task.target):
-        return
+    await get_tree().create_timer(task.duration).timeout
+    
+    Logger.log_debug("Timer abgelaufen für " + task.label, "Builder")
+
+    if task.on_done.is_valid():
+        Logger.log_debug("Rufe Callback auf...", "Builder")
+        task.on_done.call()
+    
+    Kernel.states.set_state(Kernel.states.PlayerState.FREE)
+    Logger.log_debug("Interaktion beendet, Player wieder FREE", "Builder")
 
     # 5. Korrekt eingerücktes await
     await get_tree().process_frame
