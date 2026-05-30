@@ -158,32 +158,36 @@ func show_context_menu(actions: Array) -> void:
     container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
     var panel := PanelContainer.new()
-    # Position: über dem Interact-Button, rechtsbündig
-    var screen_size = DisplayServer.window_get_size()
-    var margin_right = 30.0
-    var margin_bottom = 80.0   # Platz für die Buttons darunter
+    # Zentriert auf dem Bildschirm
+    panel.anchor_left   = 0.5
+    panel.anchor_right  = 0.5
+    panel.anchor_top    = 0.5
+    panel.anchor_bottom = 0.5
 
-    panel.anchor_left   = 1.0
-    panel.anchor_top    = 1.0
-    panel.anchor_right  = 1.0
-    panel.anchor_bottom = 1.0
-    panel.offset_left   = -220.0 - margin_right
-    panel.offset_right  = -margin_right
-    panel.offset_top    = -margin_bottom - 50.0 * actions.size() - 10
-    panel.offset_bottom = -margin_bottom
+    var menu_width  = 320.0
+    var entry_height = 56.0
+    var total_height = entry_height * actions.size() + 20  # 20 Padding
+
+    panel.offset_left   = -menu_width / 2
+    panel.offset_right  =  menu_width / 2
+    panel.offset_top    = -total_height / 2
+    panel.offset_bottom =  total_height / 2
 
     var sb := StyleBoxFlat.new()
-    sb.bg_color = Color(0, 0, 0, 0.85)
-    sb.set_corner_radius_all(8)
+    sb.bg_color = Color(0, 0, 0, 0.9)
+    sb.set_corner_radius_all(12)
+    sb.set_content_margin_all(10)
     panel.add_theme_stylebox_override("panel", sb)
 
     var vbox := VBoxContainer.new()
+    vbox.alignment = BoxContainer.ALIGNMENT_CENTER
     panel.add_child(vbox)
 
     for action in actions:
         var btn := Button.new()
         btn.text = action.label
-        btn.custom_minimum_size = Vector2(180, 42)
+        btn.custom_minimum_size = Vector2(menu_width - 20, entry_height - 6)
+        btn.add_theme_font_size_override("font_size", 20)
         var action_ref = action
         btn.pressed.connect(func():
             Logger.log_debug("[UIFactory] Kontext-Aktion gewählt: " + action_ref.label, "UIFactory")
@@ -195,7 +199,6 @@ func show_context_menu(actions: Array) -> void:
     container.add_child(panel)
     hud_root.add_child(container)
 
-    # Auto-close nach 5 Sekunden
     get_tree().create_timer(5.0).timeout.connect(func():
         if is_instance_valid(container):
             container.queue_free()
