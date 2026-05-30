@@ -27,9 +27,12 @@ func create_hud() -> HUD:
         Color(0.2, 0.8, 0.3, 0.85),
         -110.0, -110.0, -30.0, -30.0,
         func():
+            Logger.log_debug("[UIFactory] Interact-Button gedrückt!", "UIFactory")
             var players = get_tree().get_nodes_in_group("player")
             if players.size() > 0:
                 players[0].try_default_interact()
+            else:
+                Logger.log_error("[UIFactory] Kein Player gefunden!", "UIFactory")
     )
     canvas.add_child(interact_container)
 
@@ -39,9 +42,12 @@ func create_hud() -> HUD:
         Color(0.2, 0.5, 0.9, 0.85),
         -200.0, -110.0, -120.0, -30.0,
         func():
+            Logger.log_debug("[UIFactory] Kontext-Button gedrückt!", "UIFactory")
             var players = get_tree().get_nodes_in_group("player")
             if players.size() > 0:
                 players[0].try_open_context_menu()
+            else:
+                Logger.log_error("[UIFactory] Kein Player gefunden!", "UIFactory")
     )
     canvas.add_child(context_container)
 
