@@ -37,14 +37,12 @@ func create_hud() -> HUD:
     v_box.add_child(xp_bar)
     Logger.log_debug("[UIFactory] XP-Bar hinzugefügt", "UIFactory")
 
-    # Bildschirmgröße sicher ermitteln
-    var viewport = canvas.get_viewport()
-    if not viewport:
-        Logger.log_error("[UIFactory] Kein Viewport verfügbar!", "UIFactory")
-        return null
-    var viewport_size = viewport.get_visible_rect().size
+        # Bildschirmgröße aus den Projekteinstellungen holen (funktioniert ohne Viewport)
+    var viewport_width = ProjectSettings.get_setting("display/window/size/viewport_width", 1080)
+    var viewport_height = ProjectSettings.get_setting("display/window/size/viewport_height", 1920)
+    var viewport_size = Vector2(viewport_width, viewport_height)
     var btn_size = clamp(viewport_size.x * 0.09, 80.0, 120.0)
-    Logger.log_debug("[UIFactory] Viewport-Size: %s, btn_size: %s" % [viewport_size, btn_size], "UIFactory")
+    Logger.log_debug("[UIFactory] Viewport-Size (aus Settings): %s, btn_size: %s" % [viewport_size, btn_size], "UIFactory")
 
     # Interact-Button
     var interact_data = _create_action_button(
