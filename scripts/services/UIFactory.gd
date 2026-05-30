@@ -208,38 +208,53 @@ func show_popup(text: String) -> void:
     if hud_nodes.is_empty():
         return
     var hud_root = hud_nodes[0]
+
     var existing = get_tree().get_nodes_in_group("popup_message")
     for n in existing:
         n.queue_free()
+
     var container := Control.new()
     container.add_to_group("popup_message")
     container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+    # Bildschirmgröße für dynamische Position
+    var screen_size = DisplayServer.window_get_size()
+    var panel_width = 400.0
+    var panel_height = 100.0
+
     var panel := PanelContainer.new()
     panel.anchor_left   = 0.5
     panel.anchor_right  = 0.5
     panel.anchor_top    = 0.5
     panel.anchor_bottom = 0.5
-    panel.offset_left   = -200.0
-    panel.offset_right  = 200.0
-    panel.offset_top    = -40.0
-    panel.offset_bottom = 40.0
+    panel.offset_left   = -panel_width / 2
+    panel.offset_right  = panel_width / 2
+    panel.offset_top    = -panel_height / 2
+    panel.offset_bottom = panel_height / 2
+
     var sb := StyleBoxFlat.new()
-    sb.bg_color = Color(0, 0, 0, 0.8)
-    sb.set_content_margin_all(12)
+    sb.bg_color = Color(0, 0, 0, 0.85)
+    sb.set_content_margin_all(16)
     sb.set_corner_radius_all(8)
     panel.add_theme_stylebox_override("panel", sb)
+
     var lbl := Label.new()
     lbl.text = text
     lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    lbl.add_theme_font_size_override("font_size", 18)
+    lbl.add_theme_font_size_override("font_size", 20)
     panel.add_child(lbl)
+
     container.add_child(panel)
     hud_root.add_child(container)
+
+    # Auto-close nach 3 Sekunden
     get_tree().create_timer(3.0).timeout.connect(func():
         if is_instance_valid(container):
             container.queue_free()
     )
+    Logger.log_debug("[UIFactory] Popup angezeigt: " + text, "UIFactory")
 
 func create_progress_bar(width: float = 250.0) -> ProgressBar:
     var bar := ProgressBar.new()
