@@ -1,37 +1,51 @@
 extends Node3D
 class_name InteractableObject
 
-var label: String = "Interagieren"
-var duration: float = 2.0
-var xp_type: String = "none"
-var xp_amount: int = 10
+var actions: Array[InteractableAction] = []
+var default_action_id: String = ""
 
 func _ready() -> void:
     add_to_group("interactable")
     _setup_visuals()
-    
-    var built = Kernel.builder.create(self)\
-        .set_label(label)\
-        .set_duration(duration)\
-        .on_complete(_handle_completion)\
-        .build()
+    _register_actions()
+
+    for action in actions:
+        action.on_complete = func(): _handle_completion(action)
+
+    var built = Kernel.builder.build_interactable(self)
     Logger.log_debug("Kinder nach build: " + str(get_children()), "InteractableObject")
-    Logger.log_debug("InteractableObject: Child gebaut? " + str(built) + " | Label: " + label + " | Parent: " + name, "InteractableObject")
+    Logger.log_debug("InteractableObject: gebaut | Default: " + default_action_id + " | Parent: " + name, "InteractableObject")
 
-func start_interaction() -> void:
-    for child in get_children():
-        if child.has_method("start_interaction"):
-            child.start_interaction()
-            return
+func get_default_action() -> InteractableAction:
+    for a in actions:
+        if a.id == default_action_id:
+            return a
+    if actions.size() > 0:
+        return actions[0]
+    return null
 
-func _handle_completion() -> void:
-    Kernel.events.player.emit_xp(xp_type, xp_amount)
-    Kernel.inventory.add_item("log_normal", 3)
-    _on_interaction_finished()
-    queue_free()
+func get_action(id: String) -> InteractableAction:
+    for a in actions:
+        if a.id == id:
+            return a
+    return null
+
+func _handle_completion(action: InteractableAction) -> void:
+    if action.xp_type != "none" and action.xp_amount > 0:
+        Kernel.events.player.emit_xp(action.xp_type, action.xp_amount)
+    if action.inspect_text != "":
+        Kernel.ui_factory.show_popup(action.inspect_text)
+    if action.id != "inspect":
+        Kernel.inventory.add_item("log_normal", 3)
+    _on_action_finished(action)
+    if action.id != "inspect":
+        queue_free()
 
 func _setup_visuals() -> void:
     pass
 
-func _on_interaction_finished() -> void:
+func _register_actions() -> void:
+    pass
+
+func _on_action_finished(_action: InteractableAction) -> void:
     pass
