@@ -41,3 +41,25 @@ func _create_mesh(size: Vector2, color: Color) -> MeshInstance3D:
 	
 	mi.material_override = mat
 	return mi
+	
+# In Factory3D.gd hinzufügen
+func create_simple_tree(parent: Node3D) -> void:
+    # Stamm
+    var trunk = _create_3d_shape(CylinderMesh.new(), Color(0.4, 0.25, 0.1)) # Braun
+    trunk.scale = Vector3(0.3, 1.5, 0.3)
+    trunk.position.y = 0.75
+    parent.add_child(trunk)
+    
+    # Krone
+    var leaves = _create_3d_shape(SphereMesh.new(), Color(0.1, 0.5, 0.1)) # Grün
+    leaves.scale = Vector3(1.2, 1.2, 1.2)
+    leaves.position.y = 1.8
+    parent.add_child(leaves)
+
+func _create_3d_shape(mesh: Mesh, color: Color) -> MeshInstance3D:
+    var mi = MeshInstance3D.new()
+    mi.mesh = mesh
+    var mat = StandardMaterial3D.new()
+    mat.albedo_color = color
+    mi.material_override = mat
+    return mi
