@@ -27,12 +27,13 @@ func create_hud() -> HUD:
     
     return canvas
 
-func _create_interact_button() -> Button:
+func _create_interact_button() -> Control:
+    var container := Control.new()
+    container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    
     var btn := Button.new()
     btn.text = "!"
     btn.custom_minimum_size = Vector2(80, 80)
-    
-    # Unten rechts verankern
     btn.anchor_left   = 1.0
     btn.anchor_top    = 1.0
     btn.anchor_right  = 1.0
@@ -51,7 +52,6 @@ func _create_interact_button() -> Button:
     sb_pressed.bg_color = Color(0.1, 0.6, 0.2, 0.85)
     sb_pressed.set_corner_radius_all(40)
     btn.add_theme_stylebox_override("pressed", sb_pressed)
-    
     btn.add_theme_font_size_override("font_size", 32)
     
     btn.pressed.connect(func():
@@ -60,7 +60,8 @@ func _create_interact_button() -> Button:
             players[0].try_interact()
     )
     
-    return btn
+    container.add_child(btn)
+    return container
 
 func create_progress_bar(width: float = 250.0) -> ProgressBar:
     var bar := ProgressBar.new()
