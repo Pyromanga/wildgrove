@@ -34,18 +34,23 @@ func create_hud() -> HUD:
     v_box.add_child(xp_bar)
     Logger.log_debug("[UIFactory] XP-Bar hinzugefügt", "UIFactory")
 
-    # Bildschirmgröße für Skalierung verwenden (echte Fenstergröße)
+    # Echte Fenstergröße für Skalierung
     var screen_size = DisplayServer.window_get_size()
-    var btn_size = clamp(screen_size.x * 0.12, 100.0, 160.0)
-    var margin_right = screen_size.x * 0.03   # 3% Abstand vom rechten Rand
-    var margin_bottom = screen_size.y * 0.02  # 2% Abstand vom unteren Rand
+    var btn_size = clamp(screen_size.x * 0.15, 120.0, 200.0)  # 15% der Breite
+    var gap = 20.0                        # Abstand zwischen den Buttons
+    var margin_right = 30.0               # Abstand vom rechten Rand
+    var margin_bottom = 40.0              # Abstand vom unteren Rand
+
     Logger.log_debug("[UIFactory] Screen-Size: %s, btn_size: %.1f" % [screen_size, btn_size], "UIFactory")
 
-    # Interact-Button (!) – Positionen dynamisch
+    # Interact-Button (!) – direkt über dem unteren Rand, rechts
     var interact_data = _create_action_button(
         "!",
         Color(0.2, 0.8, 0.3, 0.85),
-        -btn_size - margin_right, -btn_size * 1.5, -margin_right, -btn_size * 0.5,
+        -btn_size - margin_right,                  # offset_left
+        -btn_size - margin_bottom,                 # offset_top
+        -margin_right,                             # offset_right
+        -margin_bottom,                            # offset_bottom
         btn_size,
         func():
             Logger.log_debug("[UIFactory] Interact-Button gedrückt!", "UIFactory")
@@ -59,11 +64,14 @@ func create_hud() -> HUD:
     canvas.add_child(interact_data["container"])
     Logger.log_debug("[UIFactory] Interact-Button erstellt", "UIFactory")
 
-    # Kontext-Button (☰)
+    # Kontext-Button (☰) – links daneben
     var context_data = _create_action_button(
         "☰",
         Color(0.2, 0.5, 0.9, 0.85),
-        -btn_size * 2 - margin_right * 2, -btn_size * 1.5, -btn_size - margin_right * 2, -btn_size * 0.5,
+        -2 * btn_size - gap - margin_right,        # offset_left
+        -btn_size - margin_bottom,                 # offset_top
+        -btn_size - gap - margin_right,            # offset_right
+        -margin_bottom,                            # offset_bottom
         btn_size,
         func():
             Logger.log_debug("[UIFactory] Kontext-Button gedrückt!", "UIFactory")
