@@ -16,6 +16,16 @@ func _ready() -> void:
     Logger.log_debug("Kinder nach build: " + str(get_children()), "InteractableObject")
     Logger.log_debug("InteractableObject: gebaut | Default: " + default_action_id + " | Parent: " + name, "InteractableObject")
 
+# --- NEU: Methoden, die Player direkt aufrufen kann ---
+func get_actions() -> Array:
+    return actions
+
+func start_default_interaction() -> void:
+    var action = get_default_action()
+    if action:
+        Kernel.builder.execute_action(action)
+
+# --- Bestehende Methoden unverändert ---
 func get_default_action() -> InteractableAction:
     for a in actions:
         if a.id == default_action_id:
