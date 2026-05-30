@@ -21,11 +21,10 @@ func create_hud() -> HUD:
     var xp_bar = create_progress_bar()
     v_box.add_child(xp_bar)
 
-    # Button-Größe relativ zur Bildschirmbreite (ca. 9% der Breite, mind. 80, max. 120)
     var viewport_size = canvas.get_viewport().get_visible_rect().size
     var btn_size = clamp(viewport_size.x * 0.09, 80.0, 120.0)
 
-    # Interact-Button (!)
+    # Interact-Button
     var interact_data = _create_action_button(
         "!",
         Color(0.2, 0.8, 0.3, 0.85),
@@ -42,7 +41,7 @@ func create_hud() -> HUD:
     var interact_btn: Button = interact_data["button"]
     canvas.add_child(interact_data["container"])
 
-    # Kontextmenü-Button (☰)
+    # Kontext-Button
     var context_data = _create_action_button(
         "☰",
         Color(0.2, 0.5, 0.9, 0.85),
@@ -59,9 +58,7 @@ func create_hud() -> HUD:
     var context_btn: Button = context_data["button"]
     canvas.add_child(context_data["container"])
 
-    # HUD mitteilen, welche Buttons es verwalten soll
     canvas.setup_buttons(interact_btn, context_btn)
-
     return canvas
 
 func _create_action_button(
@@ -105,9 +102,9 @@ func _create_action_button(
 
     return {"container": container, "button": btn}
 
-func show_context_menu(actions: Array[InteractableAction]) -> void:
+# show_context_menu mit Logs und ohne typisiertes Array:
+func show_context_menu(actions: Array) -> void:
     Logger.log_debug("[UIFactory] show_context_menu aufgerufen mit %d Aktionen" % actions.size(), "UIFactory")
-    # Altes Menü entfernen falls offen
     var existing = get_tree().get_nodes_in_group("context_menu")
     for n in existing:
         n.queue_free()
@@ -159,15 +156,11 @@ func show_context_menu(actions: Array[InteractableAction]) -> void:
     container.add_child(panel)
     hud_root.add_child(container)
 
-    # Auto-close nach 4 Sekunden
     get_tree().create_timer(4.0).timeout.connect(func():
         if is_instance_valid(container):
             container.queue_free()
     )
     Logger.log_debug("[UIFactory] Kontextmenü erstellt und angezeigt", "UIFactory")
-
-# Die restlichen Methoden (show_popup, create_progress_bar, create_label_box, create_button, create_joystick_visuals) bleiben unverändert!
-# ... (einfach den bestehenden Code ab show_popup anhängen)
 
 func show_popup(text: String) -> void:
     var hud_nodes = get_tree().get_nodes_in_group("hud")
