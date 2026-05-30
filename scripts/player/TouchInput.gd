@@ -13,7 +13,6 @@ var _right_fingers: Dictionary = {}
 var _pinch_last_dist: float    = 0.0
 var _cam_last: Vector2         = Vector2.ZERO
 var _cam_finger: int           = -1
-var _right_press_pos: Dictionary = {}
 
 var _js_base: ColorRect = null
 var _js_knob: ColorRect = null
@@ -31,7 +30,6 @@ func reset() -> void:
     zoom_delta = 0.0
     _js_finger = -1
     _right_fingers.clear()
-    _right_press_pos.clear()
     _cam_finger = -1
     _pinch_last_dist = 0.0
     if _js_base: _js_base.visible = false
@@ -63,8 +61,6 @@ func _input(event: InputEvent) -> void:
             zoom_delta -= 1.0
         elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
             zoom_delta += 1.0
-        elif event.button_index == MOUSE_BUTTON_LEFT:
-            _try_player_interact()
 
 func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
     if event.pressed:
@@ -77,7 +73,6 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
                 _update_js_visuals(_js_origin, Vector2.ZERO)
         else:
             _right_fingers[event.index] = event.position
-            _right_press_pos[event.index] = event.position
             if _right_fingers.size() == 1:
                 _cam_finger = event.index
                 _cam_last = event.position
@@ -93,14 +88,7 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
             if _js_knob: _js_knob.visible = false
             _reset_js_visuals()
         if event.index in _right_fingers:
-            var start_pos = _right_press_pos.get(event.index, event.position)
-            var moved = event.position.distance_to(start_pos)
-            _right_press_pos.erase(event.index)
             _right_fingers.erase(event.index)
-
-            if moved < 20.0 and _right_fingers.size() == 0:
-                _try_player_interact()
-
             if _right_fingers.size() == 1:
                 _cam_finger = _right_fingers.keys()[0]
                 _cam_last = _right_fingers[_cam_finger]
@@ -124,11 +112,6 @@ func _handle_drag(event: InputEventScreenDrag, sw: float) -> void:
         elif event.index == _cam_finger:
             cam_delta += event.position - _cam_last
             _cam_last = event.position
-
-func _try_player_interact() -> void:
-    var players = get_tree().get_nodes_in_group("player")
-    if players.size() > 0 and players[0].has_method("try_interact"):
-        players[0].try_interact()
 
 func _update_js_visuals(origin: Vector2, offset: Vector2) -> void:
     if _js_base: _js_base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
