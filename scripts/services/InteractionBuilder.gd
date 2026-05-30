@@ -34,7 +34,9 @@ class Task:
 
 func execute_interaction(task: Task) -> void:
     Logger.log_debug("START execute_interaction für: " + task.label, "Builder")
-
+    if Kernel.states.get_state() == Kernel.states.PlayerState.BUSY:
+        Logger.log_debug("ABBRUCH: Spieler bereits BUSY", "Builder")
+        return
     if not is_instance_valid(task.target):
         Logger.log_error("ABBRUCH: Target Instanz nicht mehr valide!", "Builder")
         return
