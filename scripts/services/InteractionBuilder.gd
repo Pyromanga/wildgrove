@@ -1,6 +1,8 @@
 extends ServiceBase
 class_name InteractionBuilder
 
+var _active_tween: Tween = null
+var _active_bar: ProgressBar = null
 
 class Task:
     var target: Node3D
@@ -31,8 +33,20 @@ class Task:
         return interactable
 
 
+func cancel_interaction() -> void:
+    if Kernel.states.is_free():
+        return
+    Logger.log_debug("Interaktion abgebrochen!", "Builder")
+    if _active_tween:
+        _active_tween.kill()
+        _active_tween = null
+    if _active_bar:
+        _active_bar.queue_free()
+        _active_bar = null
+    Kernel.states.set_state(Kernel.states.PlayerState.FREE)
+
+
 func execute_interaction(task: Task) -> void:
-    # Guard: kein Spam wenn bereits BUSY
     if not Kernel.states.is_free():
         Logger.log_debug("ABBRUCH: Spieler bereits BUSY", "Builder")
         return
@@ -49,17 +63,26 @@ func execute_interaction(task: Task) -> void:
     Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
     Logger.log_debug("Spieler ist jetzt BUSY", "Builder")
 
-    # HUD über Gruppe holen statt Kernel.hud
     var hud_nodes = get_tree().get_nodes_in_group("hud")
     var hud_root: Node = hud_nodes[0] if hud_nodes.size() > 0 else get_tree().root
 
     var bar: ProgressBar = Kernel.ui_factory.create_progress_bar(250.0)
     bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
     hud_root.add_child(bar)
+    _active_bar = bar
 
     var tween: Tween = bar.create_tween()
+    _active_tween = tween
     tween.tween_property(bar, "value", 100.0, task.duration).from(0.0)
     await tween.finished
+
+    _active_tween = null
+    _active_bar = null
+
+    # Wurde während await abgebrochen? Dann ist State bereits FREE
+    if Kernel.states.is_free():
+        Logger.log_debug("Interaktion wurde abgebrochen", "Builder")
+        return
 
     bar.queue_free()
 
