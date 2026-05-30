@@ -94,5 +94,6 @@ func _add_trees(world: Node3D, positions: Array) -> void:
         var tree := Node3D.new()
         tree.set_script(load("res://scripts/world/objects/OakTree.gd"))
         tree.position = positions[i]
-        world.add_child(tree)
+        world.add_child(tree)          # erst add_child, DANN group
+        tree.add_to_group("interactable")   # ← NEU
         Logger.log_debug("Baum " + str(i) + " OK bei " + str(positions[i]), "WorldFactory")
