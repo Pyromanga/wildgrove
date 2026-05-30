@@ -15,6 +15,7 @@ func _ready() -> void:
         .set_duration(duration)\
         .on_complete(_handle_completion)\
         .build()
+    Logger.log_debug("Kinder nach build: " + str(get_children()), "InteractableObject")
     Logger.log_debug("InteractableObject: Child gebaut? " + str(built) + " | Label: " + label + " | Parent: " + name, "InteractableObject")
 
 func start_interaction() -> void:
