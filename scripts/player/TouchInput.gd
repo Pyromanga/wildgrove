@@ -42,14 +42,20 @@ func _is_settings_open() -> bool:
     return false
 
 func _input(event: InputEvent) -> void:
-    if event is InputEventScreenTouch or event is InputEventScreenDrag:
-        var pos = event.position if event is InputEventScreenTouch else (event as InputEventScreenDrag).position
-        Logger.log_debug("[TouchInput] Event: %s, Pos: %s" % [event.as_text(), pos], "TouchInput")
-
     if _is_settings_open():
         js_vec = Vector2.ZERO
         cam_delta = Vector2.ZERO
         return
+
+    # Bei Touch-Events prüfen, ob der Finger auf einem UI-Element liegt
+    if event is InputEventScreenTouch and event.pressed:
+        if _is_over_ui(event.position):
+            # Event nicht für Joystick/Kamera verwenden – die UI bekommt es trotzdem
+            return
+    elif event is InputEventScreenDrag:
+        # Bei Drag nur blockieren, wenn der Finger für UI reserviert wurde (in _touch_ui_fingers)
+        if event.index in _ui_fingers:
+            return
 
     var sw = get_viewport().get_visible_rect().size.x
 
@@ -66,9 +72,34 @@ func _input(event: InputEvent) -> void:
         elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
             zoom_delta += 1.0
 
+# Neues Dictionary, um Finger-Indizes zu speichern, die auf UI-Elementen liegen
+var _ui_fingers: Dictionary = {}
+
+func _is_over_ui(pos: Vector2) -> bool:
+    # Prüft, ob an der Position ein Control (Button, Panel etc.) liegt,
+    # das nicht zum Joystick gehört. Wir verwenden get_viewport().get_mouse_position()
+    # um die Control-Liste zu bekommen – einfacher: wir fragen die GUI ab.
+    var viewport = get_viewport()
+    if viewport == null:
+        return false
+    # gui_get_drag_data() ist nicht ideal, besser: die Control-Nodes unter der Maus
+    # Godot 4 hat keine einfache Funktion, aber wir können über die Baumstruktur gehen.
+    # Workaround: Wir nehmen an, dass alles im unteren Bereich mit y > 70% des Bildschirms UI sein könnte.
+    # Besser: Wir checken, ob der Punkt innerhalb eines HUD-Controls liegt (Group "hud")
+    var hud_nodes = get_tree().get_nodes_in_group("hud")
+    for hud in hud_nodes:
+        if hud is Control:
+            var hud_control = hud as Control
+            if hud_control.get_global_rect().has_point(pos):
+                return true
+    return false
+
 func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
     if event.pressed:
-        Logger.log_debug("[TouchInput] Touch pressed, Pos: %s, sw: %s" % [event.position, sw], "TouchInput")
+        # Wenn der Touch auf UI liegt, Finger merken und nicht für Joystick nutzen
+        if _is_over_ui(event.position):
+            _ui_fingers[event.index] = true
+            return
         if event.position.x < sw * 0.5:
             if _js_finger < 0:
                 _js_finger = event.index
@@ -86,7 +117,9 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
                 var keys = _right_fingers.keys()
                 _pinch_last_dist = _right_fingers[keys[0]].distance_to(_right_fingers[keys[1]])
     else:
-        Logger.log_debug("[TouchInput] Touch released, Index: %s" % event.index, "TouchInput")
+        if _ui_fingers.has(event.index):
+            _ui_fingers.erase(event.index)
+            return
         if event.index == _js_finger:
             _js_finger = -1
             js_vec = Vector2.ZERO
@@ -102,6 +135,8 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
                 _cam_finger = -1
 
 func _handle_drag(event: InputEventScreenDrag, sw: float) -> void:
+    if _ui_fingers.has(event.index):
+        return
     if event.index == _js_finger:
         var delta = event.position - _js_origin
         var clamped = delta.limit_length(JS_RADIUS)
