@@ -61,19 +61,37 @@ func _handle_movement(touch: Node, delta: float) -> void:
     move_and_slide()
 
 func try_default_interact() -> void:
+    Logger.log_debug("[Player] try_default_interact aufgerufen", "Player")
     var target = _get_closest_interactable()
-    if target and target.has_method("start_default_interaction"):
+    if not target:
+        Logger.log_debug("[Player] Kein Interactable in Reichweite", "Player")
+        return
+    if target.has_method("start_default_interaction"):
+        Logger.log_debug("[Player] start_default_interaction auf " + target.name, "Player")
         target.start_default_interaction()
+    else:
+        Logger.log_debug("[Player] Target hat keine start_default_interaction", "Player")
 
 func try_open_context_menu() -> void:
+    Logger.log_debug("[Player] try_open_context_menu aufgerufen", "Player")
     var target = _get_closest_interactable()
-    if target and target.has_method("get_actions"):
+    if not target:
+        Logger.log_debug("[Player] Kein Interactable in Reichweite", "Player")
+        return
+    if target.has_method("get_actions"):
         var actions = target.get_actions()
+        Logger.log_debug("[Player] " + str(actions.size()) + " Aktionen gefunden", "Player")
         if actions.size() > 0:
             Kernel.ui_factory.show_context_menu(actions)
+        else:
+            Logger.log_debug("[Player] Keine Aktionen vorhanden", "Player")
+    else:
+        Logger.log_debug("[Player] Target hat keine get_actions", "Player")
 
 func _get_closest_interactable() -> Node3D:
     return Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
+
+# ... (der gesamte restliche Code aus dem bisherigen Player.gd)
 
 func _build_player_nodes() -> void:
     Logger.log_debug("_build_player_nodes() START", "Player")
