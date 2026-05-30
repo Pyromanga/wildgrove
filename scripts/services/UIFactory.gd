@@ -1,11 +1,9 @@
 extends ServiceBase
 class_name UIFactory
 
-# Design-Konstanten für ein einheitliches Look & Feel
 const COLOR_BG = Color(0, 0, 0, 0.6)
-const COLOR_ACCENT = Color(0.2, 0.8, 0.3) # Mining-Grün
+const COLOR_ACCENT = Color(0.2, 0.8, 0.3)
 
-## 1. Haupt-HUD erstellen (wird von Main.gd aufgerufen)
 func create_hud() -> HUD:
     var canvas := HUD.new()
     canvas.name = "HUD"
@@ -20,13 +18,50 @@ func create_hud() -> HUD:
     v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
     margin.add_child(v_box)
     
-    # XP-Bar als erstes HUD-Element
     var xp_bar = create_progress_bar()
     v_box.add_child(xp_bar)
+
+    # Interact-Button unten rechts
+    var interact_btn := _create_interact_button()
+    canvas.add_child(interact_btn)
     
     return canvas
 
-## 2. Fortschrittsbalken-Fabrik
+func _create_interact_button() -> Button:
+    var btn := Button.new()
+    btn.text = "!"
+    btn.custom_minimum_size = Vector2(80, 80)
+    
+    # Unten rechts verankern
+    btn.anchor_left   = 1.0
+    btn.anchor_top    = 1.0
+    btn.anchor_right  = 1.0
+    btn.anchor_bottom = 1.0
+    btn.offset_left   = -110.0
+    btn.offset_top    = -110.0
+    btn.offset_right  = -30.0
+    btn.offset_bottom = -30.0
+    
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = Color(0.2, 0.8, 0.3, 0.85)
+    sb.set_corner_radius_all(40)
+    btn.add_theme_stylebox_override("normal", sb)
+    
+    var sb_pressed := StyleBoxFlat.new()
+    sb_pressed.bg_color = Color(0.1, 0.6, 0.2, 0.85)
+    sb_pressed.set_corner_radius_all(40)
+    btn.add_theme_stylebox_override("pressed", sb_pressed)
+    
+    btn.add_theme_font_size_override("font_size", 32)
+    
+    btn.pressed.connect(func():
+        var players = btn.get_tree().get_nodes_in_group("player")
+        if players.size() > 0 and players[0].has_method("try_interact"):
+            players[0].try_interact()
+    )
+    
+    return btn
+
 func create_progress_bar(width: float = 250.0) -> ProgressBar:
     var bar := ProgressBar.new()
     bar.custom_minimum_size = Vector2(width, 24)
@@ -45,7 +80,6 @@ func create_progress_bar(width: float = 250.0) -> ProgressBar:
     
     return bar
 
-## 3. Beschriftungs-Fabrik (z.B. für Objektnamen)
 func create_label_box(text: String) -> PanelContainer:
     var pc := PanelContainer.new()
     var sb := StyleBoxFlat.new()
@@ -61,7 +95,6 @@ func create_label_box(text: String) -> PanelContainer:
     
     return pc
 
-## 4. Hilfs-Button Fabrik (für Menüs)
 func create_button(text: String, callback: Callable) -> Button:
     var btn := Button.new()
     btn.text = text
@@ -71,9 +104,9 @@ func create_button(text: String, callback: Callable) -> Button:
 
 func create_joystick_visuals() -> Array:
     var base := ColorRect.new()
-    base.custom_minimum_size = Vector2(180, 180) # 2 * JS_RADIUS
+    base.custom_minimum_size = Vector2(180, 180)
     base.color = Color(1, 1, 1, 0.2)
-    base.set_deferred("visible", false) # Erst bei Touch sichtbar machen
+    base.set_deferred("visible", false)
     
     var knob := ColorRect.new()
     knob.custom_minimum_size = Vector2(60, 60)
