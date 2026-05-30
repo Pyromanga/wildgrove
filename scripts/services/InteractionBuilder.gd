@@ -32,6 +32,7 @@ class Task:
         target.add_child(interactable)
         return interactable
 
+var _cancel_cooldown: bool = false
 
 func cancel_interaction() -> void:
     if Kernel.states.is_free():
@@ -43,14 +44,19 @@ func cancel_interaction() -> void:
     if _active_bar:
         _active_bar.queue_free()
         _active_bar = null
+    _cancel_cooldown = true
     Kernel.states.set_state(Kernel.states.PlayerState.FREE)
-
+    # Cooldown nach 0.5s aufheben
+    get_tree().create_timer(0.5).timeout.connect(func(): _cancel_cooldown = false)
 
 func execute_interaction(task: Task) -> void:
     if not Kernel.states.is_free():
         Logger.log_debug("ABBRUCH: Spieler bereits BUSY", "Builder")
         return
-
+    if _cancel_cooldown:
+        Logger.log_debug("ABBRUCH: Cancel-Cooldown aktiv", "Builder")
+        return
+        
     Logger.log_debug("START execute_interaction für: " + task.label, "Builder")
 
     if not is_instance_valid(task.target):
