@@ -152,14 +152,19 @@ func show_context_menu(actions: Array) -> void:
     container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
     var panel := PanelContainer.new()
+    # Position: über dem Interact-Button, rechtsbündig
+    var screen_size = DisplayServer.window_get_size()
+    var margin_right = 30.0
+    var margin_bottom = 80.0   # Platz für die Buttons darunter
+
     panel.anchor_left   = 1.0
     panel.anchor_top    = 1.0
     panel.anchor_right  = 1.0
     panel.anchor_bottom = 1.0
-    panel.offset_left   = -220.0
-    panel.offset_top    = -60.0 - (actions.size() * 55.0)
-    panel.offset_right  = -30.0
-    panel.offset_bottom = -120.0
+    panel.offset_left   = -220.0 - margin_right
+    panel.offset_right  = -margin_right
+    panel.offset_top    = -margin_bottom - 50.0 * actions.size() - 10
+    panel.offset_bottom = -margin_bottom
 
     var sb := StyleBoxFlat.new()
     sb.bg_color = Color(0, 0, 0, 0.85)
@@ -172,7 +177,7 @@ func show_context_menu(actions: Array) -> void:
     for action in actions:
         var btn := Button.new()
         btn.text = action.label
-        btn.custom_minimum_size = Vector2(180, 48)
+        btn.custom_minimum_size = Vector2(180, 42)
         var action_ref = action
         btn.pressed.connect(func():
             Logger.log_debug("[UIFactory] Kontext-Aktion gewählt: " + action_ref.label, "UIFactory")
@@ -184,7 +189,8 @@ func show_context_menu(actions: Array) -> void:
     container.add_child(panel)
     hud_root.add_child(container)
 
-    get_tree().create_timer(4.0).timeout.connect(func():
+    # Auto-close nach 5 Sekunden
+    get_tree().create_timer(5.0).timeout.connect(func():
         if is_instance_valid(container):
             container.queue_free()
     )
