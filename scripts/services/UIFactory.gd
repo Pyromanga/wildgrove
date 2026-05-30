@@ -21,35 +21,46 @@ func create_hud() -> HUD:
     var xp_bar = create_progress_bar()
     v_box.add_child(xp_bar)
 
+    # Button-Größe relativ zur Bildschirmbreite (ca. 9% der Breite, mind. 80, max. 120)
+    var viewport_size = canvas.get_viewport().get_visible_rect().size
+    var btn_size = clamp(viewport_size.x * 0.09, 80.0, 120.0)
+
     # Interact-Button (!)
-    var interact_container := _create_action_button(
+    var interact_data = _create_action_button(
         "!",
         Color(0.2, 0.8, 0.3, 0.85),
         -110.0, -110.0, -30.0, -30.0,
+        btn_size,
         func():
             Logger.log_debug("[UIFactory] Interact-Button gedrückt!", "UIFactory")
-            var players = get_tree().get_nodes_in_group("player")
+            var players = canvas.get_tree().get_nodes_in_group("player")
             if players.size() > 0:
                 players[0].try_default_interact()
             else:
                 Logger.log_error("[UIFactory] Kein Player gefunden!", "UIFactory")
     )
-    canvas.add_child(interact_container)
+    var interact_btn: Button = interact_data["button"]
+    canvas.add_child(interact_data["container"])
 
     # Kontextmenü-Button (☰)
-    var context_container := _create_action_button(
+    var context_data = _create_action_button(
         "☰",
         Color(0.2, 0.5, 0.9, 0.85),
         -200.0, -110.0, -120.0, -30.0,
+        btn_size,
         func():
             Logger.log_debug("[UIFactory] Kontext-Button gedrückt!", "UIFactory")
-            var players = get_tree().get_nodes_in_group("player")
+            var players = canvas.get_tree().get_nodes_in_group("player")
             if players.size() > 0:
                 players[0].try_open_context_menu()
             else:
                 Logger.log_error("[UIFactory] Kein Player gefunden!", "UIFactory")
     )
-    canvas.add_child(context_container)
+    var context_btn: Button = context_data["button"]
+    canvas.add_child(context_data["container"])
+
+    # HUD mitteilen, welche Buttons es verwalten soll
+    canvas.setup_buttons(interact_btn, context_btn)
 
     return canvas
 
@@ -60,14 +71,15 @@ func _create_action_button(
     offset_top: float,
     offset_right: float,
     offset_bottom: float,
+    size: float,
     callback: Callable
-) -> Control:
+) -> Dictionary:
     var container := Control.new()
     container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
     var btn := Button.new()
     btn.text = text
-    btn.custom_minimum_size = Vector2(80, 80)
+    btn.custom_minimum_size = Vector2(size, size)
     btn.anchor_left   = 1.0
     btn.anchor_top    = 1.0
     btn.anchor_right  = 1.0
@@ -79,20 +91,22 @@ func _create_action_button(
 
     var sb := StyleBoxFlat.new()
     sb.bg_color = color
-    sb.set_corner_radius_all(40)
+    sb.set_corner_radius_all(size / 2)
     btn.add_theme_stylebox_override("normal", sb)
 
     var sb_pressed := StyleBoxFlat.new()
     sb_pressed.bg_color = color.darkened(0.3)
-    sb_pressed.set_corner_radius_all(40)
+    sb_pressed.set_corner_radius_all(size / 2)
     btn.add_theme_stylebox_override("pressed", sb_pressed)
 
-    btn.add_theme_font_size_override("font_size", 32)
+    btn.add_theme_font_size_override("font_size", int(size * 0.4))
     btn.pressed.connect(callback)
     container.add_child(btn)
-    return container
+
+    return {"container": container, "button": btn}
 
 func show_context_menu(actions: Array[InteractableAction]) -> void:
+    Logger.log_debug("[UIFactory] show_context_menu aufgerufen mit %d Aktionen" % actions.size(), "UIFactory")
     # Altes Menü entfernen falls offen
     var existing = get_tree().get_nodes_in_group("context_menu")
     for n in existing:
@@ -100,8 +114,13 @@ func show_context_menu(actions: Array[InteractableAction]) -> void:
 
     var hud_nodes = get_tree().get_nodes_in_group("hud")
     if hud_nodes.is_empty():
+        Logger.log_error("[UIFactory] Kein HUD für Kontextmenü gefunden!", "UIFactory")
         return
     var hud_root = hud_nodes[0]
+
+    if actions.is_empty():
+        Logger.log_debug("[UIFactory] Keine Aktionen vorhanden, kein Menü", "UIFactory")
+        return
 
     var container := Control.new()
     container.add_to_group("context_menu")
@@ -131,6 +150,7 @@ func show_context_menu(actions: Array[InteractableAction]) -> void:
         btn.custom_minimum_size = Vector2(180, 48)
         var action_ref = action
         btn.pressed.connect(func():
+            Logger.log_debug("[UIFactory] Kontext-Aktion gewählt: " + action_ref.label, "UIFactory")
             container.queue_free()
             Kernel.builder.execute_action(action_ref)
         )
@@ -144,6 +164,10 @@ func show_context_menu(actions: Array[InteractableAction]) -> void:
         if is_instance_valid(container):
             container.queue_free()
     )
+    Logger.log_debug("[UIFactory] Kontextmenü erstellt und angezeigt", "UIFactory")
+
+# Die restlichen Methoden (show_popup, create_progress_bar, create_label_box, create_button, create_joystick_visuals) bleiben unverändert!
+# ... (einfach den bestehenden Code ab show_popup anhängen)
 
 func show_popup(text: String) -> void:
     var hud_nodes = get_tree().get_nodes_in_group("hud")
