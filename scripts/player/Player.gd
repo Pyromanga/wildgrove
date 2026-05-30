@@ -23,6 +23,9 @@ func _physics_process(delta: float) -> void:
     if _touch == null:
         return
     if not Kernel.states.is_free():
+        # NEU: Bewegung während BUSY = Abbruch
+        if _touch.js_vec.length() > 0.3:
+            Kernel.builder.cancel_interaction()
         velocity.x = 0
         velocity.z = 0
         move_and_slide()
