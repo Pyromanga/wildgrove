@@ -1,5 +1,5 @@
 extends ServiceBase
-class_name DebugConsole
+class_name DebugConsole2
 
 const MAX_LINES := 12
 const FONT_SIZE := 22
