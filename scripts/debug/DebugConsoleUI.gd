@@ -80,6 +80,28 @@ func _build_ui() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	add_child(_panel)
 
+  _toggle_button = Button.new()
+  _toggle_button.text = "DEBUG"
+  # Position: Unten rechts
+  _toggle_button.custom_minimum_size = Vector2(80, 40)
+  _toggle_button.anchor_left = 1.0
+  _toggle_button.anchor_top = 1.0
+  _toggle_button.anchor_right = 1.0
+  _toggle_button.anchor_bottom = 1.0
+  _toggle_button.offset_left = -100
+  _toggle_button.offset_top = -60
+  _toggle_button.offset_right = -20
+  _toggle_button.offset_bottom = -20
+    
+  # Styling (Optional: etwas transparenter Look)
+  var btn_style := StyleBoxFlat.new()
+  btn_style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
+  btn_style.set_corner_radius_all(5)
+  _toggle_button.add_theme_stylebox_override("normal", btn_style)
+    
+  _toggle_button.pressed.connect(func(): _console.toggle())
+  add_child(_toggle_button)
+    
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vbox.add_theme_constant_override("separation", 4)
