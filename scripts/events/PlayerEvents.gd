@@ -9,7 +9,7 @@ signal level_up(skill: String, new_level: int)
 signal movement_interrupted()
 signal player_died()
 signal player_respawned()
-
+signal inventory_changed(items: Array)
 func _init() -> void:
 	super._init("Events/Player")
 
@@ -32,3 +32,7 @@ func emit_player_died() -> void:
 func emit_player_respawned() -> void:
 	_log_info("Spieler respawned.")
 	player_respawned.emit()
+
+func emit_inventory_changed(items: Array) -> void:
+    _log("Inventar aktualisiert (%d Items)" % items.size())
+    inventory_changed.emit(items)
