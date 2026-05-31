@@ -1,5 +1,11 @@
 extends CharacterBody3D
 
+signal inventory_changed(items: Array)
+
+func emit_inventory_changed(items: Array) -> void:
+    _log("Inventar aktualisiert (%d Items)" % items.size())
+    inventory_changed.emit(items)
+    
 @onready var speed: float = Kernel.data.get_player_stat("speed", 6.0)
 @onready var gravity: float = Kernel.data.get_player_stat("gravity", 12.0)
 @onready var interact_range: float = Kernel.data.get_player_stat("interact_range", 4.0)
