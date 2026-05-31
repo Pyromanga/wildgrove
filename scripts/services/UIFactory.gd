@@ -84,7 +84,19 @@ func create_hud() -> HUD:
     var context_btn: Button = context_data["button"]
     canvas.add_child(context_data["container"])
     Logger.log_debug("[UIFactory] Kontext-Button erstellt", "UIFactory")
-
+    # --- Inventar-Button (Rucksack) ---
+    var inventory_data = _create_action_button(
+        "🎒",
+        Color(0.7, 0.5, 0.2, 0.85),
+        -3 * btn_size - gap * 2 - margin_right,
+        -btn_size - margin_bottom,
+        -2 * btn_size - gap * 2 - margin_right,
+        -margin_bottom,
+        btn_size,
+        func():
+            canvas.toggle_inventory()
+    )
+    canvas.add_child(inventory_data["container"])
     canvas.setup_buttons(interact_btn, context_btn)
     Logger.log_debug("[UIFactory] setup_buttons aufgerufen, create_hud() ENDE", "UIFactory")
 
