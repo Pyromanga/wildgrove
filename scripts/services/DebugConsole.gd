@@ -11,15 +11,17 @@ var _log_buffer: Array[String] = []  # kompletter Log für Copy
 var _visible := true
 
 func _ready() -> void:
-    # Nur 'self' übergeben!
-    if Kernel.has_method("register_service"):
-        Kernel.register_service(self)
+    # 1. Ruft ServiceBase._ready() auf. 
+    # Das erledigt die Registrierung beim Kernel automatisch!
+    super() 
     
+    # 2. Dein restliches UI-Setup
     _build_ui()
+    
     if is_instance_valid(Logger):
         Logger.on_log.connect(_on_log)
     
-    Logger.log_debug("DebugConsole bereit.", "DebugConsole")
+    Logger.log_debug("DebugConsole bereit (UI geladen).", "DebugConsole")
 
 func _build_ui() -> void:
     _canvas = CanvasLayer.new()
