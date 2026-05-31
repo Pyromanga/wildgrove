@@ -2,6 +2,9 @@ extends Node
 
 ## SimpleTerminal.gd - Logik & Command-Zentrale
 ## Als AutoLoad "SimpleTerminal" registrieren!
+var _panel: Control
+var _btn_toggle: Button
+var _input: LineEdit # Für das grab_focus()
 
 const MAX_ENTRIES := 500
 
