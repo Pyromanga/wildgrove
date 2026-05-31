@@ -17,6 +17,7 @@ const SERVICES: Array[Dictionary] = [
 	# Abhängig von Fundament
 	{ "name": "states",        "path": "res://scripts/services/StateService.gd",         "deps": ["savesystem"] },
 	{ "name": "debug_console", "path": "res://scripts/debug/DebugConsole.gd",         "deps": ["debug_service"] },
+	{ "name": "debug_console", "path": "res://scripts/service/DebugConsole.gd",         "deps": ["debug_service2"] },
 	{ "name": "skill_system",  "path": "res://scripts/services/SkillSystem.gd",          "deps": ["data"] },
 	{ "name": "factory3d",     "path": "res://scripts/services/Factory3D.gd",            "deps": ["data"] },
 	{ "name": "builder",       "path": "res://scripts/services/InteractionBuilder.gd",   "deps": [] },
