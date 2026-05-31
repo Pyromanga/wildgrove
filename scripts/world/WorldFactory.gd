@@ -76,16 +76,21 @@ func _add_player(world: Node3D, pos: Vector3) -> void:
 	Logger.log_debug("Player OK.", "WorldFactory")
 
 func _add_trees(world: Node3D, positions: Array) -> void:
-    for pos in positions:
-        # 1. Erstelle den visuellen Baum über die Factory3D
-        var tree_visual = Kernel.factory3d.create_simple_tree(world)
-        tree_visual.position = pos
-        tree_visual.add_to_group("interactable")
-        
-        # 2. Erstelle die Logik (Interactable)
-        # Hier brauchen wir ein Daten-Objekt (InteractableObject)
-        var tree_data = InteractableObject.new()
-        tree_data.name = "Eiche"
-        
-        # 3. Verbinde Logik mit Visuellem Node
-        Kernel.builder.build_interactable(tree_visual, tree_data)
+	# Wir laden das Skript für die Eiche
+	var OakScript = load("res://scripts/world/objects/OakTree.gd")
+	
+	for pos in positions:
+		# Wir erstellen einen einfachen Node3D als Container
+		var tree = Node3D.new()
+		tree.name = "OakTree"
+		tree.position = pos
+		
+		# Wir hängen das OakTree-Skript ran. 
+		# Dieses Skript (das du vorhin gepostet hast) erledigt den Rest:
+		# 1. Es ruft Kernel.factory3d auf für die Grafik.
+		# 2. Es erstellt die InteractableComponent.
+		tree.set_script(OakScript)
+		
+		world.add_child(tree)
+	
+	Logger.log_debug(str(positions.size()) + " Bäume via Komponenten-System erstellt.", "WorldFactory")
