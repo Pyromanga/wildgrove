@@ -118,15 +118,24 @@ func _build_player_nodes() -> void:
 	_touch = touch_node as TouchInput
 	
 func try_open_context_menu() -> void:
-    Logger.log_debug("Kontext-Menü Button gedrückt", "Player")
-    _with_closest_target(func(target: Node3D):
-        Logger.log_debug("Ziel für Kontext gefunden: " + target.name, "Player")
-        if target.has_method("get_actions"):
-            var actions: Array = target.get_actions()
-            if actions.is_empty():
-                Logger.log_debug("Ziel hat keine Aktionen", "Player")
-                return
-            Kernel.ui_factory.show_context_menu(actions)
-        else:
-            Logger.log_debug("Ziel-Node hat keine get_actions Methode", "Player")
-    )
+	Logger.log_debug("Kontext-Menü Button gedrückt", "Player")
+	_with_closest_target(func(target: Node3D):
+		Logger.log_debug("Ziel für Kontext gefunden: " + target.name, "Player")
+		
+		# SUCHE NACH DER LOGIK: Entweder auf dem Node selbst oder in den Kindern
+		var interactable_logic = target
+		if not target.has_method("get_actions"):
+			for child in target.get_children():
+				if child.has_method("get_actions"):
+					interactable_logic = child
+					break
+		
+		if interactable_logic.has_method("get_actions"):
+			var actions = interactable_logic.get_actions()
+			if actions.is_empty():
+				Logger.log_debug("Interactable hat keine Aktionen definiert", "Player")
+				return
+			Kernel.ui_factory.show_context_menu(actions)
+		else:
+			Logger.log_debug("Keine Interactable-Logik auf " + target.name + " gefunden!", "Player")
+	)
