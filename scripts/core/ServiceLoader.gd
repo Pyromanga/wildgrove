@@ -12,7 +12,7 @@ const SERVICES: Array[Dictionary] = [
 	{ "name": "events",        "path": "res://scripts/services/GameEvents.gd",           "deps": [] },
 	{ "name": "data",          "path": "res://scripts/services/DataService.gd",          "deps": [] },
 	{ "name": "utils",         "path": "res://scripts/services/Utils.gd",                "deps": [] },
-	{ "name": "debug_service", "path": "res://scripts/services/DebugService.gd",         "deps": [] },
+	{ "name": "debug_service", "path": "res://scripts/debug/DebugService.gd",         "deps": [] },
 
 	# Abhängig von Fundament
 	{ "name": "states",        "path": "res://scripts/services/StateService.gd",         "deps": ["savesystem"] },
