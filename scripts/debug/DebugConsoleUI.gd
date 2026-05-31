@@ -37,6 +37,7 @@ var _cmd_input:        LineEdit
 var _level_filter:     OptionButton
 var _category_filter:  LineEdit
 var _panel:            Panel
+var _toggle_button:    Button
 
 var _current_level_filter:    Logger.LogLevel = Logger.LogLevel.DEBUG
 var _current_category_filter: String = ""
