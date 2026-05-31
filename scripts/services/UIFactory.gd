@@ -306,15 +306,10 @@ func create_joystick_visuals() -> Array:
     knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
     return [base, knob]
     
+# In UIFactory.gd
 func setup_inventory_controller(hud: HUD) -> void:
-    if not Kernel.has_service("inventory"):
-        Logger.log_error("inventory Service fehlt für InventoryUIController", "UIFactory")
-        return
-    var inv_ui := InventoryUIController.new()
-    # UIFactory ist selbst ein Node (ServiceBase extends Node) → add_child funktioniert
-    hud.add_child(inv_ui)
-    inv_ui.setup(hud, Kernel.inventory)
-    Logger.log_debug("InventoryUIController bereit", "UIFactory")
+    var controller = InventoryUIController.new()
+    controller.setup(hud, Kernel.inventory)
     
 # In UIFactory.gd — aufgerufen von Main nach _start_game()
 # In UIFactory.gd
