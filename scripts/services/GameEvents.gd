@@ -8,6 +8,7 @@ var system := SystemEvents.new()
 class PlayerEvents extends RefCounted:
     signal xp_gained(skill: String, amt: int)
     signal level_up(skill: String, new_level: int)
+    signal movement_interrupted()  # NEU — Player bewegt sich während BUSY
 
     func emit_xp(skill: String, amt: int) -> void:
         Logger.log_debug("XP: +%d %s" % [amt, skill], "Events")
@@ -16,6 +17,10 @@ class PlayerEvents extends RefCounted:
     func emit_level_up(skill: String, new_level: int) -> void:
         Logger.log_debug("Level Up: %s → %d" % [skill, new_level], "Events")
         level_up.emit(skill, new_level)
+
+    func emit_movement_interrupted() -> void:
+        Logger.log_debug("Bewegung während Aktion erkannt", "Events")
+        movement_interrupted.emit()
 
 class WorldEvents extends RefCounted:
     signal interaction_started(label: String, duration: float)
