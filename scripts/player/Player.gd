@@ -86,11 +86,13 @@ func _get_closest_interactable() -> Node3D:
 	return Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
 
 func _with_closest_target(callback: Callable) -> void:
-	var target: Node3D = _get_closest_interactable()
-	if not target:
-		Logger.log_debug("Kein Ziel in Reichweite", "Player")
-		return
-	callback.call(target)
+    var target: Node3D = _get_closest_interactable()
+    if not target:
+        # LOG ERWEITERN:
+        var all_interactables = get_tree().get_nodes_in_group("interactable")
+        Logger.log_debug("Kein Ziel. In Gruppe 'interactable' sind: " + str(all_interactables.size()) + " Objekte.", "Player")
+        return
+    callback.call(target)
 
 func _build_player_nodes() -> void:
 	var col := CollisionShape3D.new()
