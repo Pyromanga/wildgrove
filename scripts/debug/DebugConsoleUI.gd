@@ -225,18 +225,11 @@ func _append_entry(entry: DebugConsole.LogEntry) -> void:
 # ─────────────────────────────────────────────
 
 func _input(event: InputEvent) -> void:
-	# Desktop: F1
-	if event is InputEventKey:
-		if event.pressed and event.keycode == KEY_F1:
-			Logger.log_debug("F1 gedrückt — toggle Console.", LOG_CAT)
-			_console.toggle()
-			get_viewport().set_input_as_handled()
-
-	# Mobile: 4-Finger-Tap (4 simultane Touches)
-	if event is InputEventScreenTouch and event.pressed:
-		if Input.get_touching_index_count() >= 4:
-			Logger.log_debug("4-Finger-Tap erkannt — toggle Console.", LOG_CAT)
-			_console.toggle()
+    if event is InputEventKey:
+        if event.pressed and event.keycode == KEY_F1:
+            Logger.log_debug("F1 gedrückt — toggle Console.", LOG_CAT)
+            _console.toggle()
+            get_viewport().set_input_as_handled()
 
 # ─────────────────────────────────────────────
 # Signal Handler
