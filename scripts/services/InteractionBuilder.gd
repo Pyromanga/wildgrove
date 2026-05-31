@@ -61,11 +61,11 @@ func _cleanup() -> void:
 func is_busy() -> bool:
 	return _active_action != null
 	
+# InteractionBuilder.gd (Beispiel)
 func _ready() -> void:
-func _ready() -> void:
-    if Kernel.has_method("register_service"):
-        Kernel.register_service(self)
+    super() # Ruft ServiceBase._ready() auf -> Registriert sich automatisch!
     
+    # Nur noch das zusätzliche Setup hier:
     if Kernel.events and Kernel.events.player:
         Kernel.events.player.movement_interrupted.connect(cancel_interaction)
 	
