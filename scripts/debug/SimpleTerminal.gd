@@ -22,7 +22,6 @@ func _init() -> void:
 
 func _ready() -> void:
 	_register_default_commands()
-	# UI instanziieren
 	add_child(load("res://scripts/debug/SimpleTerminalUI.gd").new())
 
 func _on_log_entry(msg: String, cat: String, lvl: int) -> void:
