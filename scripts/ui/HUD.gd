@@ -44,12 +44,13 @@ func _build_ui() -> void:
     _inventory_panel.offset_right = 200
     _inventory_panel.offset_top = -100
     _inventory_panel.offset_bottom = 100
-
+    _inventory_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _inventory_label = Label.new()
     _inventory_label.name = "InventoryLabel"
     _inventory_label.add_theme_font_size_override("font_size", 20)
     _inventory_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _inventory_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    _inventory_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _inventory_panel.add_child(_inventory_label)
     add_child(_inventory_panel)
 
