@@ -50,3 +50,17 @@ func _on_finished(_label: String) -> void:
 func _on_cancelled(_label: String) -> void:
     Logger.log_warn("Interaktion abgebrochen.", LOG_CAT)
     bar.visible = false
+    
+func create_progress_bar(width: float = 250.0) -> ProgressBar:
+    var bar := ProgressBar.new()
+    bar.custom_minimum_size = Vector2(width, 24)
+    bar.show_percentage = false
+    var sb_bg := StyleBoxFlat.new()
+    sb_bg.bg_color = COLOR_BG
+    sb_bg.set_corner_radius_all(4)
+    var sb_fg := StyleBoxFlat.new()
+    sb_fg.bg_color = COLOR_ACCENT
+    sb_fg.set_corner_radius_all(4)
+    bar.add_theme_stylebox_override("background", sb_bg)
+    bar.add_theme_stylebox_override("fill", sb_fg)
+    return bar
