@@ -19,7 +19,7 @@ const SERVICES: Array[Dictionary] = [
 	{ "name": "debug_console", "path": "res://scripts/debug/DebugConsole.gd",         "deps": ["debug_service"] },
 	{ "name": "skill_system",  "path": "res://scripts/services/SkillSystem.gd",          "deps": ["data"] },
 	{ "name": "factory3d",     "path": "res://scripts/services/Factory3D.gd",            "deps": ["data"] },
-	{ "name": "builder",       "path": "res://scripts/services/InteractionBuilder.gd",   "deps": [] },
+	{ "name": "builder",       "path": "res://scripts/interaction/InteractionBuilder.gd",   "deps": [] },
 
 	# Abhängig von mehreren
 	{ "name": "gamemanager",   "path": "res://scripts/services/GameManager.gd",          "deps": ["savesystem", "states"] },
