@@ -146,24 +146,13 @@ func _load_from_disk() -> Dictionary:
 func _write_to_disk(state: Dictionary) -> bool:
 	Logger.log_debug("_write_to_disk() — Pfad: '%s'" % SAVE_PATH, LOG_CAT)
 
-	# Diese beiden Zeilen MÜSSEN mit einem Tab eingerückt sein:
-	# Wir deklarieren json_string ZUERST und weisen dann zu. 
-	# Das erzwingt die Typisierung, bevor die Zuweisung passiert.
-	var json_string: String = ""
-	json_string = str(JSON.stringify(state, "\t"))
+	# Wir nutzen einen expliziten Cast direkt in der Zuweisung.
+	# Das 'as String' ist für Godot 4.3 bei strengen Regeln das einzig Wahre.
+	var json_string: String = JSON.stringify(state, "\t") as String
 	
-	Logger.log_debug("Serialisiert: %d Zeichen." % json_string.length(), LOG_CAT)
-	Logger.log_debug("Serialisiert: %d Zeichen." % json_string.length(), LOG_CAT)
-
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if not file:
-		Logger.log_error("Datei konnte nicht zum Schreiben geöffnet werden! Fehler: %d" % FileAccess.get_open_error(), LOG_CAT)
+	if json_string == "":
+		Logger.log_error("JSON Serialisierung ergab leeren String!", LOG_CAT)
 		return false
-
-	file.store_string(json_string)
-	file.close()
-	Logger.log_debug("Datei geschlossen. Schreiben erfolgreich.", LOG_CAT)
-	return true
 
 # ─────────────────────────────────────────────
 # Migration
