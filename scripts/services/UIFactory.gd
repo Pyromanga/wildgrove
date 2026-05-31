@@ -317,72 +317,20 @@ func setup_inventory_controller(hud: HUD) -> void:
     Logger.log_debug("InventoryUIController bereit", "UIFactory")
     
 # In UIFactory.gd — aufgerufen von Main nach _start_game()
-func setup_interaction_ui(hud: HUD) -> void:
-    if not Kernel.has_service("builder"):
-        Logger.log_error("builder Service fehlt", "UIFactory")
-        return
-    var bar := create_progress_bar(250.0)
-    bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-    bar.visible = false
-    bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    hud.add_child(bar)
+# In UIFactory.gd
 
-    Kernel.builder.interaction_started.connect(func(label: String, duration: float):
-        bar.value = 0.0
-        bar.visible = true
-        Logger.log_debug("Interaktions-Bar gestartet: " + label, "UIFactory")
-    )
-    Kernel.builder.interaction_completed.connect(func(_label: String):
-        bar.visible = false
-    )
-    Kernel.builder.interaction_cancelled.connect(func(_label: String):
-        bar.visible = false
-    )
+func setup_interaction_ui(hud: HUD) -> void:
+    # Die Factory baut nur noch das Objekt und ruft setup auf.
+    # Keine Signal-Logik mehr hier!
+    var controller = InteractionUIController.new()
+    controller.setup(hud)
 
 # UIFactory.gd — wird in setup_hud() aufgerufen
 # UIFactory.gd - Fix für den Crash beim Laden
 func setup_joystick(hud: HUD) -> void:
-    Logger.log_debug("Starte Joystick-Setup...", "UIFactory")
-    
-    # Warte kurz, falls der Player gerade erst geadded wurde
     var players = hud.get_tree().get_nodes_in_group("player")
-    if players.is_empty():
-        Logger.log_error("Joystick-Fehler: Player-Node nicht in Group 'player' gefunden!", "UIFactory")
-        return
-
-    var player = players[0]
-    var touch = player.get_node_or_null("TouchInput")
+    if players.is_empty(): return
     
-    if not touch:
-        Logger.log_error("TouchInput-Node fehlt auf dem Player!", "UIFactory")
-        return
-
-    var visuals = create_joystick_visuals()
-    var base: ColorRect = visuals[0]
-    var knob: ColorRect = visuals[1]
-    
-    hud.add_child(base)
-    hud.add_child(knob)
-
-    # Konstante für Radius (Sicherer Zugriff)
-    var js_radius = 90.0 # Standardwert falls TouchInput.JS_RADIUS nicht greifbar
-    if "JS_RADIUS" in touch: js_radius = touch.JS_RADIUS
-
-    touch.joystick_activated.connect(func(origin: Vector2):
-        base.visible = true
-        knob.visible = true
-        base.global_position = origin - Vector2(js_radius, js_radius)
-        knob.global_position = origin - knob.size * 0.5
-    , CONNECT_DEFERRED) # Deferred für Thread-Sicherheit auf Mobile
-
-    touch.joystick_moved.connect(func(origin: Vector2, offset: Vector2):
-        base.global_position = origin - Vector2(js_radius, js_radius)
-        knob.global_position = origin + offset - knob.size * 0.5
-    , CONNECT_DEFERRED)
-
-    touch.joystick_released.connect(func():
-        base.visible = false
-        knob.visible = false
-    , CONNECT_DEFERRED)
-
-    Logger.log_debug("Joystick-Visuals erfolgreich verbunden.", "UIFactory")
+    # Die Factory delegiert die Logik an den Controller
+    var controller = JoystickController.new()
+    controller.setup(hud, players[0])
