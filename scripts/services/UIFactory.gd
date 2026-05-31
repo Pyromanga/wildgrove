@@ -164,8 +164,6 @@ func _create_action_button(
 
     return {"container": container, "button": btn}
 
-# --- Rest unverändert ---
-# In UIFactory.gd
 func show_context_menu(actions: Array) -> void:
     var hud_nodes = get_tree().get_nodes_in_group("hud")
     if hud_nodes.is_empty():
@@ -213,39 +211,19 @@ func create_button(text: String, callback: Callable) -> Button:
     btn.custom_minimum_size = Vector2(150, 40)
     btn.pressed.connect(callback)
     return btn
-
-func create_joystick_visuals() -> Array:
-    var base := ColorRect.new()
-    base.custom_minimum_size = Vector2(180, 180)
-    base.color = Color(1, 1, 1, 0.2)
-    base.set_deferred("visible", false)
-    base.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    var knob := ColorRect.new()
-    knob.custom_minimum_size = Vector2(60, 60)
-    knob.color = Color(1, 1, 1, 0.8)
-    knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    return [base, knob]
     
-# In UIFactory.gd
 func setup_inventory_controller(hud: HUD) -> void:
     var controller = InventoryUIController.new()
     controller.setup(hud, Kernel.inventory)
     
-# In UIFactory.gd — aufgerufen von Main nach _start_game()
-# In UIFactory.gd
 
 func setup_interaction_ui(hud: HUD) -> void:
-    # Die Factory baut nur noch das Objekt und ruft setup auf.
-    # Keine Signal-Logik mehr hier!
     var controller = InteractionUIController.new()
     controller.setup(hud)
 
-# UIFactory.gd — wird in setup_hud() aufgerufen
-# UIFactory.gd - Fix für den Crash beim Laden
 func setup_joystick(hud: HUD) -> void:
     var players = hud.get_tree().get_nodes_in_group("player")
     if players.is_empty(): return
     
-    # Die Factory delegiert die Logik an den Controller
     var controller = JoystickController.new()
     controller.setup(hud, players[0])
