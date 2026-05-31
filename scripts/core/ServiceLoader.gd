@@ -9,7 +9,7 @@ const LOG_CAT := "ServiceLoader"
 const SERVICES: Array[Dictionary] = [
 	# Fundament — keine Abhängigkeiten
 	{ "name": "savesystem",    "path": "res://scripts/services/SaveSystem.gd",          "deps": [] },
-	{ "name": "events",        "path": "res://scripts/services/GameEvents.gd",           "deps": [] },
+	{ "name": "events",        "path": "res://scripts/events/GameEvents.gd",           "deps": [] },
 	{ "name": "data",          "path": "res://scripts/services/DataService.gd",          "deps": [] },
 	{ "name": "utils",         "path": "res://scripts/services/Utils.gd",                "deps": [] },
 	{ "name": "debug_service", "path": "res://scripts/debug/DebugService.gd",         "deps": [] },
