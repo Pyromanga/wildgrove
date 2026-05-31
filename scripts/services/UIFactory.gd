@@ -337,54 +337,49 @@ func setup_interaction_ui(hud: HUD) -> void:
     )
 
 # UIFactory.gd — wird in setup_hud() aufgerufen
+# UIFactory.gd - Fix für den Crash beim Laden
 func setup_joystick(hud: HUD) -> void:
-    # Player muss schon im Tree sein
-    var players := hud.get_tree().get_nodes_in_group("player")
-    if players.is_empty():
-        Logger.log_error("Kein Player für Joystick-Setup", "UIFactory")
-        return
-    var touch := players[0].get_node_or_null("TouchInput")
-    if not touch:
-        Logger.log_error("Kein TouchInput auf Player", "UIFactory")
-        return
-    var visuals: Array = create_joystick_visuals()
-    hud.add_child(visuals[0])
-    hud.add_child(visuals[1])
-    touch.register_joystick_visuals(visuals[0], visuals[1])
-    Logger.log_debug("Joystick registriert", "UIFactory")
+    Logger.log_debug("Starte Joystick-Setup...", "UIFactory")
     
-func setup_joystick(hud: HUD) -> void:
-    var players := hud.get_tree().get_nodes_in_group("player")
+    # Warte kurz, falls der Player gerade erst geadded wurde
+    var players = hud.get_tree().get_nodes_in_group("player")
     if players.is_empty():
-        Logger.log_error("Kein Player für Joystick-Setup", "UIFactory")
-        return
-    var touch: TouchInput = players[0].get_node_or_null("TouchInput")
-    if not touch:
-        Logger.log_error("Kein TouchInput auf Player", "UIFactory")
+        Logger.log_error("Joystick-Fehler: Player-Node nicht in Group 'player' gefunden!", "UIFactory")
         return
 
-    var visuals := create_joystick_visuals()
+    var player = players[0]
+    var touch = player.get_node_or_null("TouchInput")
+    
+    if not touch:
+        Logger.log_error("TouchInput-Node fehlt auf dem Player!", "UIFactory")
+        return
+
+    var visuals = create_joystick_visuals()
     var base: ColorRect = visuals[0]
     var knob: ColorRect = visuals[1]
+    
     hud.add_child(base)
     hud.add_child(knob)
 
-    # UI reagiert auf TouchInput-Signals — TouchInput kennt die Nodes nicht
+    # Konstante für Radius (Sicherer Zugriff)
+    var js_radius = 90.0 # Standardwert falls TouchInput.JS_RADIUS nicht greifbar
+    if "JS_RADIUS" in touch: js_radius = touch.JS_RADIUS
+
     touch.joystick_activated.connect(func(origin: Vector2):
         base.visible = true
         knob.visible = true
-        base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
+        base.global_position = origin - Vector2(js_radius, js_radius)
         knob.global_position = origin - knob.size * 0.5
-    )
+    , CONNECT_DEFERRED) # Deferred für Thread-Sicherheit auf Mobile
+
     touch.joystick_moved.connect(func(origin: Vector2, offset: Vector2):
-        base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
+        base.global_position = origin - Vector2(js_radius, js_radius)
         knob.global_position = origin + offset - knob.size * 0.5
-    )
+    , CONNECT_DEFERRED)
+
     touch.joystick_released.connect(func():
         base.visible = false
         knob.visible = false
-    )
+    , CONNECT_DEFERRED)
 
-    # JS_RADIUS für Positionierung hier definiert, nicht in TouchInput
-    const JS_RADIUS := TouchInput.JS_RADIUS
-    Logger.log_debug("Joystick-Visuals registriert", "UIFactory")
+    Logger.log_debug("Joystick-Visuals erfolgreich verbunden.", "UIFactory")
