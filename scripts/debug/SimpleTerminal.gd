@@ -32,3 +32,8 @@ func toggle() -> void:
 func clear() -> void:
 	entries.clear()
 	updated.emit()
+	
+# In SimpleTerminal.gd ergänzen:
+
+func get_all_text() -> String:
+	return "\n".join(entries)
