@@ -2,6 +2,9 @@ extends ServiceBase
 class_name DebugService
 
 func _ready() -> void:
-    if Kernel.has_method("register_service"):
-        Kernel.register_service(self)
-    Logger.log_debug("DebugService bereit.", "DebugService")
+	# Ruft ServiceBase._ready() auf -> Erledigt die Registrierung automatisch!
+	super()
+	
+	# Da ServiceBase bereits ein "registriert" Log ausgibt, 
+	# kannst du hier zusätzliche Infos loggen oder es ganz weglassen.
+	Logger.log_debug("DebugService bereit.", "DebugService")
