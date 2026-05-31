@@ -3,26 +3,9 @@ class_name DebugConsoleUI
 
 ## DebugConsoleUI.gd
 ## Das visuelle Overlay. Wird von DebugService als Child zur Szene hinzugefügt.
-## Struktur:
-##   CanvasLayer (layer=128, damit es immer über allem liegt)
-##     Panel (halbtransparent, obere Hälfte des Screens)
-##       VBoxContainer
-##         HBoxContainer (Toolbar)
-##           Label "WildGrove Debug"
-##           OptionButton (Level-Filter)
-##           LineEdit (Kategorie-Filter)
-##           Button "Copy"
-##           Button "Clear"
-##           Button "✕"
-##         ScrollContainer
-##           RichTextLabel (Log-Output)
-##         HBoxContainer (Input)
-##           LineEdit (Command-Input)
-##           Button "Run"
 
 const LOG_CAT := "DebugConsoleUI"
 
-# Farben pro Log-Level für BBCode
 const LEVEL_COLORS := {
 	Logger.LogLevel.DEBUG: "gray",
 	Logger.LogLevel.INFO:  "white",
@@ -42,33 +25,20 @@ var _toggle_button:    Button
 var _current_level_filter:    Logger.LogLevel = Logger.LogLevel.DEBUG
 var _current_category_filter: String = ""
 
-# ─────────────────────────────────────────────
-# Setup — wird von DebugService aufgerufen
-# ─────────────────────────────────────────────
-
 func setup(console: DebugConsole) -> void:
 	Logger.log_debug("setup() — baue UI auf...", LOG_CAT)
 	_console = console
-	layer = 128  # Über allem
+	layer = 128
 
 	_build_ui()
 	_connect_signals()
-
-	# Initialen Log-Inhalt laden
 	_rebuild_log()
-
-	# Erstmal versteckt
 	_panel.visible = false
 	Logger.log_debug("UI aufgebaut und versteckt.", LOG_CAT)
-
-# ─────────────────────────────────────────────
-# UI Builder (rein per Code, keine .tscn nötig)
-# ─────────────────────────────────────────────
 
 func _build_ui() -> void:
 	Logger.log_debug("_build_ui()...", LOG_CAT)
 
-	# Halbtransparentes Panel — obere 55% des Screens
 	_panel = Panel.new()
 	_panel.name = "DebugPanel"
 	_panel.anchor_right  = 1.0
@@ -80,34 +50,29 @@ func _build_ui() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	add_child(_panel)
 
-  _toggle_button = Button.new()
-  _toggle_button.text = "DEBUG"
-  # Position: Unten rechts
-  _toggle_button.custom_minimum_size = Vector2(80, 40)
-  _toggle_button.anchor_left = 1.0
-  _toggle_button.anchor_top = 1.0
-  _toggle_button.anchor_right = 1.0
-  _toggle_button.anchor_bottom = 1.0
-  _toggle_button.offset_left = -100
-  _toggle_button.offset_top = -60
-  _toggle_button.offset_right = -20
-  _toggle_button.offset_bottom = -20
-    
-  # Styling (Optional: etwas transparenter Look)
-  var btn_style := StyleBoxFlat.new()
-  btn_style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
-  btn_style.set_corner_radius_all(5)
-  _toggle_button.add_theme_stylebox_override("normal", btn_style)
-    
-  _toggle_button.pressed.connect(func(): _console.toggle())
-  add_child(_toggle_button)
-    
+	_toggle_button = Button.new()
+	_toggle_button.text = "DEBUG"
+	_toggle_button.custom_minimum_size = Vector2(80, 40)
+	_toggle_button.anchor_left   = 1.0
+	_toggle_button.anchor_top    = 1.0
+	_toggle_button.anchor_right  = 1.0
+	_toggle_button.anchor_bottom = 1.0
+	_toggle_button.offset_left   = -100
+	_toggle_button.offset_top    = -60
+	_toggle_button.offset_right  = -20
+	_toggle_button.offset_bottom = -20
+	var btn_style := StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.1, 0.1, 0.1, 0.7)
+	btn_style.set_corner_radius_all(5)
+	_toggle_button.add_theme_stylebox_override("normal", btn_style)
+	_toggle_button.pressed.connect(func(): _console.toggle())
+	add_child(_toggle_button)
+
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vbox.add_theme_constant_override("separation", 4)
 	_panel.add_child(vbox)
 
-	# Toolbar
 	var toolbar := HBoxContainer.new()
 	toolbar.custom_minimum_size.y = 36
 	toolbar.add_theme_constant_override("separation", 8)
@@ -119,39 +84,33 @@ func _build_ui() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(title)
 
-	# Level-Filter Dropdown
 	_level_filter = OptionButton.new()
 	_level_filter.custom_minimum_size.x = 90
 	for lvl_name in Logger.LogLevel.keys():
 		_level_filter.add_item(lvl_name)
-	_level_filter.selected = 0  # DEBUG
+	_level_filter.selected = 0
 	toolbar.add_child(_level_filter)
 
-	# Kategorie-Filter
 	_category_filter = LineEdit.new()
 	_category_filter.placeholder_text = "Kategorie..."
 	_category_filter.custom_minimum_size.x = 120
 	toolbar.add_child(_category_filter)
 
-	# Copy-Button
 	var copy_btn := Button.new()
 	copy_btn.text = "Copy"
 	copy_btn.pressed.connect(_on_copy_pressed)
 	toolbar.add_child(copy_btn)
 
-	# Clear-Button
 	var clear_btn := Button.new()
 	clear_btn.text = "Clear"
 	clear_btn.pressed.connect(_on_clear_pressed)
 	toolbar.add_child(clear_btn)
 
-	# Schließen-Button
 	var close_btn := Button.new()
 	close_btn.text = "✕"
 	close_btn.pressed.connect(_on_close_pressed)
 	toolbar.add_child(close_btn)
 
-	# ScrollContainer + RichTextLabel für Log
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -165,7 +124,6 @@ func _build_ui() -> void:
 	_log_output.add_theme_font_size_override("normal_font_size", 11)
 	_scroll.add_child(_log_output)
 
-	# Command-Input
 	var input_row := HBoxContainer.new()
 	input_row.custom_minimum_size.y = 32
 	input_row.add_theme_constant_override("separation", 4)
@@ -197,10 +155,6 @@ func _connect_signals() -> void:
 	_category_filter.text_changed.connect(_on_category_filter_changed)
 	Logger.log_debug("Signals verbunden.", LOG_CAT)
 
-# ─────────────────────────────────────────────
-# Log Rendering
-# ─────────────────────────────────────────────
-
 func _rebuild_log() -> void:
 	Logger.log_debug("_rebuild_log() — filtere und rendere alle Einträge...", LOG_CAT)
 	_log_output.clear()
@@ -220,20 +174,12 @@ func _append_entry(entry: DebugConsole.LogEntry) -> void:
 	]
 	_log_output.append_text(line)
 
-# ─────────────────────────────────────────────
-# Input — F1 oder Tipp-Geste zum Togglen
-# ─────────────────────────────────────────────
-
 func _input(event: InputEvent) -> void:
-    if event is InputEventKey:
-        if event.pressed and event.keycode == KEY_F1:
-            Logger.log_debug("F1 gedrückt — toggle Console.", LOG_CAT)
-            _console.toggle()
-            get_viewport().set_input_as_handled()
-
-# ─────────────────────────────────────────────
-# Signal Handler
-# ─────────────────────────────────────────────
+	if event is InputEventKey:
+		if event.pressed and event.keycode == KEY_F1:
+			Logger.log_debug("F1 gedrückt — toggle Console.", LOG_CAT)
+			_console.toggle()
+			get_viewport().set_input_as_handled()
 
 func _on_entry_added(entry: DebugConsole.LogEntry) -> void:
 	if entry.level < _current_level_filter:
