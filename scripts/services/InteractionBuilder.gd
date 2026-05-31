@@ -62,18 +62,12 @@ func is_busy() -> bool:
 	return _active_action != null
 	
 func _ready() -> void:
-	# 1. Registrierung beim Kernel (Essentiell!)
-	if has_method("register"):
-		register() 
-	else:
-		# Falls ServiceBase keine register-Methode hat:
-		Kernel.register_service("builder", self)
-	
-	# 2. Signale verbinden
-	if Kernel.events and Kernel.events.player:
-		Kernel.events.player.movement_interrupted.connect(cancel_interaction)
-	
-	Logger.log_debug("InteractionBuilder registriert und bereit.", "Builder")
+func _ready() -> void:
+    if Kernel.has_method("register_service"):
+        Kernel.register_service(self)
+    
+    if Kernel.events and Kernel.events.player:
+        Kernel.events.player.movement_interrupted.connect(cancel_interaction)
 	
 func build_interactable(target: Node3D, data: InteractableObject) -> Interactable:
 	# FIX: target muss ein Node3D sein (z.B. der Baum), data ist die Resource
