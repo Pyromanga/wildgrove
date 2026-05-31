@@ -10,6 +10,7 @@ signal movement_interrupted()
 signal player_died()
 signal player_respawned()
 signal inventory_changed(items: Array)
+
 func _init() -> void:
 	super._init("Events/Player")
 
