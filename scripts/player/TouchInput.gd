@@ -41,7 +41,7 @@ func _is_settings_open() -> bool:
         return nodes[0].is_settings_open()
     return false
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
     if _is_settings_open():
         js_vec = Vector2.ZERO
         cam_delta = Vector2.ZERO
