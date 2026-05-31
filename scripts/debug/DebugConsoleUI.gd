@@ -211,7 +211,7 @@ func _input(event: InputEvent) -> void:
 
 	# Mobile: 4-Finger-Tap (4 simultane Touches)
 	if event is InputEventScreenTouch and event.pressed:
-		if Input.get_touch_count() >= 4:
+		if Input.get_touching_index_count() >= 4:
 			Logger.log_debug("4-Finger-Tap erkannt — toggle Console.", LOG_CAT)
 			_console.toggle()
 
