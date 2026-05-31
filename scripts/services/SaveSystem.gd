@@ -146,7 +146,7 @@ func _load_from_disk() -> Dictionary:
 func _write_to_disk(state: Dictionary) -> bool:
 	Logger.log_debug("_write_to_disk() — Pfad: '%s'" % SAVE_PATH, LOG_CAT)
 
-	var json_string: String = JSON.stringify(state, "\t")  # Pretty-Print für Debugging
+	var json_string: String = JSON.stringify(state, "\t")
 	Logger.log_debug("Serialisiert: %d Zeichen." % json_string.length(), LOG_CAT)
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -175,11 +175,11 @@ func _migrate_if_needed(state: Dictionary) -> Dictionary:
 
 	# Migrations-Chain: v0 → v1 → v2 → ...
 	if version < 1:
-		state = _migrate_v0_to_v1(state)
+		state = _migrate_v0_to_v1(state) as Dictionary
 
 	# Hier später weitere Migrationen anfügen:
 	# if version < 2:
-	#     state = _migrate_v1_to_v2(state)
+	#     state = _migrate_v1_to_v2(state) as Dictionary
 
 	Logger.log_info("Migration abgeschlossen. Neuer Stand: v%d" % state.get("version", -1), LOG_CAT)
 	return state
