@@ -69,17 +69,11 @@ func _handle_movement(touch: Node, delta: float) -> void:
 
 func try_default_interact() -> void:
 	_with_closest_target(func(target: Node3D):
-		var logic = target
-		if not target.has_method("start_default_interaction"):
-			for child in target.get_children():
-				if child.has_method("start_default_interaction"):
-					logic = child
-					break
-		
-		if logic.has_method("start_default_interaction"):
-			logic.start_default_interaction()
+		# target ist jetzt die InteractableComponent!
+		if target.has_method("start_default_interaction"):
+			target.start_default_interaction()
 		else:
-			Logger.log_debug("Keine Standard-Aktion auf " + target.name, "Player")
+			Logger.log_error("Target in Gruppe 'interactable' hat keine Start-Methode!", "Player")
 	)
 
 func _get_closest_interactable() -> Node3D:
