@@ -146,8 +146,11 @@ func _load_from_disk() -> Dictionary:
 func _write_to_disk(state: Dictionary) -> bool:
 	Logger.log_debug("_write_to_disk() — Pfad: '%s'" % SAVE_PATH, LOG_CAT)
 
-  var json_raw: Variant = JSON.stringify(state, "\t")
-  var json_string: String = str(json_raw)
+	# Diese beiden Zeilen MÜSSEN mit einem Tab eingerückt sein:
+	var json_raw: Variant = JSON.stringify(state, "\t")
+	var json_string: String = str(json_raw)
+	
+	Logger.log_debug("Serialisiert: %d Zeichen." % json_string.length(), LOG_CAT)
 	Logger.log_debug("Serialisiert: %d Zeichen." % json_string.length(), LOG_CAT)
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
