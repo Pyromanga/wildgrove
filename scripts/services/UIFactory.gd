@@ -335,3 +335,20 @@ func setup_interaction_ui(hud: HUD) -> void:
     Kernel.builder.interaction_cancelled.connect(func(_label: String):
         bar.visible = false
     )
+
+# UIFactory.gd — wird in setup_hud() aufgerufen
+func setup_joystick(hud: HUD) -> void:
+    # Player muss schon im Tree sein
+    var players := hud.get_tree().get_nodes_in_group("player")
+    if players.is_empty():
+        Logger.log_error("Kein Player für Joystick-Setup", "UIFactory")
+        return
+    var touch := players[0].get_node_or_null("TouchInput")
+    if not touch:
+        Logger.log_error("Kein TouchInput auf Player", "UIFactory")
+        return
+    var visuals: Array = create_joystick_visuals()
+    hud.add_child(visuals[0])
+    hud.add_child(visuals[1])
+    touch.register_joystick_visuals(visuals[0], visuals[1])
+    Logger.log_debug("Joystick registriert", "UIFactory")
