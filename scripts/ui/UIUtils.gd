@@ -1,4 +1,3 @@
-extends ServiceBase
 class_name UIUtils
 
 const COLOR_BG = Color(0, 0, 0, 0.6)
