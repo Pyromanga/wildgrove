@@ -75,3 +75,11 @@ func build_interactable(target: Node3D, data: InteractableObject) -> Interactabl
 	target.add_child(node)
 	node.setup(data)
 	return node
+	
+func build_interactable(target: Node3D, data: InteractableObject) -> Interactable:
+    var node: Interactable = Interactable.new()
+    node.name = "InteractableLogic" # Name geben für Debugging
+    target.add_child(node)
+    node.setup(data)
+    node.add_to_group("interactable") # <--- DAS HIER FEHLTE VERMUTLICH!
+    return node
