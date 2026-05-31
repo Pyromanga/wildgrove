@@ -78,9 +78,12 @@ func create_hud() -> HUD:
         -margin_bottom,
         btn_size,
         func():
-            var players = canvas.get_tree().get_nodes_in_group("player")
-            if players.size() > 0:
-                players[0].try_default_interact()
+          Logger.log_debug("Interact-Button geklickt", "UIFactory")
+          var p = get_tree().get_first_node_in_group("player")
+          if p and p.has_method("try_default_interact"):
+            p.try_default_interact()
+          else:
+            Logger.log_error("Player nicht gefunden oder Methode fehlt!", "UIFactory")
     )
     canvas.add_child(interact_data["container"])
 
