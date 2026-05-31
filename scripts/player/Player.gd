@@ -1,6 +1,5 @@
 extends CharacterBody3D
 
-# Explizite Typisierung statt Inferenz, um den Compiler zu beruhigen
 @onready var speed: float = Kernel.data.get_player_stat("speed", 6.0)
 @onready var gravity: float = Kernel.data.get_player_stat("gravity", 12.0)
 @onready var interact_range: float = Kernel.data.get_player_stat("interact_range", 4.0)
@@ -11,7 +10,7 @@ var _target_pitch: float = deg_to_rad(-35.0)
 
 var _spring_arm: SpringArm3D
 var _mesh: MeshInstance3D
-var _touch: TouchInput # Das muss als class_name in TouchInput.gd stehen!
+var _touch: TouchInput 
 
 func _ready() -> void:
 	add_to_group("player")
@@ -33,7 +32,6 @@ func _physics_process(delta: float) -> void:
 	_handle_movement(_touch, delta)
 
 func _handle_camera(touch: TouchInput, delta: float) -> void:
-	# FIX: Explizite Typen statt :=
 	var c_delta: Vector2 = touch.cam_delta
 	touch.cam_delta = Vector2.ZERO
 	var z_delta: float = touch.zoom_delta
@@ -51,16 +49,13 @@ func _handle_camera(touch: TouchInput, delta: float) -> void:
 	_spring_arm.spring_length = lerp(_spring_arm.spring_length, _target_zoom, 5.0 * delta)
 
 func _handle_movement(touch: Node, delta: float) -> void:
-	# FIX: Expliziter Typ für den Joystick-Vektor
 	var input: Vector2 = touch.js_vec
-	
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	else:
 		velocity.y = 0
 		
 	if input.length() > 0.1:
-		# FIX: Expliziter Typ für move_dir
 		var move_dir: Vector3 = Kernel.utils.calculate_move_direction(_spring_arm, input)
 		velocity.x = move_dir.x * speed
 		velocity.z = move_dir.z * speed
@@ -70,12 +65,21 @@ func _handle_movement(touch: Node, delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0, speed)
 	move_and_slide()
 
-# --- Restliche Methoden bleiben gleich, achte auf saubere Typen bei Callbacks ---
+# --- Interaktions-Logik ---
+
+func try_default_interact() -> void:
+	_with_closest_target(func(target: Node3D):
+		if target.has_method("start_default_interaction"):
+			target.start_default_interaction()
+	)
+
+func _get_closest_interactable() -> Node3D:
+	return Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
 
 func _with_closest_target(callback: Callable) -> void:
 	var target: Node3D = _get_closest_interactable()
 	if not target:
-		Logger.log_debug("Kein Interactable in Reichweite", "Player")
+		Logger.log_debug("Kein Ziel in Reichweite", "Player")
 		return
 	callback.call(target)
 
@@ -86,21 +90,12 @@ func _build_player_nodes() -> void:
 	add_child(col)
 
 	_mesh = MeshInstance3D.new()
-	var cm := CapsuleMesh.new()
-	cm.radius = 0.4
-	cm.height = 1.8
-	_mesh.mesh = cm
-	
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(1.0, 0.4, 0.1)
-	_mesh.material_override = mat
+	_mesh.mesh = CapsuleMesh.new()
 	_mesh.position.y = 1.0
 	add_child(_mesh)
 
 	_spring_arm = SpringArm3D.new()
 	_spring_arm.position = Vector3(0, 1.6, 0)
-	_spring_arm.spring_length = _target_zoom
-	_spring_arm.add_excluded_object(get_rid())
 	add_child(_spring_arm)
 
 	var cam := Camera3D.new()
@@ -109,7 +104,6 @@ func _build_player_nodes() -> void:
 
 	var touch_node := Node.new()
 	touch_node.name = "TouchInput"
-	# WICHTIG: Wenn TouchInput.gd einen Fehler hat, crashed das hier!
 	touch_node.set_script(load("res://scripts/player/TouchInput.gd"))
 	add_child(touch_node)
 	_touch = touch_node as TouchInput
