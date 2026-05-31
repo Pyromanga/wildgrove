@@ -96,6 +96,7 @@ func create_hud() -> HUD:
         func():
             canvas.toggle_inventory()
     )
+    inventory_data["container"].mouse_filter = Control.MOUSE_FILTER_IGNORE
     canvas.add_child(inventory_data["container"])
     canvas.setup_buttons(interact_btn, context_btn)
     Logger.log_debug("[UIFactory] setup_buttons aufgerufen, create_hud() ENDE", "UIFactory")
