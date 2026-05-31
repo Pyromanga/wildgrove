@@ -24,13 +24,15 @@ func register_service(node: Node) -> void:
 func _get(property):
 	if services.has(property):
 		return services[property]
+	Logger.log_error("Property-Zugriff fehlgeschlagen: " + str(property), "Kernel")
 	return null
 
-## Holt einen Service. Nützlich, wenn man sichergehen will, dass er existiert
 func get_service(service_name: String) -> Node:
-	return services.get(service_name.to_lower())
+	var s = services.get(service_name.to_lower())
+  if not s:
+    Logger.log_error("Service nicht gefunden: " + service_name, "Kernel")
+  return s
 
-## Hilfsmethode, um zu prüfen, ob ein Service schon da ist
 func has_service(service_name: String) -> bool:
 	return services.has(service_name.to_lower())
 
