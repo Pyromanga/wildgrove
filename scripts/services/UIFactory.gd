@@ -165,59 +165,14 @@ func _create_action_button(
     return {"container": container, "button": btn}
 
 # --- Rest unverändert ---
+# In UIFactory.gd
 func show_context_menu(actions: Array) -> void:
-    var existing = get_tree().get_nodes_in_group("context_menu")
-    for n in existing:
-        n.queue_free()
     var hud_nodes = get_tree().get_nodes_in_group("hud")
     if hud_nodes.is_empty():
-        Logger.log_error("Kein HUD für Kontextmenü!", "UIFactory")
+        Logger.log_error("Kein HUD für Kontextmenü gefunden!", "UIFactory")
         return
-    if actions.is_empty():
-        return
-    var hud_root = hud_nodes[0]
-    var container := Control.new()
-    container.add_to_group("context_menu")
-    container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-    var panel := PanelContainer.new()
-    panel.anchor_left   = 0.5
-    panel.anchor_right  = 0.5
-    panel.anchor_top    = 0.5
-    panel.anchor_bottom = 0.5
-    var menu_width  = 320.0
-    var entry_height = 56.0
-    var total_height = entry_height * actions.size() + 20
-    panel.offset_left   = -menu_width / 2
-    panel.offset_right  =  menu_width / 2
-    panel.offset_top    = -total_height / 2
-    panel.offset_bottom =  total_height / 2
-    var sb := StyleBoxFlat.new()
-    sb.bg_color = Color(0, 0, 0, 0.9)
-    sb.set_corner_radius_all(12)
-    sb.set_content_margin_all(10)
-    panel.add_theme_stylebox_override("panel", sb)
-    var vbox := VBoxContainer.new()
-    vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-    panel.add_child(vbox)
-    for action in actions:
-        var btn := Button.new()
-        btn.text = action.label
-        btn.custom_minimum_size = Vector2(menu_width - 20, entry_height - 6)
-        btn.add_theme_font_size_override("font_size", 20)
-        var action_ref = action
-        btn.pressed.connect(func():
-            container.queue_free()
-            Kernel.builder.execute_action(action_ref)
-        )
-        vbox.add_child(btn)
-    container.add_child(panel)
-    hud_root.add_child(container)
-    get_tree().create_timer(5.0).timeout.connect(func():
-        if is_instance_valid(container):
-            container.queue_free()
-    )
+        
+    ContextMenuController.new().show(hud_nodes[0], actions)
 
 func show_popup(text: String) -> void:
     var hud_nodes = get_tree().get_nodes_in_group("hud")
