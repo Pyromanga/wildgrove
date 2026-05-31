@@ -11,13 +11,11 @@ var _log_buffer: Array[String] = []  # kompletter Log für Copy
 var _visible := true
 
 func _ready() -> void:
-    # Erst registrieren, damit der Kernel weiß, dass wir da sind
+    # Nur 'self' übergeben!
     if Kernel.has_method("register_service"):
-        Kernel.register_service("debug_console", self)
+        Kernel.register_service(self)
     
     _build_ui()
-    
-    # Sicherstellen, dass Logger existiert
     if is_instance_valid(Logger):
         Logger.on_log.connect(_on_log)
     
