@@ -90,3 +90,14 @@ func _register_default_commands() -> void:
 		if gm and gm.has_method("get_state_name"):
 			Logger.log_info("GameState: " + gm.get_state_name(), "CMD")
 	, "Zeigt den GameManager-Status")
+	
+func _on_toggled(v: bool) -> void:
+    _panel.visible = v
+    # SEHR WICHTIG: Wenn zu, darf das Terminal keine Maus-Events mehr prüfen
+    if v:
+        _panel.mouse_filter = Control.MOUSE_FILTER_STOP
+        _input.grab_focus()
+    else:
+        _panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    
+    _btn_toggle.text = "CLOSE" if v else "LOG"
