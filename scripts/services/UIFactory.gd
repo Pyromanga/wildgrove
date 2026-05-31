@@ -29,7 +29,7 @@ func create_hud() -> HUD:
     var v_box := VBoxContainer.new()
     v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
     margin.add_child(v_box)
-
+    margin.mouse_filter = Control.MOUSE_FILTER_IGNORE   # verhindert Blockade
     var xp_bar = create_progress_bar()
     v_box.add_child(xp_bar)
     Logger.log_debug("[UIFactory] XP-Bar hinzugefügt", "UIFactory")
