@@ -7,8 +7,9 @@ var duration: float = 0.0
 var xp_type: String = "none"
 var xp_amount: int = 0
 var inspect_text: String = ""
+var drops: Dictionary = {}  # { "item_id": quantity } — leer = kein Drop
 var on_complete: Callable
 
 func _init(p_id: String, p_label: String) -> void:
-    id = p_id
+    id    = p_id
     label = p_label
