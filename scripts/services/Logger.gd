@@ -1,30 +1,32 @@
 extends Node
 
-signal on_log(msg: String)
+## Zentraler Logger für das gesamte Projekt.
+## Erlaubt Kategorisierung und später das Filtern in der Dev-Konsole.
 
-func _init() -> void:
-    print("[Logger] Initialisiert (Pre-Ready)")
+signal on_log(message: String, category: String, level: LogLevel)
 
-func log_debug(msg: String, context: String = "System") -> void:
-    var time := Time.get_ticks_msec()
-    var line := "[%d] [%s] %s" % [time, context, msg]
-    print(line)
-    on_log.emit(line)
+enum LogLevel { DEBUG, INFO, WARN, ERROR }
 
-func log_error(msg: String, context: String = "System") -> void:
-    var time := Time.get_ticks_msec()
-    var line := "[%d] [ERROR] [%s] %s" % [time, context, msg]
-    print(line)
-    on_log.emit(line)
+func log_debug(msg: String, cat: String = "General") -> void:
+	_print_log(msg, cat, LogLevel.DEBUG)
 
-    var stack := get_stack()
-    for i in stack.size():
-        var frame: Dictionary = stack[i]
-        var frame_line := "  #%d %s:%d @ %s()" % [
-            i,
-            frame.get("source", "?"),
-            frame.get("line", 0),
-            frame.get("function", "?")
-        ]
-        print(frame_line)
-        on_log.emit(frame_line)
+func log_info(msg: String, cat: String = "General") -> void:
+	_print_log(msg, cat, LogLevel.INFO)
+
+func log_warn(msg: String, cat: String = "General") -> void:
+	_print_log(msg, cat, LogLevel.WARN)
+
+func log_error(msg: String, cat: String = "General") -> void:
+	_print_log(msg, cat, LogLevel.ERROR)
+	push_error("[%s] %s" % [cat, msg])
+
+func _print_log(msg: String, cat: String, level: LogLevel) -> void:
+	var time = Time.get_time_string_from_system()
+	var level_name = LogLevel.keys()[level]
+	var formatted = "[%s] [%s] [%s] %s" % [time, level_name, cat, msg]
+	
+	# In Standard-Konsole ausgeben
+	print(formatted)
+	
+	# Signal für In-Game Konsole
+	on_log.emit(formatted, cat, level)
