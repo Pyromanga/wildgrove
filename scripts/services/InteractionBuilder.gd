@@ -64,3 +64,9 @@ func is_busy() -> bool:
 func _ready() -> void:
     super()  # ServiceBase.register
     Kernel.events.player.movement_interrupted.connect(cancel_interaction)
+    
+func build_interactable(target: InteractableObject) -> Interactable:
+    var node := Interactable.new()
+    target.add_child(node)
+    node.setup(target)  # explizit statt Meta
+    return node
