@@ -60,3 +60,7 @@ func _cleanup() -> void:
 
 func is_busy() -> bool:
     return _active_action != null
+    
+func _ready() -> void:
+    super()  # ServiceBase.register
+    Kernel.events.player.movement_interrupted.connect(cancel_interaction)
