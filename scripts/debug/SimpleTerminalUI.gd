@@ -1,79 +1,92 @@
-extends CanvasLayer
-class_name SimpleTerminalUI
+extends Node
 
-var _panel: Panel
-var _output: RichTextLabel
-var _input: LineEdit
-var _btn_toggle: Button
+## SimpleTerminal.gd - Logik & Command-Zentrale
+## Als AutoLoad "SimpleTerminal" registrieren!
+
+const MAX_ENTRIES := 500
+
+signal entry_added(entry: LogEntry)
+signal toggled(visible: bool)
+
+class LogEntry:
+	var timestamp: String
+	var level: Logger.LogLevel
+	var category: String
+	var message: String
+	var formatted: String
+
+	func _init(ts: String, lvl: Logger.LogLevel, cat: String, msg: String) -> void:
+		timestamp = ts
+		level = lvl
+		category = cat
+		message = msg
+		formatted = "[%s] [%s] [%s] %s" % [ts, Logger.LogLevel.keys()[lvl], cat, msg]
+
+var entries: Array[LogEntry] = []
+var is_visible: bool = false
+var _commands: Dictionary = {}
+
+func _init() -> void:
+	# Verbindet sich sofort mit dem globalen Logger
+	if Logger.has_signal("on_log"):
+		Logger.on_log.connect(_on_log_entry)
 
 func _ready() -> void:
-	layer = 128
-	_setup_ui()
+	_register_default_commands()
+	# Erstellt die UI automatisch als Kind von sich selbst
+	var ui = SimpleTerminalUI.new()
+	add_child(ui)
+
+func _on_log_entry(msg: String, cat: String, lvl: Logger.LogLevel) -> void:
+	var time = Time.get_time_string_from_system()
+	var entry = LogEntry.new(time, lvl, cat, msg)
+	entries.append(entry)
 	
-	var logic = get_parent()
-	logic.toggled.connect(_on_toggled)
-	logic.entry_added.connect(_on_entry_added)
-	_on_toggled(logic.is_visible)
+	if entries.size() > MAX_ENTRIES:
+		entries.pop_front()
+	
+	entry_added.emit(entry)
 
-func _setup_ui() -> void:
-	# Floating Button (Groß & Mobil-freundlich)
-	_btn_toggle = Button.new()
-	_btn_toggle.text = "LOG"
-	_btn_toggle.custom_minimum_size = Vector2(140, 80)
-	_btn_toggle.anchor_left = 1.0; _btn_toggle.anchor_top = 1.0
-	_btn_toggle.anchor_right = 1.0; _btn_toggle.anchor_bottom = 1.0
-	_btn_toggle.offset_left = -160; _btn_toggle.offset_top = -100
-	_btn_toggle.pressed.connect(func(): get_parent().toggle())
-	add_child(_btn_toggle)
+func toggle() -> void:
+	is_visible = not is_visible
+	toggled.emit(is_visible)
 
-	# Panel
-	_panel = Panel.new()
-	_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_panel.offset_bottom = -110
-	add_child(_panel)
+func get_all_text() -> String:
+	var lines: PackedStringArray = []
+	for e in entries:
+		lines.append(e.formatted)
+	return "\n".join(lines)
 
-	var vbox = VBoxContainer.new()
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_panel.add_child(vbox)
+func register_command(cmd: String, callable: Callable, description: String = "") -> void:
+	_commands[cmd.to_lower()] = { "fn": callable, "desc": description }
 
-	# Toolbar
-	var toolbar = HBoxContainer.new()
-	vbox.add_child(toolbar)
+func execute(raw_input: String) -> void:
+	var trimmed = raw_input.strip_edges()
+	if trimmed.is_empty(): return
+	
+	Logger.log_info("> " + trimmed, "CMD")
+	var parts = trimmed.split(" ", false)
+	var cmd = parts[0].to_lower()
+	var args = parts.slice(1)
 
-	var btn_copy = Button.new()
-	btn_copy.text = " COPY ALL "
-	btn_copy.custom_minimum_size.y = 60
-	btn_copy.pressed.connect(func(): DisplayServer.clipboard_set(get_parent().get_all_text()))
-	toolbar.add_child(btn_copy)
+	if _commands.has(cmd):
+		_commands[cmd]["fn"].call(args)
+	else:
+		Logger.log_warn("Unbekannter Befehl: " + cmd, "CMD")
 
-	# Output
-	_output = RichTextLabel.new()
-	_output.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_output.bbcode_enabled = true
-	_output.scroll_following = true
-	vbox.add_child(_output)
+func _register_default_commands() -> void:
+	register_command("help", func(_args):
+		for c in _commands:
+			Logger.log_info("%-15s %s" % [c, _commands[c]["desc"]], "HELP")
+	, "Zeigt alle Befehle")
+	
+	register_command("clear", func(_args):
+		entries.clear()
+		entry_added.emit(null)
+	, "Leert das Terminal")
 
-	# Command Input
-	_input = LineEdit.new()
-	_input.custom_minimum_size.y = 70
-	_input.placeholder_text = "Befehl eingeben..."
-	_input.text_submitted.connect(_on_submit)
-	vbox.add_child(_input)
-
-func _on_submit(txt: String) -> void:
-	get_parent().execute(txt)
-	_input.clear()
-
-func _on_toggled(v: bool) -> void:
-	_panel.visible = v
-	_btn_toggle.text = "CLOSE" if v else "LOG"
-	if v: 
-		_input.grab_focus()
-		_output.text = get_parent().get_all_text()
-
-func _on_entry_added(entry) -> void:
-	if entry == null: # Clear-Event
-		_output.text = ""
-		return
-	if _panel.visible:
-		_output.append_text(entry.formatted + "\n")
+	register_command("state", func(_args):
+		var gm = get_node_or_null("/root/Main/gamemanager")
+		if gm and gm.has_method("get_state_name"):
+			Logger.log_info("GameState: " + gm.get_state_name(), "CMD")
+	, "Zeigt den GameManager-Status")
