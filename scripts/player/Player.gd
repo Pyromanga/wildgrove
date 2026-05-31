@@ -32,17 +32,21 @@ func _physics_process(delta: float) -> void:
     _handle_camera(_touch, delta)
     _handle_movement(_touch, delta)
 
-func _handle_camera(touch: Node, delta: float) -> void:
-    if touch.cam_delta != Vector2.ZERO:
-        _target_yaw -= touch.cam_delta.x * 0.006
-        _target_pitch = clamp(_target_pitch - touch.cam_delta.y * 0.005, deg_to_rad(-75), deg_to_rad(0))
-        touch.cam_delta = Vector2.ZERO
-    if touch.zoom_delta != 0:
-        _target_zoom = clamp(_target_zoom + touch.zoom_delta, 3.0, 15.0)
-        touch.zoom_delta = 0
-    _spring_arm.rotation.y = lerp_angle(_spring_arm.rotation.y, _target_yaw, 10.0 * delta)
-    _spring_arm.rotation.x = lerp(_spring_arm.rotation.x, _target_pitch, 10.0 * delta)
-    _spring_arm.spring_length = lerp(_spring_arm.spring_length, _target_zoom, 5.0 * delta)
+func _handle_camera(touch: TouchInput, delta: float) -> void:
+    var c_delta := touch.cam_delta
+    touch.cam_delta = Vector2.ZERO   # bleibt — expliziter Consume
+    var z_delta := touch.zoom_delta
+    touch.zoom_delta = 0.0
+
+    if c_delta != Vector2.ZERO:
+        _target_yaw   -= c_delta.x * 0.006
+        _target_pitch  = clamp(_target_pitch - c_delta.y * 0.005, deg_to_rad(-75), deg_to_rad(0))
+    if z_delta != 0.0:
+        _target_zoom = clamp(_target_zoom + z_delta, 3.0, 15.0)
+
+    _spring_arm.rotation.y    = lerp_angle(_spring_arm.rotation.y, _target_yaw,   10.0 * delta)
+    _spring_arm.rotation.x    = lerp(_spring_arm.rotation.x,       _target_pitch, 10.0 * delta)
+    _spring_arm.spring_length = lerp(_spring_arm.spring_length,     _target_zoom,  5.0 * delta)
 
 func _handle_movement(touch: Node, delta: float) -> void:
     var input := touch.js_vec
