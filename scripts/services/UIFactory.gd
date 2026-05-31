@@ -352,3 +352,39 @@ func setup_joystick(hud: HUD) -> void:
     hud.add_child(visuals[1])
     touch.register_joystick_visuals(visuals[0], visuals[1])
     Logger.log_debug("Joystick registriert", "UIFactory")
+    
+func setup_joystick(hud: HUD) -> void:
+    var players := hud.get_tree().get_nodes_in_group("player")
+    if players.is_empty():
+        Logger.log_error("Kein Player für Joystick-Setup", "UIFactory")
+        return
+    var touch: TouchInput = players[0].get_node_or_null("TouchInput")
+    if not touch:
+        Logger.log_error("Kein TouchInput auf Player", "UIFactory")
+        return
+
+    var visuals := create_joystick_visuals()
+    var base: ColorRect = visuals[0]
+    var knob: ColorRect = visuals[1]
+    hud.add_child(base)
+    hud.add_child(knob)
+
+    # UI reagiert auf TouchInput-Signals — TouchInput kennt die Nodes nicht
+    touch.joystick_activated.connect(func(origin: Vector2):
+        base.visible = true
+        knob.visible = true
+        base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
+        knob.global_position = origin - knob.size * 0.5
+    )
+    touch.joystick_moved.connect(func(origin: Vector2, offset: Vector2):
+        base.global_position = origin - Vector2(JS_RADIUS, JS_RADIUS)
+        knob.global_position = origin + offset - knob.size * 0.5
+    )
+    touch.joystick_released.connect(func():
+        base.visible = false
+        knob.visible = false
+    )
+
+    # JS_RADIUS für Positionierung hier definiert, nicht in TouchInput
+    const JS_RADIUS := TouchInput.JS_RADIUS
+    Logger.log_debug("Joystick-Visuals registriert", "UIFactory")
