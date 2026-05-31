@@ -13,18 +13,18 @@ var _mesh: MeshInstance3D
 var _touch: TouchInput
 
 func _ready() -> void:
-    Logger.log_debug("Player _ready() start", "Player")
     add_to_group("player")
     _build_player_nodes()
     position = Vector3(0, 1.5, 0)
-    Logger.log_debug("Player _ready() fertig, touch: " + str(_touch), "Player")
+    Logger.log_debug("Player bereit", "Player")
 
 func _physics_process(delta: float) -> void:
     if _touch == null:
         return
     if not Kernel.states.is_free():
         if _touch.js_vec.length() > 0.3:
-            Kernel.builder.cancel_interaction()
+            # Event statt direkter Kopplung — Builder hört selbst zu
+            Kernel.events.player.emit_movement_interrupted()
         velocity.x = 0
         velocity.z = 0
         move_and_slide()
@@ -45,13 +45,13 @@ func _handle_camera(touch: Node, delta: float) -> void:
     _spring_arm.spring_length = lerp(_spring_arm.spring_length, _target_zoom, 5.0 * delta)
 
 func _handle_movement(touch: Node, delta: float) -> void:
-    var input = touch.js_vec
+    var input := touch.js_vec
     if not is_on_floor():
         velocity.y -= gravity * delta
     else:
         velocity.y = 0
     if input.length() > 0.1:
-        var move_dir = Kernel.utils.calculate_move_direction(_spring_arm, input)
+        var move_dir := Kernel.utils.calculate_move_direction(_spring_arm, input)
         velocity.x = move_dir.x * speed
         velocity.z = move_dir.z * speed
         _mesh.rotation.y = lerp_angle(_mesh.rotation.y, atan2(move_dir.x, move_dir.z), 10.0 * delta)
@@ -61,41 +61,34 @@ func _handle_movement(touch: Node, delta: float) -> void:
     move_and_slide()
 
 func try_default_interact() -> void:
-    Logger.log_debug("[Player] try_default_interact aufgerufen", "Player")
-    var target = _get_closest_interactable()
-    if not target:
-        Logger.log_debug("[Player] Kein Interactable in Reichweite", "Player")
-        return
-    if target.has_method("start_default_interaction"):
-        Logger.log_debug("[Player] start_default_interaction auf " + target.name, "Player")
-        target.start_default_interaction()
-    else:
-        Logger.log_debug("[Player] Target hat keine start_default_interaction", "Player")
+    _with_closest_target(func(target: Node3D):
+        if target.has_method("start_default_interaction"):
+            target.start_default_interaction()
+        else:
+            Logger.log_debug("Kein start_default_interaction auf: " + target.name, "Player")
+    )
 
 func try_open_context_menu() -> void:
-    Logger.log_debug("[Player] try_open_context_menu aufgerufen", "Player")
-    var target = _get_closest_interactable()
-    if not target:
-        Logger.log_debug("[Player] Kein Interactable in Reichweite", "Player")
-        return
-    if target.has_method("get_actions"):
-        var actions = target.get_actions()
-        Logger.log_debug("[Player] " + str(actions.size()) + " Aktionen gefunden", "Player")
-        if actions.size() > 0:
-            Kernel.ui_factory.show_context_menu(actions)
+    _with_closest_target(func(target: Node3D):
+        if target.has_method("get_actions"):
+            var actions: Array = target.get_actions()
+            if actions.size() > 0:
+                Kernel.ui_factory.show_context_menu(actions)
         else:
-            Logger.log_debug("[Player] Keine Aktionen vorhanden", "Player")
-    else:
-        Logger.log_debug("[Player] Target hat keine get_actions", "Player")
+            Logger.log_debug("Kein get_actions auf: " + target.name, "Player")
+    )
 
 func _get_closest_interactable() -> Node3D:
     return Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
 
-# ... (der gesamte restliche Code aus dem bisherigen Player.gd)
+func _with_closest_target(callback: Callable) -> void:
+    var target := _get_closest_interactable()
+    if not target:
+        Logger.log_debug("Kein Interactable in Reichweite", "Player")
+        return
+    callback.call(target)
 
 func _build_player_nodes() -> void:
-    Logger.log_debug("_build_player_nodes() START", "Player")
-
     var col := CollisionShape3D.new()
     col.shape = CapsuleShape3D.new()
     col.position.y = 1.0
@@ -127,31 +120,3 @@ func _build_player_nodes() -> void:
     touch_node.set_script(load("res://scripts/player/TouchInput.gd"))
     add_child(touch_node)
     _touch = touch_node as TouchInput
-
-    call_deferred("_setup_joystick_visuals")
-    Logger.log_debug("_build_player_nodes() ENDE", "Player")
-
-func _setup_joystick_visuals() -> void:
-    Logger.log_debug("_setup_joystick_visuals() start", "Player")
-    var hud_nodes := get_tree().get_nodes_in_group("hud")
-    Logger.log_debug("HUD nodes: " + str(hud_nodes.size()), "Player")
-    if hud_nodes.is_empty():
-        Logger.log_error("Kein HUD gefunden!", "Player")
-        get_tree().node_added.connect(_on_node_added)
-        return
-    _attach_joystick_to_hud(hud_nodes[0])
-
-func _on_node_added(node: Node) -> void:
-    if node.is_in_group("hud"):
-        get_tree().node_added.disconnect(_on_node_added)
-        _attach_joystick_to_hud(node)
-
-func _attach_joystick_to_hud(hud: Node) -> void:
-    Logger.log_debug("_attach_joystick_to_hud() start", "Player")
-    var visuals: Array = Kernel.ui_factory.create_joystick_visuals()
-    var base: ColorRect = visuals[0]
-    var knob: ColorRect = visuals[1]
-    hud.add_child(base)
-    hud.add_child(knob)
-    _touch.register_joystick_visuals(base, knob)
-    Logger.log_debug("Joystick registriert!", "Player")
