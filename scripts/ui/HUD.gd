@@ -24,6 +24,7 @@ func _build_ui() -> void:
     var v_box := VBoxContainer.new()
     v_box.alignment = BoxContainer.ALIGNMENT_BEGIN
     margin.add_child(v_box)
+    margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
     # XP-Bar wird von UIFactory eingefügt – Platzhalter
     var xp_bar_placeholder = Control.new()
