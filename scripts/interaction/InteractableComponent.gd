@@ -41,8 +41,15 @@ func _setup_detection() -> void:
 	area.add_child(col)
 	add_child(area)
 	
-	area.body_entered.connect(func(b): if b.is_in_group("player"): _label.visible = true)
-	area.body_exited.connect(func(b): if b.is_in_group("player"): _label.visible = false)
+	# Lambdas brauchen einen klaren Body für if-Statements
+	area.body_entered.connect(func(b): 
+		if b.is_in_group("player"): 
+			_label.visible = true
+	)
+	area.body_exited.connect(func(b): 
+		if b.is_in_group("player"): 
+			_label.visible = false
+	)
 
 # --- Das Gehirn der Interaktion ---
 
