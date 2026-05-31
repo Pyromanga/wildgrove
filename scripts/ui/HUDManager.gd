@@ -13,7 +13,9 @@ func setup(hud: CanvasLayer) -> void:
     interact_ctrl = InteractionUIController.new()
     interact_ctrl.setup(hud)
     
-    # ... usw.
+    context_ctrl = ContextMenuController.new()
+    context_ctrl.setup(hud)
+    
     Logger.log_debug("HUDManager: Alle UI-Controller bereit", "HUDManager")
 
 func toggle_inventory() -> void:
