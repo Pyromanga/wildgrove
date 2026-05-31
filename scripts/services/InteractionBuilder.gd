@@ -1,70 +1,62 @@
 extends ServiceBase
 class_name InteractionBuilder
 
-var _active_tween: Tween = null
-var _active_bar: ProgressBar = null
-var _cancel_cooldown: bool = false
+signal interaction_started(label: String, duration: float)
+signal interaction_completed(label: String)
+signal interaction_cancelled(label: String)
 
-func build_interactable(target: InteractableObject) -> Node3D:
-    var node := Node3D.new()
-    node.set_script(load("res://scripts/world/objects/Interactable.gd"))
-    node.set_meta("target", target)
-    target.add_child(node)
-    return node
+var _active_action: InteractableAction = null
+var _active_tween: Tween = null
 
 func execute_action(action: InteractableAction) -> void:
     if not Kernel.states.is_free():
-        Logger.log_debug("ABBRUCH: Spieler bereits BUSY", "Builder")
+        Logger.log_debug("Abbruch: Spieler BUSY", "Builder")
         return
-    if _cancel_cooldown:
-        Logger.log_debug("ABBRUCH: Cancel-Cooldown aktiv", "Builder")
+    if _active_action != null:
+        Logger.log_debug("Abbruch: Aktion bereits aktiv", "Builder")
         return
 
-    Logger.log_debug("START execute_action: " + action.label, "Builder")
+    Logger.log_debug("Starte: " + action.label, "Builder")
+    _active_action = action
     Kernel.states.set_state(Kernel.states.PlayerState.BUSY)
+    interaction_started.emit(action.label, action.duration)
 
-    var hud_nodes = get_tree().get_nodes_in_group("hud")
-    var hud_root: Node = hud_nodes[0] if hud_nodes.size() > 0 else get_tree().root
+    # Tween auf einem stabilen Node (dem Service selbst)
+    _active_tween = create_tween()
+    # Dummy-Property tweenen — wir brauchen nur das finished-Signal
+    var _progress := [0.0]
+    _active_tween.tween_method(func(v: float): _progress[0] = v, 0.0, 1.0, action.duration)
+    _active_tween.finished.connect(_on_tween_finished)
 
-    var bar: ProgressBar = Kernel.ui_factory.create_progress_bar(250.0)
-    bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-    hud_root.add_child(bar)
-    _active_bar = bar
+func _on_tween_finished() -> void:
+    if _active_action == null:
+        return  # wurde gecancelt während tween lief
 
-    var tween: Tween = bar.create_tween()
-    _active_tween = tween
-    tween.tween_property(bar, "value", 100.0, action.duration).from(0.0)
-    await tween.finished
+    var completed_action := _active_action
+    _cleanup()
 
-    _active_tween = null
-    _active_bar = null
+    Logger.log_debug("Abgeschlossen: " + completed_action.label, "Builder")
+    interaction_completed.emit(completed_action.label)
 
-    if Kernel.states.is_free():
-        Logger.log_debug("Interaktion wurde abgebrochen", "Builder")
-        return
-
-    bar.queue_free()
-
-    if action.on_complete.is_valid():
-        Logger.log_debug("Rufe Callback auf: " + action.label, "Builder")
-        action.on_complete.call()
+    if completed_action.on_complete.is_valid():
+        completed_action.on_complete.call()
 
     Kernel.states.set_state(Kernel.states.PlayerState.FREE)
-    Logger.log_debug("Aktion beendet, Spieler FREE", "Builder")
 
 func cancel_interaction() -> void:
-    if Kernel.states.is_free():
+    if _active_action == null:
         return
-    Logger.log_debug("Interaktion abgebrochen!", "Builder")
+    Logger.log_debug("Abgebrochen: " + _active_action.label, "Builder")
+    var cancelled_label := _active_action.label
+    _cleanup()
+    interaction_cancelled.emit(cancelled_label)
+    Kernel.states.set_state(Kernel.states.PlayerState.FREE)
+
+func _cleanup() -> void:
     if _active_tween:
         _active_tween.kill()
         _active_tween = null
-    if _active_bar:
-        _active_bar.queue_free()
-        _active_bar = null
-    _cancel_cooldown = true
-    Kernel.states.set_state(Kernel.states.PlayerState.FREE)
-    get_tree().create_timer(0.5).timeout.connect(func(): _cancel_cooldown = false)
+    _active_action = null
 
-func is_interactable(node: Node) -> bool:
-    return node.is_in_group("interactable")
+func is_busy() -> bool:
+    return _active_action != null
