@@ -312,3 +312,26 @@ func setup_inventory_controller(hud: HUD) -> void:
     hud.add_child(inv_ui)
     inv_ui.setup(hud, Kernel.inventory)
     Logger.log_debug("InventoryUIController bereit", "UIFactory")
+    
+# In UIFactory.gd — aufgerufen von Main nach _start_game()
+func setup_interaction_ui(hud: HUD) -> void:
+    if not Kernel.has_service("builder"):
+        Logger.log_error("builder Service fehlt", "UIFactory")
+        return
+    var bar := create_progress_bar(250.0)
+    bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+    bar.visible = false
+    bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hud.add_child(bar)
+
+    Kernel.builder.interaction_started.connect(func(label: String, duration: float):
+        bar.value = 0.0
+        bar.visible = true
+        Logger.log_debug("Interaktions-Bar gestartet: " + label, "UIFactory")
+    )
+    Kernel.builder.interaction_completed.connect(func(_label: String):
+        bar.visible = false
+    )
+    Kernel.builder.interaction_cancelled.connect(func(_label: String):
+        bar.visible = false
+    )
