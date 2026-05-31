@@ -119,3 +119,48 @@ func setup(hud: HUD) -> void:
     canvas.setup_buttons(interact_data["button"], context_data["button"])
     Logger.log_debug("create_hud() ENDE", "UIFactory")
     return canvas
+    
+func _create_action_button(
+    text: String,
+    color: Color,
+    offset_left: float,
+    offset_top: float,
+    offset_right: float,
+    offset_bottom: float,
+    size: float,
+    callback: Callable
+) -> Dictionary:
+    # Container ist IGNORE – er hat keine eigene Fläche die Klicks frisst
+    var container := Control.new()
+    container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+    var btn := Button.new()
+    btn.text = text
+    btn.custom_minimum_size = Vector2(size, size)
+    btn.anchor_left   = 1.0
+    btn.anchor_top    = 1.0
+    btn.anchor_right  = 1.0
+    btn.anchor_bottom = 1.0
+    btn.offset_left   = offset_left
+    btn.offset_top    = offset_top
+    btn.offset_right  = offset_right
+    btn.offset_bottom = offset_bottom
+    # STOP: der Button selbst fängt seinen eigenen Bereich
+    btn.mouse_filter = Control.MOUSE_FILTER_STOP
+
+    var sb := StyleBoxFlat.new()
+    sb.bg_color = color
+    sb.set_corner_radius_all(size / 2)
+    btn.add_theme_stylebox_override("normal", sb)
+
+    var sb_pressed := StyleBoxFlat.new()
+    sb_pressed.bg_color = color.darkened(0.3)
+    sb_pressed.set_corner_radius_all(size / 2)
+    btn.add_theme_stylebox_override("pressed", sb_pressed)
+
+    btn.add_theme_font_size_override("font_size", int(size * 0.4))
+    btn.pressed.connect(callback)
+    container.add_child(btn)
+
+    return {"container": container, "button": btn}
