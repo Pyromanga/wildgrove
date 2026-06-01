@@ -1,0 +1,7 @@
+class_name GameConfig extends Resource
+
+# Dictionary: Key = von_state, Value = Array mit erlaubten zu_states
+@export var valid_transitions: Dictionary = {
+    "BOOT": ["MAIN_MENU"],
+    "PLAYING": ["PAUSED", "GAME_OVER", "CUTSCENE"]
+}
