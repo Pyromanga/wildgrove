@@ -1,12 +1,8 @@
-# scripts/ui/components/interaction_component.gd
-class_name InteractionComponent extends BaseUIComponent
-
 func build(hud: HUD) -> InteractionUIController:
-    # 1. Visuals bauen
     var visuals = InteractionVisuals.new(hud)
-    
-    # 2. Controller bauen & koppeln
     var ctrl = InteractionUIController.new()
-    ctrl.setup(visuals)
+    
+    # Injection: Der Builder/Component bestimmt, welche Welt-Events genutzt werden
+    ctrl.setup(visuals, Kernel.events.world)
     
     return ctrl
