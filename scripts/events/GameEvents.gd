@@ -31,5 +31,7 @@ func init() -> void:
 	Logger.log_debug("init() — keine Abhängigkeiten.", LOG_CAT)
 
 func on_ready() -> void:
-	super.on_ready()
-	Logger.log_debug("on_ready() — EventSystem vollständig aktiv.", LOG_CAT)
+    super.on_ready()
+    # Hier feuern wir das Signal, auf das alle anderen (HUDBuilder etc.) warten können
+    system.emit_services_initialized()
+    Logger.log_debug("on_ready() — EventSystem vollständig aktiv.", LOG_CAT)
