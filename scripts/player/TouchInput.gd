@@ -1,4 +1,4 @@
-extends Node
+extends ServiceNode
 class_name TouchInput
 
 # --- Output-State (explizit typisiert) ---
@@ -21,10 +21,17 @@ var _pinch_last_dist: float    = 0.0
 var _cam_last: Vector2         = Vector2.ZERO
 var _cam_finger: int           = -1
 
+func init() -> void:
+    super.init()
+    # Registriere dich unter einem festen Namen im Kernel
+    Kernel.register_service("touchinput", self)
+    Logger.log_debug("TouchInput als Service registriert.", "TouchInput")
+
 func _ready() -> void:
-	add_to_group("touch_input")
-	if Kernel.events.system.state_changed:
-		Kernel.events.system.state_changed.connect(_on_state_changed)
+    # WICHTIG: ServiceNode ruft super._ready() auf, 
+    # das kümmert sich um die Basis-Initialisierung.
+    super._ready()
+    add_to_group("touch_input")
 
 func _on_state_changed(_new_state: int) -> void:
 	reset_input()
