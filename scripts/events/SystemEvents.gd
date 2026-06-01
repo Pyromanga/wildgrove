@@ -9,6 +9,7 @@ signal save_started()
 signal save_completed(success: bool)
 signal load_started()
 signal load_completed(success: bool)
+signal services_initialized() # <--- Neu!
 
 func _init() -> void:
 	super._init("Events/System")
@@ -42,3 +43,7 @@ func emit_load_completed(success: bool) -> void:
 	else:
 		_log_warn("Ladevorgang fehlgeschlagen!")
 	load_completed.emit(success)
+	
+func emit_services_initialized() -> void:
+    _log_info("Systemdienste vollständig initialisiert.")
+    services_initialized.emit()
