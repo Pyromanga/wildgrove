@@ -140,7 +140,7 @@ func _topological_sort() -> Array[String]:
 	var adj: Dictionary = {}  # dep → [services die dep brauchen]
 	var services = _get_config_list()
 	
-	for s in _get_s:
+	for s in _get_service_interface:
 		in_degree[s["name"]] = 0
 		adj[s["name"]] = []
 	
