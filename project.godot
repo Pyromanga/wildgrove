@@ -38,6 +38,19 @@ renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=0
 lights_and_shadows/directional_shadow/size=2048
+# ─────────────────────────────────────────────────────────────────────────────
+# project.godot — [autoload] Sektion
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# REIHENFOLGE IST KRITISCH:
+#   1. Logger        — kein Autoload-Dep, muss zuerst da sein
+#   2. SimpleTerminal — connectet sich auf Logger.on_log in _init()
+#                       muss VOR Kernel sein damit Kernel-Logs sichtbar sind
+#   3. Kernel        — nutzt Logger (immer verfügbar), ist unabhängig von SimpleTerminal
+#
+# SimpleTerminal ist KEIN Service des Kernels — es ist ein Debugging-Tool
+# das unabhängig vom Service-Lifecycle läuft.
+# ─────────────────────────────────────────────────────────────────────────────
 
 [autoload]
 Logger="*res://scripts/services/Logger.gd"
