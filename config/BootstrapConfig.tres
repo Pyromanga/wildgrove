@@ -54,7 +54,7 @@ deps = []
 [sub_resource type="Resource" id="Resource_gamemanager"]
 script = ExtResource("2_def")
 name = "gamemanager"
-path = "res://scripts/services/GameManager.gd"
+path = "res://scripts/core/GameManager.gd"
 deps = ["savesystem", "states"]
 
 [sub_resource type="Resource" id="Resource_inventory"]
