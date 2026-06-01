@@ -24,3 +24,8 @@ func setup(hud: CanvasLayer) -> void:
     context_ctrl = ContextMenuController.new()
     
     Logger.log_debug("HUDManager: Alle Controller erfolgreich mit Visuals verheiratet.", "HUDManager")
+    
+    var btn_visuals = ButtonVisuals.new(hud)
+    var btn_ctrl = InteractionButtonController.new()
+    btn_ctrl.setup(btn_visuals)
+    # Controller im HUDManager speichern, falls du später noch Zugriff brauchst
