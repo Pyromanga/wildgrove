@@ -10,7 +10,6 @@ signal overlay_changed(overlay_type: String, active: bool)
 
 signal joystick_moved(origin: Vector2, offset: Vector2)
 signal joystick_toggled(is_active: bool, origin: Vector2)
-signal joystick_moved(offset: Vector2)
 
 func _init() -> void:
     super._init("Events/UI")
@@ -35,4 +34,4 @@ func emit_joystick_toggled(is_active: bool, origin: Vector2 = Vector2.ZERO) -> v
 
 func emit_joystick_moved(offset: Vector2) -> void:
     # Kein Log hier, um Performance zu sparen (wird bei Bewegung 60x pro Sekunde gefeuert)
-    joystick_moved.emit(offset)
+    joystick_moved.emit(origin, offset)
