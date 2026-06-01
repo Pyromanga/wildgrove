@@ -6,7 +6,8 @@ var inventory_ctrl: InventoryUIController
 var joystick_ctrl: JoystickController
 var context_ctrl: ContextMenuController
 var interact_ctrl: InteractionUIController
-
+var notif_ctrl: NotificationController
+var float_text_ctrl: FloatingTextController
 func setup(hud: CanvasLayer) -> void:
     # 1. Joystick
     joystick_ctrl = JoystickController.new()
