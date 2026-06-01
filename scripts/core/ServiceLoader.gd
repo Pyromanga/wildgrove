@@ -1,54 +1,38 @@
 class_name ServiceLoader extends RefCounted
 
-## ServiceLoader.gd
-## Instanziiert, sortiert und orchestriert alle Services in drei Phasen.
-## Deps-Deklaration ermöglicht topologische Sortierung → korrekte Init-Reihenfolge.
-
 const LOG_CAT := "ServiceLoader"
+const CONFIG_PATH := "res://config/bootstrap_config.tres"
 
-const SERVICES: Array[Dictionary] = [
-	# Fundament — keine Abhängigkeiten
-	{ "name": "savesystem",    "path": "res://scripts/services/SaveSystem.gd",          "deps": [] },
-	{ "name": "events",        "path": "res://scripts/events/GameEvents.gd",           "deps": [] },
-	{ "name": "data",          "path": "res://scripts/services/DataService.gd",          "deps": [] },
-	{ "name": "utils",         "path": "res://scripts/services/Utils.gd",                "deps": [] },
-	{ "name": "debug_service", "path": "res://scripts/debug/DebugService.gd",         "deps": [] },
+# Wir brauchen das Array hier nicht mehr als konstante Liste im Code!
+# Wir holen es dynamisch.
 
-	# Abhängig von Fundament
-	{ "name": "states",        "path": "res://scripts/services/StateService.gd",         "deps": ["savesystem"] },
-	{ "name": "debug_console", "path": "res://scripts/debug/DebugConsole.gd",         "deps": ["debug_service"] },
-	{ "name": "skill_system",  "path": "res://scripts/services/SkillSystem.gd",          "deps": ["data"] },
-	{ "name": "factory3d",     "path": "res://scripts/services/Factory3D.gd",            "deps": ["data"] },
-	{ "name": "builder",       "path": "res://scripts/interaction/InteractionBuilder.gd",   "deps": [] },
+func _get_services_config() -> Array:
+    var config = load(CONFIG_PATH) as BootstrapConfig
+    if not config:
+        Logger.log_error("BootstrapConfig nicht gefunden bei: " + CONFIG_PATH, LOG_CAT)
+        return []
+    
+    # Wandle die Resource-Objekte in das Format um, das dein Code erwartet
+    var list = []
+    for s in config.services:
+        list.append({ "name": s.name, "path": s.path, "deps": s.deps })
+    return list
 
-	# Abhängig von mehreren
-	{ "name": "gamemanager",   "path": "res://scripts/services/GameManager.gd",          "deps": ["savesystem", "states"] },
-	{ "name": "inventory",     "path": "res://scripts/services/InventorySystem.gd",      "deps": ["data", "savesystem"] },
+func get_required_names() -> Array[String]:
+    var names: Array[String] = []
+    for s in _get_services_config():
+        names.append(s["name"])
+    return names
 
-	# Abhängig von gameplay-nahen Services
-	{ "name": "ui_factory",    "path": "res://scripts/services/UIFactory.gd",            "deps": ["inventory"] },
-]
+func setup_services(parent: Node) -> void:
+    var services = _get_services_config()
+    Logger.log_info("=== Phase 1: SETUP gestartet (%d Services) ===" % services.size(), LOG_CAT)
+    for s in services:
+        _create(s["name"], parent, s["path"])
 
 # ─────────────────────────────────────────────
 # Öffentliche API
 # ─────────────────────────────────────────────
-
-func get_required_names() -> Array[String]:
-	var names: Array[String] = []
-	for s in SERVICES:
-		names.append(s["name"])
-	Logger.log_debug("Required-Namen abgerufen: %s" % str(names), LOG_CAT)
-	return names
-
-## Phase 1: Alle Service-Nodes instanziieren und dem Tree hinzufügen.
-## ServiceBase._ready() → Kernel.register_service() passiert automatisch.
-func setup_services(parent: Node) -> void:
-	Logger.log_info("=== Phase 1: SETUP gestartet (%d Services) ===" % SERVICES.size(), LOG_CAT)
-	
-	for s in SERVICES:
-		_create(s["name"], parent, s["path"])
-	
-	Logger.log_info("=== Phase 1: SETUP abgeschlossen ===" , LOG_CAT)
 
 ## Phase 2 + 3: init() und on_ready() in topologischer Reihenfolge aufrufen.
 ## Erst aufrufen wenn alle _ready()-Calls abgeschlossen sind (nach setup_services-Awaits).
@@ -133,7 +117,7 @@ func _topological_sort() -> Array[String]:
 	var in_degree: Dictionary = {}
 	var adj: Dictionary = {}  # dep → [services die dep brauchen]
 	
-	for s in SERVICES:
+	for s in _get_services_config:
 		in_degree[s["name"]] = 0
 		adj[s["name"]] = []
 	
