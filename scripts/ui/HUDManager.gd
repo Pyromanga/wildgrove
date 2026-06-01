@@ -1,22 +1,21 @@
 extends Node
 class_name HUDManager
 
+# Die Controller-Liste
 var inventory_ctrl: InventoryUIController
-var interact_ctrl: InteractionUIController
+var joystick_ctrl: JoystickController
 var context_ctrl: ContextMenuController
 
 func setup(hud: CanvasLayer) -> void:
-    # Hier werden alle Controller initialisiert
-    inventory_ctrl = InventoryUIController.new()
-    inventory_ctrl.setup(hud, Kernel.inventory)
+    # 1. Visuals erstellen (aus deinen neuen Klassen)
+    var js_visuals = JoystickVisuals.new(hud)
     
-    interact_ctrl = InteractionUIController.new()
-    interact_ctrl.setup(hud)
+    # 2. Joystick-Logik verbinden
+    joystick_ctrl = JoystickController.new()
+    joystick_ctrl.setup(js_visuals)
     
+    # 3. Andere Controller bleiben wie gehabt (oder werden später auch umgebaut)
     context_ctrl = ContextMenuController.new()
     context_ctrl.setup(hud)
     
-    Logger.log_debug("HUDManager: Alle UI-Controller bereit", "HUDManager")
-
-func toggle_inventory() -> void:
-    if inventory_ctrl: inventory_ctrl.toggle()
+    Logger.log_debug("HUDManager: Alle Controller bereit", "HUDManager")
