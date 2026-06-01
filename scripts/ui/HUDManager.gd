@@ -1,7 +1,8 @@
 extends Node
 class_name HUDManager
 
-# Alle Controller
+# Die Controller werden hier als Referenzen gehalten.
+# Wir setzen sie initial auf null, damit wir später prüfen können, ob sie existieren.
 var inventory_ctrl: InventoryUIController
 var joystick_ctrl: JoystickController
 var context_ctrl: ContextMenuController
@@ -11,33 +12,16 @@ var notif_ctrl: NotificationController
 var float_text_ctrl: FloatingTextController
 
 func setup(hud: HUD) -> void:
-    # 1. Interaktion-System
-    var interact_visuals = InteractionButtonVisuals.new(hud)
-    interact_ctrl = InteractionButtonController.new()
-    interact_ctrl.setup(interact_visuals) # Übergibt nur die Interaktions-Visuals
+    # Der Manager delegiert den Aufbau an den Builder
+    var registry = HUDBuilder.build_all(hud)
     
-    # 2. Kontext-System
-    var context_visuals = ContextButtonVisuals.new(hud)
-    var context_btn_ctrl = ContextButtonController.new()
-    context_btn_ctrl.setup(context_visuals, context_ctrl, hud)
+    # Referenzen übernehmen (mit Fallback, um Crashes zu vermeiden)
+    inventory_ctrl = registry.get("inventory")
+    joystick_ctrl = registry.get("joystick")
+    context_ctrl = registry.get("context")
+    interact_ctrl = registry.get("interaction")
+    btn_ctrl = registry.get("interaction_button")
+    notif_ctrl = registry.get("notification")
+    float_text_ctrl = registry.get("floating_text")
     
-    # 2. Joystick
-    joystick_ctrl = JoystickController.new()
-    joystick_ctrl.setup(JoystickVisuals.new(hud))
-    
-    # 3. Inventar
-    inventory_ctrl = InventoryUIController.new()
-    inventory_ctrl.setup(InventoryVisuals.new(hud), Kernel.inventory)
-    
-    # 4. Fortschrittsbalken (Interaction)
-    interact_ctrl = InteractionUIController.new()
-    interact_ctrl.setup(InteractionVisuals.new(hud))
-    
-    # 6. Globales Notif-System (Panels)
-    notif_ctrl = NotificationController.new()
-    notif_ctrl.setup(NotificationVisuals.new(hud))
-    
-    float_text_ctrl = FloatingTextController.new()
-    float_text_ctrl.setup(FloatingTextVisuals.new(hud))
-    
-    Logger.log_debug("HUDManager: Alles modular bereit", "HUDManager")
+    Logger.log_debug("HUDManager: Initialisierung durch HUDBuilder abgeschlossen", "HUDManager")
