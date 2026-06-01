@@ -8,6 +8,9 @@ signal layout_requested(state: String)
 signal menu_toggled(menu_name: String, is_visible: bool)
 signal overlay_changed(overlay_type: String, active: bool)
 
+signal joystick_active(is_active: bool)
+signal joystick_moved(offset: Vector2)
+
 func _init() -> void:
     super._init("Events/UI")
 
