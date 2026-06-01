@@ -30,3 +30,10 @@ func setup(hud: CanvasLayer) -> void:
     var btn_ctrl = InteractionButtonController.new()
     btn_ctrl.setup(btn_visuals)
     # Controller im HUDManager speichern, falls du später noch Zugriff brauchst
+
+    # Benachrichtigungen (Popups)
+    var notif_ctrl = NotificationController.new()
+    
+    # Floating Texte (XP/Level-Up)
+    var float_text_ctrl = FloatingTextController.new()
+    float_text_ctrl.setup(hud)
