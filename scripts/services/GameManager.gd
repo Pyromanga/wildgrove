@@ -1,4 +1,4 @@
-extends ServiceBase
+extends ServiceNode
 class_name GameManager
 
 ## GameManager.gd
@@ -32,21 +32,10 @@ func _ready() -> void:
 	super._ready()
 
 func init() -> void:
-	super.init()
-	Logger.log_info("init() — hole Abhängigkeiten vom Kernel...", LOG_CAT)
-
-	_save_system = Kernel.get_service("savesystem") as SaveSystem
-	if not _save_system:
-		Logger.log_error("SaveSystem nicht gefunden! GameManager kann nicht initialisiert werden.", LOG_CAT)
-		return
-	Logger.log_debug("SaveSystem gefunden.", LOG_CAT)
-
-	# Spielstand anwenden
-	var state := _save_system.get_state()
-	Logger.log_debug("Spielstand abgerufen. Keys: %s" % str(state.keys()), LOG_CAT)
-	_apply_save_state(state)
-
-	Logger.log_info("init() abgeschlossen. Initialer GameState: %s" % _state_name(_current_state), LOG_CAT)
+    super.init()
+    var save_system = Kernel.get_service("savesystem")
+    if save_system:
+        save_system.register_save_provider(self)
 
 func on_ready() -> void:
 	super.on_ready()
