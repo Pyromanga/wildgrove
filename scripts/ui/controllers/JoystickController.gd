@@ -1,12 +1,15 @@
+# scripts/ui/controllers/joystick_controller.gd
 class_name JoystickController
 
 var _visuals: JoystickVisuals
 
-func setup(visuals: JoystickVisuals) -> void:
+# Injection: Wir übergeben den Event-Bus explizit
+func setup(visuals: JoystickVisuals, event_bus: Object) -> void:
     _visuals = visuals
-    # Wir lauschen jetzt auf den Bus
-    Kernel.events.ui.joystick_toggled.connect(_on_toggled)
-    Kernel.events.ui.joystick_moved.connect(_on_moved)
+    event_bus.joystick_toggled.connect(_on_toggled)
+    event_bus.joystick_moved.connect(_on_moved)
+
+# ... der Rest des Codes bleibt identisch ...
 
 func _on_toggled(active: bool, origin: Vector2) -> void:
     _visuals.set_visible(active)
