@@ -83,7 +83,8 @@ func try_default_interact() -> void:
 	)
 
 func _get_closest_interactable() -> Node3D:
-	return Kernel.utils.get_closest_node(global_position, "interactable", interact_range)
+    # Anstatt Kernel.utils.get_closest_node...
+    return _sensor.get_closest()
 
 func _with_closest_target(callback: Callable) -> void:
     var target: Node3D = _get_closest_interactable()
