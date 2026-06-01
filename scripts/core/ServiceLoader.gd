@@ -81,22 +81,39 @@ func init_services() -> void:
 # ─────────────────────────────────────────────
 
 func _create(service_name: String, parent: Node, path: String) -> void:
-	Logger.log_debug("Lade Script: '%s' von '%s'..." % [service_name, path], LOG_CAT)
-	
-	var script = load(path)
-	if not script:
-		Logger.log_error("Script nicht gefunden: '%s' — Service '%s' wird nicht erstellt!" % [path, service_name], LOG_CAT)
-		return
-	
-	Logger.log_debug("Script geladen. Erstelle Node...", LOG_CAT)
-	var node := Node.new()
-	node.name = service_name
-	node.set_script(script)
-	
-	Logger.log_debug("Füge '%s' dem Tree hinzu (parent: '%s')..." % [service_name, parent.name], LOG_CAT)
-	parent.add_child(node)
-	# Ab hier läuft ServiceBase._ready() → Kernel.register_service()
-	Logger.log_debug("Node '%s' im Tree. _ready() wird vom Engine aufgerufen." % service_name, LOG_CAT)
+    var loaded_resource = load(path)
+    if not loaded_resource:
+        Logger.log_error("Resource nicht gefunden: '%s'" % path, LOG_CAT)
+        return
+
+    var service_instance: Object
+
+    # Fall A: Es ist eine Szene -> Instanziieren
+    if loaded_resource is PackedScene:
+        service_instance = loaded_resource.instantiate()
+        parent.add_child(service_instance)
+        
+    # Fall B: Es ist ein Skript
+    elif loaded_resource is GDScript:
+        var obj = loaded_resource.new()
+        
+        # Entscheidung: Ist es ein Node? -> In den Baum
+        if obj is Node:
+            service_instance = obj
+            service_instance.name = service_name
+            parent.add_child(service_instance)
+        else:
+            # Es ist ein "Pure Service" (RefCounted)
+            service_instance = obj
+            # Wir registrieren es direkt, da kein Node-Tree nötig ist
+            Kernel.register_service(service_instance)
+            
+    if service_instance:
+        # Hier wird die ID für Logging etc. gesetzt, falls es ein Node ist
+        if "name" in service_instance and service_instance is Node:
+            service_instance.name = service_name
+        
+        Logger.log_debug("Service '%s' erfolgreich erstellt." % service_name, LOG_CAT)
 
 func _get_service_interface(svc_name: String) -> Object:
     var obj = Kernel.get_service(svc_name)
