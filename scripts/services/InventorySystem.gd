@@ -6,12 +6,19 @@ var _items: Dictionary = {}
 var _item_registry: Dictionary = {} # Hier laden wir die .tres Dateien rein
 
 func init() -> void:
-    # 1. Lade alle Item-Definitionen aus einem Ordner
     _load_item_database("res://data/items/")
     
-    # 2. Lade hier dein Savegame (wie besprochen)
     var saved_data = Kernel.get_service("savesystem").get_state()
-    _items = saved_data.get("inventory", {})
+    var raw_inventory = saved_data.get("inventory", {})
+    
+    # Validiere, ob die Item-IDs aus dem Savegame noch in der Registry existieren
+    for item_id in raw_inventory:
+        if _item_registry.has(item_id):
+            _items[item_id] = raw_inventory[item_id]
+        else:
+            Logger.log_warn("Unbekanntes Item im Save gefunden: %s - wird ignoriert." % item_id, _log_cat())
+    
+    Logger.log_info("Inventory initialisiert. Items: %d" % _items.size(), _log_cat())
 
 func _load_item_database(path: String) -> void:
     var dir = DirAccess.open(path)
