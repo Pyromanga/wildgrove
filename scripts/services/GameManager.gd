@@ -153,26 +153,25 @@ func _build_save_state(player_data: Dictionary) -> Dictionary:
 	}
 
 func _is_valid_transition(from: GameState, to: GameState) -> bool:
-	# Erlaubte Übergänge — verhindert z.B. direkt BOOT → GAME_OVER
-	const VALID: Dictionary = {
-		GameState.BOOT:      [GameState.MAIN_MENU, GameState.LOADING],
-		GameState.MAIN_MENU: [GameState.LOADING, GameState.CREDITS],
-		GameState.LOADING:   [GameState.PLAYING, GameState.MAIN_MENU],
-		GameState.PLAYING:   [GameState.PAUSED, GameState.GAME_OVER, GameState.CUTSCENE, GameState.LOADING, GameState.MAIN_MENU],
-		GameState.PAUSED:    [GameState.PLAYING, GameState.MAIN_MENU],
-		GameState.CUTSCENE:  [GameState.PLAYING, GameState.MAIN_MENU],
-		GameState.GAME_OVER: [GameState.MAIN_MENU, GameState.LOADING],
-		GameState.CREDITS:   [GameState.MAIN_MENU],
-	}
-
-	if not VALID.has(from):
-		Logger.log_warn("_is_valid_transition: unbekannter From-State: %d" % from, LOG_CAT)
-		return false
-
-	var allowed: bool = to in VALID[from]
-	if not allowed:
-		Logger.log_warn("Übergang %s → %s nicht in Allowed-List." % [_state_name(from), _state_name(to)], LOG_CAT)
-	return allowed
+    # 1. Fallback: Falls die Config im Editor nicht zugewiesen wurde
+    if not config:
+        Logger.log_error("GameManager: Keine GameConfig zugewiesen! Transitions verweigert.", LOG_CAT)
+        return false
+    
+    # 2. Hole die Strings für den Vergleich
+    var from_str = _state_name(from)
+    var to_str = _state_name(to)
+    
+    # 3. Hole die Liste aus der Resource (Single Source of Truth!)
+    var allowed_targets = config.valid_transitions.get(from_str, [])
+    
+    # 4. Prüfen
+    var is_allowed = to_str in allowed_targets
+    
+    if not is_allowed:
+        Logger.log_warn("Übergang %s → %s nicht in der Config erlaubt." % [from_str, to_str], LOG_CAT)
+    
+    return is_allowed
 
 func _state_name(state: GameState) -> String:
 	return GameState.keys()[state]
