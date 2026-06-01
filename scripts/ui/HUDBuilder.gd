@@ -2,29 +2,26 @@ class_name HUDBuilder
 
 static func build_all(hud: HUD) -> Dictionary:
     var registry = {}
+    
+    # Zentrale Event-Buss-Referenz für die Entkopplung (z.B. Context-Signale)
+    var ui_events = Kernel.events.ui 
 
     # 1. Interaktion & Fortschritt
-    # Wir injizieren hier die spezifischen Kernel-Events
-    var interaction_comp = InteractionComponent.new()
-    registry["interaction"] = interaction_comp.build(hud, Kernel.events.world)
+    registry["interaction"] = InteractionComponent.new().build(hud, Kernel.events.world)
+    registry["interaction_button"] = InteractionButtonComponent.new().build(hud)
     
-    # 2. Buttons
-    var btn_comp = InteractionButtonComponent.new()
-    registry["interaction_button"] = btn_comp.build(hud)
-
-    # 3. Kontext (Hier injizieren wir den Kontext-Manager)
-    var context_comp = ContextComponent.new()
-    registry["context"] = context_comp.build(hud, Kernel.ui_factory)
-
-    # 4. Joystick
-    var joy_comp = JoystickComponent.new()
-    registry["joystick"] = joy_comp.build(hud, Kernel.events.ui)
-
-    # 5. Inventar (Hier injizieren wir das Service-Objekt)
-    var inv_comp = InventoryComponent.new()
-    registry["inventory"] = inv_comp.build(hud, Kernel.inventory)
-
-    # 6. Feedback
+    # 2. Kontext-System (Entkoppelt in Button und Menü)
+    # Der Button braucht nur den Bus, das Menü braucht HUD + Bus
+    registry["context_button"] = ContextButtonComponent.new().build(hud, ui_events)
+    registry["context_menu"]   = ContextMenuComponent.new().build(hud, ui_events)
+    
+    # 3. Joystick
+    registry["joystick"] = JoystickComponent.new().build(hud, ui_events)
+    
+    # 4. Inventar
+    registry["inventory"] = InventoryComponent.new().build(hud, Kernel.inventory)
+    
+    # 5. Feedback
     registry["notification"] = NotificationComponent.new().build(hud)
     registry["floating_text"] = FloatingTextComponent.new().build(hud, Kernel.events.player, Kernel.events.skill_system)
 
