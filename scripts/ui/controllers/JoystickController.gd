@@ -1,24 +1,19 @@
-extends RefCounted
 class_name JoystickController
 
 var _visuals: JoystickVisuals
 
-func setup(player: Node) -> void:
+func setup(visuals: JoystickVisuals) -> void:
     _visuals = visuals
-    var touch = player.get_node_or_null("TouchInput")
-    if not touch: return
+    # Wir lauschen jetzt auf den Bus
+    Kernel.events.ui.joystick_toggled.connect(_on_toggled)
+    Kernel.events.ui.joystick_moved.connect(_on_moved)
 
-    # Input -> Signal (Übersetzung)
-    touch.joystick_activated.connect(func(origin): 
-        Kernel.events.ui.emit_joystick_toggled(true, origin)
-    )
-    
-    touch.joystick_moved.connect(func(origin, offset): 
-        # Wir geben die rohen Daten weiter. 
-        # Die Regie (HUDManager) berechnet daraus das Aussehen.
-        Kernel.events.ui.emit_joystick_moved(origin, offset)
-    )
-    
-    touch.joystick_released.connect(func():
-        Kernel.events.ui.emit_joystick_toggled(false)
-    )
+func _on_toggled(active: bool, origin: Vector2) -> void:
+    _visuals.set_visible(active)
+    if active:
+        # Hier fragst du später den LayoutManager!
+        _visuals.base.global_position = origin - (_visuals.base.size / 2)
+
+func _on_moved(origin: Vector2, offset: Vector2) -> void:
+    # Nur Logik-Update, Visuals werden verschoben
+    _visuals.knob.global_position = origin + offset - (_visuals.knob.size * 0.5)
