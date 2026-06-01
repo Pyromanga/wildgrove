@@ -98,15 +98,18 @@ func _create(service_name: String, parent: Node, path: String) -> void:
 	# Ab hier läuft ServiceBase._ready() → Kernel.register_service()
 	Logger.log_debug("Node '%s' im Tree. _ready() wird vom Engine aufgerufen." % service_name, LOG_CAT)
 
-func _get_service_as_base(svc_name: String) -> ServiceBase:
-	var node := Kernel.get_service(svc_name)
-	if not node:
-		Logger.log_error("Service '%s' im Kernel nicht gefunden!" % svc_name, LOG_CAT)
-		return null
-	var base := node as ServiceBase
-	if not base:
-		Logger.log_error("Service '%s' ist kein ServiceBase! Klasse: '%s'" % [svc_name, node.get_class()], LOG_CAT)
-	return base
+func _get_service_interface(svc_name: String) -> Object:
+    var obj = Kernel.get_service(svc_name)
+    if not obj:
+        Logger.log_error("Service '%s' im Kernel nicht gefunden!" % svc_name, LOG_CAT)
+        return null
+    
+    # Hier der Trick: Wir prüfen nicht auf eine Klasse, sondern auf das Vorhandensein der Methoden
+    if obj.has_method("init") and obj.has_method("on_ready"):
+        return obj
+        
+    Logger.log_error("Service '%s' hat kein gültiges Service-Interface!" % svc_name, LOG_CAT)
+    return null
 
 # ─────────────────────────────────────────────
 # Topologische Sortierung (Kahn's Algorithm)
