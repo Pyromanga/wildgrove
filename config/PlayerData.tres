@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PlayerData" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/PlayerData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+speed = 6.0
+gravity = 12.0
+jump_force = 4.5
+interact_range = 4.0
