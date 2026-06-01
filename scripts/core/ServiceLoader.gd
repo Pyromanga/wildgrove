@@ -1,132 +1,100 @@
 class_name ServiceLoader extends RefCounted
 
+## ServiceLoader — Bootstrap-Orchestrator.
+## Phase 1 (setup_services):  Lädt Config, instanziiert alle Services via ServiceFactory.
+## Phase 2 (init_services):   Ruft init() in topologischer Reihenfolge auf.
+## Phase 3 (on_ready_services): Ruft on_ready() in topologischer Reihenfolge auf.
+##
+## Aufruf aus Main.gd:
+##   var loader = ServiceLoader.new()
+##   loader.setup_services(self)      # synchron
+##   await get_tree().process_frame   # sicherstellen dass alle _ready() gelaufen sind
+##   loader.init_services()
+##   loader.on_ready_services()
+
 const LOG_CAT := "ServiceLoader"
 const CONFIG_PATH := "res://config/bootstrap_config.tres"
 
-# Wir brauchen das Array hier nicht mehr als konstante Liste im Code!
-# Wir holen es dynamisch.
+# Cache damit wir die Config nicht mehrfach laden
+var _config_cache: Array[ServiceDefinition] = []
 
-func _get_services_config() -> Array:
-    var config = load(CONFIG_PATH) as BootstrapConfig
-    if not config:
-        Logger.log_error("BootstrapConfig nicht gefunden bei: " + CONFIG_PATH, LOG_CAT)
-        return []
-    
-    # Wandle die Resource-Objekte in das Format um, das dein Code erwartet
-    var list = []
-    for s in config.services:
-        list.append({ "name": s.name, "path": s.path, "deps": s.deps })
-    return list
+# ─────────────────────────────────────────────
+# Phase 1
+# ─────────────────────────────────────────────
 
-func get_required_names() -> Array[String]:
-    var names: Array[String] = []
-    for s in _get_services_config():
-        names.append(s["name"])
-    return names
-
-# Im ServiceLoader...
+## Lädt alle Services aus der Config und hängt sie in den Baum.
+## parent: Normalerweise Main-Node.
 func setup_services(parent: Node) -> void:
-    var factory = ServiceFactory.new()
-    var services = _get_config_list()
-    
-    for s in services:
-        factory.create_service(s.name, s.path, parent)
+	Logger.log_info("=== Phase 1: SETUP gestartet ===", LOG_CAT)
+	var definitions := _get_config()
 
-# ─────────────────────────────────────────────
-# Öffentliche API
-# ─────────────────────────────────────────────
-
-## Phase 2 + 3: init() und on_ready() in topologischer Reihenfolge aufrufen.
-## Erst aufrufen wenn alle _ready()-Calls abgeschlossen sind (nach setup_services-Awaits).
-func init_services() -> void:
-	Logger.log_info("=== Phase 2+3: INIT gestartet ===", LOG_CAT)
-	
-	Logger.log_debug("Berechne topologische Sortierung...", LOG_CAT)
-	var ordered := _topological_sort()
-	
-	if ordered.is_empty():
-		Logger.log_error("Topologische Sortierung fehlgeschlagen — Zyklus oder leere Liste. Init abgebrochen!", LOG_CAT)
+	if definitions.is_empty():
+		Logger.log_error("Keine Service-Definitionen gefunden — Bootstrap abgebrochen!", LOG_CAT)
 		return
-	
-	Logger.log_debug("Sortierte Reihenfolge: %s" % str(ordered), LOG_CAT)
 
-	# Phase 2: init()
-	Logger.log_info("--- Phase 2: init() ---", LOG_CAT)
-	for svc_name in ordered:
-		var service := _get_service_interface(svc_name)
-		if not service:
-			Logger.log_warn("Service '%s' nicht als ServiceBase castbar — übersprungen." % svc_name, LOG_CAT)
-			continue
-		Logger.log_debug("Rufe init() auf: '%s'..." % svc_name, LOG_CAT)
-		service.init()
-		Logger.log_debug("init() abgeschlossen: '%s'" % svc_name, LOG_CAT)
-	Logger.log_info("--- Phase 2: alle init() abgeschlossen ---", LOG_CAT)
+	var factory := ServiceFactory.new()
+	var success_count := 0
 
-	# Phase 3: on_ready()
-	Logger.log_info("--- Phase 3: on_ready() ---", LOG_CAT)
-	for svc_name in ordered:
-		var service := _get_service_interface(svc_name)
-		if not service:
-			Logger.log_warn("Service '%s' nicht als ServiceBase castbar — übersprungen." % svc_name, LOG_CAT)
-			continue
-		Logger.log_debug("Rufe on_ready() auf: '%s'..." % svc_name, LOG_CAT)
-		service.on_ready()
-		Logger.log_debug("on_ready() abgeschlossen: '%s'" % svc_name, LOG_CAT)
-	Logger.log_info("--- Phase 3: alle on_ready() abgeschlossen ---", LOG_CAT)
+	for definition in definitions:
+		var instance = factory.create_service(definition, parent)
+		if instance:
+			success_count += 1
+		else:
+			Logger.log_error("Service '%s' konnte nicht erstellt werden!" % definition.service_name, LOG_CAT)
 
-	Logger.log_info("=== Phase 2+3: INIT vollständig abgeschlossen ===", LOG_CAT)
+	Logger.log_info(
+		"=== Phase 1: SETUP abgeschlossen (%d/%d Services erstellt) ===" % [success_count, definitions.size()],
+		LOG_CAT
+	)
 
 # ─────────────────────────────────────────────
-# Private Helpers
+# Phase 2
 # ─────────────────────────────────────────────
 
-func _create(service_name: String, parent: Node, path: String) -> void:
-    var loaded_resource = load(path)
-    if not loaded_resource:
-        Logger.log_error("Resource nicht gefunden: '%s'" % path, LOG_CAT)
-        return
+## Ruft init() auf allen Services in Dependency-Reihenfolge auf.
+## Erst aufrufen nachdem alle _ready()-Calls gelaufen sind!
+func init_services() -> void:
+	Logger.log_info("=== Phase 2: INIT gestartet ===", LOG_CAT)
+	var ordered := _topological_sort()
 
-    var service_instance: Object
+	if ordered.is_empty():
+		Logger.log_error("Topologische Sortierung fehlgeschlagen — Init abgebrochen!", LOG_CAT)
+		return
 
-    # Fall A: Es ist eine Szene -> Instanziieren
-    if loaded_resource is PackedScene:
-        service_instance = loaded_resource.instantiate()
-        parent.add_child(service_instance)
-        
-    # Fall B: Es ist ein Skript
-    elif loaded_resource is GDScript:
-        var obj = loaded_resource.new()
-        
-        # Entscheidung: Ist es ein Node? -> In den Baum
-        if obj is Node:
-            service_instance = obj
-            service_instance.name = service_name
-            parent.add_child(service_instance)
-        else:
-            # Es ist ein "Pure Service" (RefCounted)
-            service_instance = obj
-            # Wir registrieren es direkt, da kein Node-Tree nötig ist
-            Kernel.register_service(service_instance)
-            
-    if service_instance:
-        # Hier wird die ID für Logging etc. gesetzt, falls es ein Node ist
-        if "name" in service_instance and service_instance is Node:
-            service_instance.name = service_name
-        
-        Logger.log_debug("Service '%s' erfolgreich erstellt." % service_name, LOG_CAT)
+	Logger.log_debug("Init-Reihenfolge: %s" % str(ordered), LOG_CAT)
 
-func _get_service_interface(svc_name: String) -> Object:
-    var obj = Kernel.get_service(svc_name)
-    if not obj:
-        Logger.log_error("Service '%s' im Kernel nicht gefunden!" % svc_name, LOG_CAT)
-        return null
-    
-    # Hier der Trick: Wir prüfen nicht auf eine Klasse, sondern auf das Vorhandensein der Methoden
-    if obj.has_method("init") and obj.has_method("on_ready"):
-        return obj
-        
-    Logger.log_error("Service '%s' hat kein gültiges Service-Interface!" % svc_name, LOG_CAT)
-    return null
+	for svc_name in ordered:
+		var service := _get_lifecycle_service(svc_name)
+		if not service:
+			continue
+		Logger.log_debug("init() → '%s'" % svc_name, LOG_CAT)
+		service.call("init")
+		Logger.log_debug("init() ✓ '%s'" % svc_name, LOG_CAT)
+
+	Logger.log_info("=== Phase 2: INIT abgeschlossen ===", LOG_CAT)
+
+# ─────────────────────────────────────────────
+# Phase 3
+# ─────────────────────────────────────────────
+
+## Ruft on_ready() auf allen Services in Dependency-Reihenfolge auf.
+func on_ready_services() -> void:
+	Logger.log_info("=== Phase 3: ON_READY gestartet ===", LOG_CAT)
+	var ordered := _topological_sort()
+
+	if ordered.is_empty():
+		Logger.log_error("Topologische Sortierung fehlgeschlagen — on_ready abgebrochen!", LOG_CAT)
+		return
+
+	for svc_name in ordered:
+		var service := _get_lifecycle_service(svc_name)
+		if not service:
+			continue
+		Logger.log_debug("on_ready() → '%s'" % svc_name, LOG_CAT)
+		service.call("on_ready")
+		Logger.log_debug("on_ready() ✓ '%s'" % svc_name, LOG_CAT)
+
+	Logger.log_info("=== Phase 3: ON_READY abgeschlossen ===", LOG_CAT)
 
 # ─────────────────────────────────────────────
 # Topologische Sortierung (Kahn's Algorithm)
@@ -134,56 +102,114 @@ func _get_service_interface(svc_name: String) -> Object:
 
 func _topological_sort() -> Array[String]:
 	Logger.log_debug("Starte Kahn's Algorithm...", LOG_CAT)
-	
-	# In-degree aufbauen (wie viele unerfüllte Deps hat jeder Service)
+
+	var definitions := _get_config()
+	if definitions.is_empty():
+		Logger.log_error("Keine Definitionen für topologische Sortierung!", LOG_CAT)
+		return []
+
+	# Bekannte Service-Namen aufbauen
+	var known_names: Dictionary = {}
+	for d in definitions:
+		known_names[d.service_name.to_lower()] = true
+
+	# In-Degree und Adjazenzliste aufbauen
 	var in_degree: Dictionary = {}
-	var adj: Dictionary = {}  # dep → [services die dep brauchen]
-	var services = _get_config_list()
-	
-	for s in _get_service_interface:
-		in_degree[s["name"]] = 0
-		adj[s["name"]] = []
-	
-	for s in services:
-		for dep in s["deps"]:
-			if not adj.has(dep):
-				Logger.log_error("Unbekannte Dependency '%s' in Service '%s'!" % [dep, s["name"]], LOG_CAT)
+	var adj: Dictionary = {}   # dep_name → [services die dep brauchen]
+
+	for d in definitions:
+		var key := d.service_name.to_lower()
+		in_degree[key] = 0
+		adj[key] = []
+
+	for d in definitions:
+		var key := d.service_name.to_lower()
+		for dep_raw in d.deps:
+			var dep := dep_raw.to_lower()
+			if not known_names.has(dep):
+				Logger.log_error(
+					"Unbekannte Dependency '%s' in Service '%s'!" % [dep, d.service_name],
+					LOG_CAT
+				)
 				return []
-			adj[dep].append(s["name"])
-			in_degree[s["name"]] += 1
-	
-	Logger.log_debug("In-Degrees: %s" % str(in_degree), LOG_CAT)
-	
-	# Queue mit allen Services ohne Abhängigkeiten starten
+			adj[dep].append(key)
+			in_degree[key] += 1
+
+	# Queue mit Services ohne Abhängigkeiten starten
 	var queue: Array[String] = []
 	for svc_name in in_degree:
 		if in_degree[svc_name] == 0:
 			queue.append(svc_name)
-	
+
 	Logger.log_debug("Start-Queue (keine Deps): %s" % str(queue), LOG_CAT)
-	
+
 	var result: Array[String] = []
-	
+
 	while not queue.is_empty():
 		var current: String = queue.pop_front()
 		result.append(current)
-		Logger.log_debug("Verarbeite: '%s' → Nachfolger: %s" % [current, str(adj[current])], LOG_CAT)
-		
+
 		for neighbor in adj[current]:
 			in_degree[neighbor] -= 1
-			Logger.log_debug("  in_degree[%s] jetzt: %d" % [neighbor, in_degree[neighbor]], LOG_CAT)
 			if in_degree[neighbor] == 0:
-				Logger.log_debug("  '%s' bereit (alle Deps erfüllt) → Queue" % neighbor, LOG_CAT)
 				queue.append(neighbor)
-	
-	# Zyklus-Check: Wenn nicht alle Services in result → Zyklus vorhanden
-	if result.size() != services.size():
+
+	# Zyklus-Check
+	if result.size() != definitions.size():
 		var missing: Array[String] = []
-		for s in services:
-			if not result.has(s["name"]):
-				missing.append(s["name"])
-		Logger.log_error("Zyklus erkannt! Folgende Services konnten nicht sortiert werden: %s" % str(missing), LOG_CAT)
+		var result_set: Dictionary = {}
+		for r in result:
+			result_set[r] = true
+		for d in definitions:
+			if not result_set.has(d.service_name.to_lower()):
+				missing.append(d.service_name)
+		Logger.log_error(
+			"Zyklus erkannt! Services die nicht sortiert werden konnten: %s" % str(missing),
+			LOG_CAT
+		)
 		return []
-	
-	Logger.log_debug("Topologische Sortierung erfolgreich: %s" % str(result), LOG_CAT)
+
+	Logger.log_debug("Sortierung erfolgreich: %s" % str(result), LOG_CAT)
 	return result
+
+# ─────────────────────────────────────────────
+# Private Helpers
+# ─────────────────────────────────────────────
+
+## Lädt und cached die BootstrapConfig.
+## Gibt ein leeres Array bei Fehler zurück — nie null.
+func _get_config() -> Array[ServiceDefinition]:
+	if not _config_cache.is_empty():
+		return _config_cache
+
+	var config = load(CONFIG_PATH) as BootstrapConfig
+	if not config:
+		# push_error damit das auch ohne Logger sichtbar ist
+		push_error("[ServiceLoader] BootstrapConfig nicht gefunden: '%s'" % CONFIG_PATH)
+		Logger.log_error("BootstrapConfig nicht gefunden: '%s'" % CONFIG_PATH, LOG_CAT)
+		return []
+
+	if config.services.is_empty():
+		Logger.log_warn("BootstrapConfig ist leer — keine Services definiert.", LOG_CAT)
+		return []
+
+	_config_cache = config.services
+	Logger.log_debug("Config geladen: %d Service-Definitionen." % _config_cache.size(), LOG_CAT)
+	return _config_cache
+
+## Holt ein Service-Objekt aus dem Kernel und prüft ob es das Lifecycle-Interface hat.
+## Gibt null zurück wenn nicht gefunden oder Interface fehlt.
+func _get_lifecycle_service(svc_name: String) -> Object:
+	var obj := Kernel.get_service(svc_name)
+	if not obj:
+		# Kernel.get_service loggt den Error bereits
+		return null
+
+	if not obj.has_method("init") or not obj.has_method("on_ready"):
+		Logger.log_warn(
+			"Service '%s' hat kein Lifecycle-Interface (init/on_ready fehlt) — übersprungen." % svc_name,
+			LOG_CAT
+		)
+		return null
+
+	return obj
