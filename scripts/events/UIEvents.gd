@@ -8,6 +8,7 @@ signal layout_requested(state: String)
 signal menu_toggled(menu_name: String, is_visible: bool)
 signal overlay_changed(overlay_type: String, active: bool)
 
+signal joystick_moved(origin: Vector2, offset: Vector2)
 signal joystick_toggled(is_active: bool, origin: Vector2)
 signal joystick_moved(offset: Vector2)
 
