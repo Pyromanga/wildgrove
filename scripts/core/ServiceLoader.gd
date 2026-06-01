@@ -124,7 +124,7 @@ func _topological_sort() -> Array[String]:
 		in_degree[s["name"]] = 0
 		adj[s["name"]] = []
 	
-	for s in SERVICES:
+	for s in services:
 		for dep in s["deps"]:
 			if not adj.has(dep):
 				Logger.log_error("Unbekannte Dependency '%s' in Service '%s'!" % [dep, s["name"]], LOG_CAT)
@@ -157,9 +157,9 @@ func _topological_sort() -> Array[String]:
 				queue.append(neighbor)
 	
 	# Zyklus-Check: Wenn nicht alle Services in result → Zyklus vorhanden
-	if result.size() != SERVICES.size():
+	if result.size() != services.size():
 		var missing: Array[String] = []
-		for s in SERVICES:
+		for s in services:
 			if not result.has(s["name"]):
 				missing.append(s["name"])
 		Logger.log_error("Zyklus erkannt! Folgende Services konnten nicht sortiert werden: %s" % str(missing), LOG_CAT)
