@@ -1,32 +1,18 @@
-class_name ContextMenuVisuals
+# ContextMenuController.gd
+class_name ContextMenuController
 
-signal action_triggered(action)
-
-var container: Control
-var vbox: VBoxContainer
-
-func _init(parent: CanvasLayer, actions: Array) -> void:
-    container = Control.new()
-    container.add_to_group("context_menu")
-    container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+func show(hud: CanvasLayer, actions: Array) -> void:
+    # Aufräumen über die Gruppe
+    for n in hud.get_tree().get_nodes_in_group("context_menu"): 
+        n.queue_free()
     
-    var panel := PanelContainer.new()
-    # Layout wird hier durch den LayoutManager bestimmt (siehe unten)
-    panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-    container.add_child(panel)
+    var visuals = ContextMenuVisuals.new(hud, actions)
     
-    vbox = VBoxContainer.new()
-    panel.add_child(vbox)
+    visuals.action_triggered.connect(func(action):
+        visuals.destroy()
+        Kernel.builder.execute_action(action)
+    )
     
-    for action in actions:
-        var btn := Button.new()
-        btn.text = action.label
-        btn.custom_minimum_size = Vector2(200, 50)
-        btn.pressed.connect(func(): action_triggered.emit(action))
-        vbox.add_child(btn)
-        
-    parent.add_child(container)
-
-func destroy() -> void:
-    container.queue_free()
+    hud.get_tree().create_timer(5.0).timeout.connect(func():
+        if is_instance_valid(visuals): visuals.destroy()
+    )
