@@ -1,21 +1,18 @@
-# scripts/ui/controllers/interaction_button_controller.gd
 class_name InteractionButtonController
 
-var _visuals: ButtonVisuals
+var _visuals: InteractionButtonVisuals # Korrigiert: Typ muss hier zum Visuals-Namen passen
 var _player: Node
 
-func setup(visuals: ButtonVisuals) -> void:
+# Wir übergeben den Player bei der Initialisierung!
+func setup(visuals: InteractionButtonVisuals, player: Node) -> void:
     _visuals = visuals
-    # Spieler suchen (oder über Kernel)
-    var players = Engine.get_main_loop().root.get_nodes_in_group("player")
-    if not players.is_empty():
-        _player = players[0]
+    _player = player
 
 func _process(_delta: float) -> void:
+    # Jetzt ist er eine "passive" Klasse, die nur noch mit dem arbeitet, was sie hat
     if not is_instance_valid(_player): return
     
     var target = null
     if _player.has_method("_get_closest_interactable"):
         target = _player._get_closest_interactable()
-        
     _visuals.set_active(target != null)
