@@ -23,3 +23,15 @@ func get_save_data() -> Dictionary:
 func load_save_data(state: Dictionary) -> void:
     data.tree_positions = str_to_var(state.get("tree_positions", "[]"))
     # ... hier Logik zum Wiederherstellen der Welt ...
+    
+func create_world() -> Node3D:
+    # 1. Factory baut die Struktur
+    var world_root = factory.create_world() 
+    
+    # 2. Skript an die Welt hängen
+    world_root.set_script(load("res://scripts/world/World.gd"))
+    
+    # 3. Welt-Controller initialisieren
+    world_root.setup(data) # Daten an den Controller übergeben
+    
+    return world_root
