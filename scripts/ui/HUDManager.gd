@@ -5,6 +5,7 @@ class_name HUDManager
 var inventory_ctrl: InventoryUIController
 var joystick_ctrl: JoystickController
 var context_ctrl: ContextMenuController
+var interact_ctrl: InteractionUIController
 
 func setup(hud: CanvasLayer) -> void:
     # 1. Visuals erstellen (aus deinen neuen Klassen)
