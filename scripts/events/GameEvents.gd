@@ -13,6 +13,8 @@ const LOG_CAT := "Events"
 var player: PlayerEvents
 var world:  WorldEvents
 var system: SystemEvents
+var ui: UIEvents
+
 # var combat: CombatEvents   ← so einfach erweiterbar
 
 func _ready() -> void:
@@ -20,7 +22,8 @@ func _ready() -> void:
 	player = PlayerEvents.new()
 	world  = WorldEvents.new()
 	system = SystemEvents.new()
-	Logger.log_debug("Namespaces bereit: player, world, system", LOG_CAT)
+	ui = UIEvents.new()
+	Logger.log_debug("Namespaces bereit: player, world, system, ui", LOG_CAT)
 	super._ready()
 
 func init() -> void:
