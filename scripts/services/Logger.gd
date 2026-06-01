@@ -7,6 +7,13 @@ signal on_log(message: String, category: String, level: LogLevel)
 
 enum LogLevel { DEBUG, INFO, WARN, ERROR }
 
+var enabled_levels: Dictionary = {
+    LogLevel.DEBUG: true,
+    LogLevel.INFO: true,
+    LogLevel.WARN: true,
+    LogLevel.ERROR: true
+}
+
 func log_debug(msg: String, cat: String = "General") -> void:
 	_print_log(msg, cat, LogLevel.DEBUG)
 
@@ -21,6 +28,7 @@ func log_error(msg: String, cat: String = "General") -> void:
 	push_error("[%s] %s" % [cat, msg])
 
 func _print_log(msg: String, cat: String, level: LogLevel) -> void:
+	if not enabled_levels.get(level, true): return
 	var time = Time.get_time_string_from_system()
 	var level_name = LogLevel.keys()[level]
 	var formatted = "[%s] [%s] [%s] %s" % [time, level_name, cat, msg]
