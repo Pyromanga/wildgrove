@@ -1,10 +1,9 @@
-# res://scripts/core/BootstrapConfig.gd
 class_name BootstrapConfig extends Resource
 
-@export var services: Array[ServiceDefinition]
+## BootstrapConfig — Liste aller Services die beim Start geladen werden.
+## Im Editor: Inspector → services Array befüllen.
+## Jeder Eintrag ist eine ServiceDefinition Resource.
+## HINWEIS: ServiceDefinition ist in ServiceDefinition.gd definiert (eigene Datei).
+##          Es gibt keine innere Klasse mehr hier — das war ein Duplikat.
 
-# Hilfsklasse für den Editor
-class ServiceDefinition:
-    @export var name: String
-    @export var path: String
-    @export var deps: Array[String]
+@export var services: Array[ServiceDefinition] = []
