@@ -1,43 +1,23 @@
-extends RefCounted
+# res://scripts/ui/controllers/InventoryUIController.gd
 class_name InventoryUIController
 
-const LOG_CAT := "UI/Inventory"
+var _visuals: InventoryVisuals
+var _service: InventorySystem
 
-var panel: PanelContainer
-var label: Label
-var inventory_service: Node # Dein Service
-
-func setup(hud: CanvasLayer, inv_service: Node) -> void:
-    Logger.log_debug("Initialisiere InventoryUIController...", LOG_CAT)
-    inventory_service = inv_service
-    
-    # 1. Visuals bauen (aus der UIFactory hierher verschoben)
-    panel = PanelContainer.new()
-    panel.visible = false
-    panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-    # Style-Logik hierher verschieben...
-    
-    label = Label.new()
-    label.name = "InventoryLabel"
-    panel.add_child(label)
-    hud.add_child(panel)
-    
-    # 2. Verbinde das Event
-    Kernel.events.player.inventory_changed.connect(_on_inventory_changed)
-    
-    # Initialer Status
-    _on_inventory_changed(inventory_service.get_items())
+func setup(visuals: InventoryVisuals, inv_service: InventorySystem) -> void:
+    _visuals = visuals
+    _service = inv_service
+    _service.inventory_changed.connect(_on_inventory_changed)
+    _update_display(_service.get_all_items())
 
 func _on_inventory_changed(items: Array) -> void:
-    Logger.log_debug("Update Inventar-UI", LOG_CAT)
-    if items.is_empty():
-        label.text = "(Leer)"
-        return
-        
+    _update_display(items)
+
+func _update_display(items: Array) -> void:
     var lines: Array[String] = []
     for item in items:
         lines.append("%s ×%d" % [item["name"], item["quantity"]])
-    label.text = "\n".join(lines)
+    _visuals.update_text("\n".join(lines) if not lines.is_empty() else "(Leer)")
 
 func toggle() -> void:
-    panel.visible = !panel.visible
+    _visuals.toggle()
