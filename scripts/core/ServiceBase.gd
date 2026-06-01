@@ -42,4 +42,5 @@ func on_ready() -> void:
 
 ## Hilfsfunktion: Log-Kategorie immer "<ClassName>/Service"
 func _log_cat() -> String:
-	return "%s/Service" % name
+    var n = name if name != "" else "UnnamedService"
+    return "%s/Service" % n
