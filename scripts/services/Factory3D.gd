@@ -1,4 +1,4 @@
-extends ServiceBase
+extends ServiceNode
 class_name Factory3D
 
 # --- Konstanten ---
@@ -6,7 +6,12 @@ const COLOR_TRUNK: Color  = Color(0.4, 0.25, 0.1)
 const COLOR_LEAVES: Color = Color(0.1, 0.5, 0.1)
 const COLOR_BAR_BG: Color = Color(0.0, 0.0, 0.0, 0.7)
 const COLOR_BAR_HP: Color = Color(0.2, 0.8, 0.3)
+extends ServiceNode
+class_name MeinService
 
+func init() -> void:
+    super.init()
+    
 func create_simple_tree(parent: Node3D) -> Node3D:
 	var root: Node3D = Node3D.new()
 	root.name = "Tree_Root"
