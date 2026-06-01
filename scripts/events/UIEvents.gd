@@ -32,6 +32,5 @@ func emit_joystick_toggled(is_active: bool, origin: Vector2 = Vector2.ZERO) -> v
     _log("Joystick aktiv: %s" % is_active)
     joystick_toggled.emit(is_active, origin)
 
-func emit_joystick_moved(offset: Vector2) -> void:
-    # Kein Log hier, um Performance zu sparen (wird bei Bewegung 60x pro Sekunde gefeuert)
+func emit_joystick_moved(origin: Vector2, offset: Vector2) -> void:
     joystick_moved.emit(origin, offset)
