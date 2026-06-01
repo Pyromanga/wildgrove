@@ -8,7 +8,7 @@ signal layout_requested(state: String)
 signal menu_toggled(menu_name: String, is_visible: bool)
 signal overlay_changed(overlay_type: String, active: bool)
 
-signal joystick_active(is_active: bool)
+signal joystick_toggled(is_active: bool, origin: Vector2)
 signal joystick_moved(offset: Vector2)
 
 func _init() -> void:
@@ -27,3 +27,11 @@ func emit_menu_toggled(menu_name: String, is_visible: bool) -> void:
 func emit_overlay_changed(overlay_type: String, active: bool) -> void:
     _log("Overlay '%s' Status: %s" % [overlay_type, active])
     overlay_changed.emit(overlay_type, active)
+
+func emit_joystick_toggled(is_active: bool, origin: Vector2 = Vector2.ZERO) -> void:
+    _log("Joystick aktiv: %s" % is_active)
+    joystick_toggled.emit(is_active, origin)
+
+func emit_joystick_moved(offset: Vector2) -> void:
+    # Kein Log hier, um Performance zu sparen (wird bei Bewegung 60x pro Sekunde gefeuert)
+    joystick_moved.emit(offset)
