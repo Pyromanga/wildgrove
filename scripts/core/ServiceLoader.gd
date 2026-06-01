@@ -53,7 +53,7 @@ func init_services() -> void:
 	# Phase 2: init()
 	Logger.log_info("--- Phase 2: init() ---", LOG_CAT)
 	for svc_name in ordered:
-		var service := _get_service_as_base(svc_name)
+		var service := _get_service_interface(svc_name)
 		if not service:
 			Logger.log_warn("Service '%s' nicht als ServiceBase castbar — übersprungen." % svc_name, LOG_CAT)
 			continue
@@ -65,7 +65,7 @@ func init_services() -> void:
 	# Phase 3: on_ready()
 	Logger.log_info("--- Phase 3: on_ready() ---", LOG_CAT)
 	for svc_name in ordered:
-		var service := _get_service_as_base(svc_name)
+		var service := _get_service_interface(svc_name)
 		if not service:
 			Logger.log_warn("Service '%s' nicht als ServiceBase castbar — übersprungen." % svc_name, LOG_CAT)
 			continue
