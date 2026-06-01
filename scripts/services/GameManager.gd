@@ -7,17 +7,6 @@ class_name GameManager
 
 const LOG_CAT := "GameManager"
 
-enum GameState {
-	BOOT,           # Spiel startet gerade
-	MAIN_MENU,      # Hauptmenü
-	LOADING,        # Szene wird geladen
-	PLAYING,        # Spiel läuft normal
-	PAUSED,         # Pausiert (Menü offen)
-	CUTSCENE,       # Cutscene läuft — Input gesperrt
-	GAME_OVER,      # Spieler gestorben
-	CREDITS,        # Abspann
-}
-
 var _current_state: GameState = GameState.BOOT
 var _previous_state: GameState = GameState.BOOT
 var _save_system: SaveSystem
