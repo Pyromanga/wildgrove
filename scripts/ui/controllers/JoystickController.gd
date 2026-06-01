@@ -1,7 +1,10 @@
 extends RefCounted
 class_name JoystickController
 
+var _visuals: JoystickVisuals
+
 func setup(player: Node) -> void:
+    _visuals = visuals
     var touch = player.get_node_or_null("TouchInput")
     if not touch: return
 
