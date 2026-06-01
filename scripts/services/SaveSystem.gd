@@ -68,3 +68,8 @@ func _migrate_if_needed(state: Dictionary) -> Dictionary:
         Logger.log_info("Migriere Savegame von v%d auf v%d" % [version, SAVE_VERSION], _log_cat())
         # Hier könntest du eine Kette von Migrations-Methoden aufrufen
     return state
+    
+# Füge diese Methode hinzu, um den State vor dem Speichern zu aktualisieren
+func update_cache(category: String, data: Dictionary) -> void:
+    _cached_state[category] = data
+    Logger.log_debug("Cache für %s aktualisiert." % category, _log_cat())
