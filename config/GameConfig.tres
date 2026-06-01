@@ -1,7 +1,8 @@
 class_name GameConfig extends Resource
 
-# Dictionary: Key = von_state, Value = Array mit erlaubten zu_states
+# Das bleibt ein Dictionary, damit es flexibel ist
 @export var valid_transitions: Dictionary = {
-    "BOOT": ["MAIN_MENU"],
-    "PLAYING": ["PAUSED", "GAME_OVER", "CUTSCENE"]
+    "BOOT": ["MAIN_MENU", "LOADING"],
+    "MAIN_MENU": ["LOADING", "CREDITS"],
+    # ... hier trägst du ALLES ein, was vorher im Code stand
 }
