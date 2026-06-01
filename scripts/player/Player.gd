@@ -62,7 +62,7 @@ func _handle_movement(touch: Node, delta: float) -> void:
 		velocity.y = 0
 		
 	if input.length() > 0.1:
-		var move_dir: Vector3 = Kernel.utils.calculate_move_direction(_spring_arm, input)
+		var move_dir: Vector3 = MathHelper.calculate_move_direction(_spring_arm, input)
 		velocity.x = move_dir.x * speed
 		velocity.z = move_dir.z * speed
 		_mesh.rotation.y = lerp_angle(_mesh.rotation.y, atan2(move_dir.x, move_dir.z), 10.0 * delta)
