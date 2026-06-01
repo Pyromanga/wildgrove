@@ -24,11 +24,13 @@ func get_required_names() -> Array[String]:
         names.append(s["name"])
     return names
 
+# Im ServiceLoader...
 func setup_services(parent: Node) -> void:
-    var services = _get_services_config()
-    Logger.log_info("=== Phase 1: SETUP gestartet (%d Services) ===" % services.size(), LOG_CAT)
+    var factory = ServiceFactory.new()
+    var services = _get_config_list()
+    
     for s in services:
-        _create(s["name"], parent, s["path"])
+        factory.create_service(s.name, s.path, parent)
 
 # ─────────────────────────────────────────────
 # Öffentliche API
@@ -116,8 +118,9 @@ func _topological_sort() -> Array[String]:
 	# In-degree aufbauen (wie viele unerfüllte Deps hat jeder Service)
 	var in_degree: Dictionary = {}
 	var adj: Dictionary = {}  # dep → [services die dep brauchen]
+	var services = _get_config_list()
 	
-	for s in _get_services_config:
+	for s in _get_s:
 		in_degree[s["name"]] = 0
 		adj[s["name"]] = []
 	
