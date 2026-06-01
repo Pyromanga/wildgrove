@@ -83,4 +83,4 @@ deps = ["savesystem", "data"]
 
 [resource]
 script = ExtResource("1_config")
-services = [SubResource("Resource_savesystem"), SubResource("Resource_events"), SubResource("Resource_data"), SubResource("Resource_touchinput"), SubResource("Resource_utils"), SubResource("Resource_debug_service"), SubResource("Resource_states"), SubResource("Resource_debug_console"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory")]
+services = [SubResource("Resource_savesystem"), SubResource("Resource_events"), SubResource("Resource_data"), SubResource("Resource_touchinput"), SubResource("Resource_utils"), SubResource("Resource_states"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory")]
