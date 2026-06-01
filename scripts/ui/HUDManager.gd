@@ -34,8 +34,7 @@ func setup(hud: HUD) -> void:
     # 6. Globales Notif-System (Panels)
     notif_ctrl = NotificationController.new()
     
-    Logger.log_debug("HUDManager: Alles modular bereit", "HUDManager")
-    
-    # Im HUDManager.setup():
     float_text_ctrl = FloatingTextController.new()
     float_text_ctrl.setup(FloatingTextVisuals.new(hud))
+    
+    Logger.log_debug("HUDManager: Alles modular bereit", "HUDManager")
