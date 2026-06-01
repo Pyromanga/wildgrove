@@ -2,12 +2,11 @@ class_name InteractionUIController
 
 var _visuals: InteractionVisuals
 
-func setup(visuals: InteractionVisuals) -> void:
+func setup(visuals: InteractionVisuals, world_events: Object) -> void:
     _visuals = visuals
-    
-    Kernel.events.world.interaction_started.connect(_on_started)
-    Kernel.events.world.interaction_finished.connect(_on_finished)
-    Kernel.events.world.interaction_cancelled.connect(_on_cancelled)
+    world_events.interaction_started.connect(_on_started)
+    world_events.interaction_finished.connect(_on_finished)
+    world_events.interaction_cancelled.connect(_on_cancelled)
 
 func _on_started(_label: String, duration: float) -> void:
     _visuals.set_value(0)
