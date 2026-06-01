@@ -19,3 +19,10 @@ func setup(hud: CanvasLayer) -> void:
     context_ctrl.setup(hud)
     
     Logger.log_debug("HUDManager: Alle Controller bereit", "HUDManager")
+
+    # Interaction-Modul verheiraten
+    var interact_visuals = InteractionVisuals.new(hud)
+    interact_ctrl = InteractionUIController.new()
+    interact_ctrl.setup(interact_visuals)
+    
+    Logger.log_debug("HUDManager: InteractionUI bereit", "HUDManager")
