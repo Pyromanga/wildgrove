@@ -27,23 +27,11 @@ name = "utils"
 path = "res://scripts/services/Utils.gd"
 deps = []
 
-[sub_resource type="Resource" id="Resource_debug_service"]
-script = ExtResource("2_def")
-name = "debug_service"
-path = "res://scripts/debug/DebugService.gd"
-deps = []
-
 [sub_resource type="Resource" id="Resource_states"]
 script = ExtResource("2_def")
 name = "states"
 path = "res://scripts/services/StateService.gd"
 deps = ["savesystem"]
-
-[sub_resource type="Resource" id="Resource_debug_console"]
-script = ExtResource("2_def")
-name = "debug_console"
-path = "res://scripts/debug/DebugConsole.gd"
-deps = ["debug_service"]
 
 [sub_resource type="Resource" id="Resource_skill_system"]
 script = ExtResource("2_def")
