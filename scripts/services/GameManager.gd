@@ -22,6 +22,7 @@ var _current_state: GameState = GameState.BOOT
 var _previous_state: GameState = GameState.BOOT
 var _save_system: SaveSystem
 var _events: GameEvents
+@export var config: GameConfig
 
 # ─────────────────────────────────────────────
 # Lifecycle
