@@ -30,22 +30,18 @@ func _init() -> void:
 	pass # Hier nichts tun! Zu gefährlich für Autoloads.
 
 func _ready() -> void:
-	# Erst hier ist garantiert, dass Logger und Kernel existieren
-	if Logger: 
-		Logger.on_log.connect(_on_log_entry)
+	# 1. Verbindung zum Logger herstellen (Sicher in _ready)
+	Logger.on_log.connect(_on_log_entry)
 	
+	# 2. Befehle registrieren
 	_register_default_commands()
 	
-	# UI laden
-	var ui_scene = load("res://scripts/debug/SimpleTerminalUI.gd")
-	add_child(ui_scene.new())
-	
-	Logger.log_debug("SimpleTerminal bereit.", "Terminal")
-
-	# UI als Kind laden — CanvasLayer mit layer=128
+	# 3. UI als Kind laden (CanvasLayer mit layer=128)
 	var ui_script = load("res://scripts/debug/SimpleTerminalUI.gd")
-	assert(ui_script != null, "SimpleTerminalUI.gd nicht gefunden!")
-	add_child(ui_script.new())
+	if ui_script:
+		add_child(ui_script.new())
+	else:
+		push_error("[SimpleTerminal] SimpleTerminalUI.gd konnte nicht geladen werden!")
 
 	Logger.log_debug("SimpleTerminal bereit.", "Terminal")
 
