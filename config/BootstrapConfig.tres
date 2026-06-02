@@ -67,12 +67,6 @@ name = "ui_factory"
 path = "res://scripts/services/UIFactory.gd"
 deps = ["inventory"]
 
-[sub_resource type="Resource" id="Resource_touchinput"]
-script = ExtResource("2_def")
-name = "touchinput"
-path = "res://scripts/player/TouchInput.gd"
-deps = []
-
 [sub_resource type="Resource" id="Resource_worldservice"]
 script = ExtResource("2_def")
 name = "world"
@@ -81,4 +75,4 @@ deps = ["savesystem", "data"]
 
 [resource]
 script = ExtResource("1_config")
-services = [SubResource("Resource_savesystem"), SubResource("Resource_gameevents"), SubResource("Resource_data"), SubResource("Resource_touchinput"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory")]
+services = [SubResource("Resource_savesystem"), SubResource("Resource_gameevents"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory")]
