@@ -29,7 +29,7 @@ var _btn_toggle: Button
 # ─────────────────────────────────────────────
 # Referenzen
 # ─────────────────────────────────────────────
-var _terminal:   SimpleTerminal     ## Typisierter Parent — nie untypisiert get_parent() nutzen
+var _terminal: Node
 var _controller: TerminalController
 
 # ─────────────────────────────────────────────
