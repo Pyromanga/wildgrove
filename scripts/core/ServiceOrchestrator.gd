@@ -85,8 +85,11 @@ func boot() -> void:
 	activator.run(ordered, registry)
 
 	# Phase 6 — Install (DependencyContainer + services_initialized)
-	Logger.log_info("── Phase 6 · Install", LOG_CAT)
-	installer.install(registry)
+	# ServiceOrchestrator.gd (Phase 6)
+  Logger.log_info("── Phase 6 · Install", LOG_CAT)
+  var final_registry = installer.install(registry)
+  Services.populate(final_registry) # Orchestrator verheiratet die Registry mit dem Container
+  EventBus.system.services_initialized.emit()
 
 	var elapsed := Time.get_ticks_msec() - started
 	Logger.log_info("╚══ BOOT FERTIG (%d ms) ══╝" % elapsed, LOG_CAT)
