@@ -100,5 +100,6 @@ func boot() -> void:
 
 func _teardown() -> void:
 	Logger.log_info("── Teardown gestartet", LOG_CAT)
-	teardown.execute(registry, installer)
+	Services.clear() 
+  teardown.execute(registry)
 	Logger.log_info("── Teardown fertig", LOG_CAT)
