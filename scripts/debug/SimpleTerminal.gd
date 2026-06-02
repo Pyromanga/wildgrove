@@ -27,12 +27,20 @@ var _commands: Dictionary = {}
 # ─────────────────────────────────────────────
 
 func _init() -> void:
-	# Signal connecten in _init damit keine Logs verloren gehen
-	# die zwischen _init() und _ready() entstehen.
-	Logger.on_log.connect(_on_log_entry)
+	pass # Hier nichts tun! Zu gefährlich für Autoloads.
 
 func _ready() -> void:
+	# Erst hier ist garantiert, dass Logger und Kernel existieren
+	if Logger: 
+		Logger.on_log.connect(_on_log_entry)
+	
 	_register_default_commands()
+	
+	# UI laden
+	var ui_scene = load("res://scripts/debug/SimpleTerminalUI.gd")
+	add_child(ui_scene.new())
+	
+	Logger.log_debug("SimpleTerminal bereit.", "Terminal")
 
 	# UI als Kind laden — CanvasLayer mit layer=128
 	var ui_script = load("res://scripts/debug/SimpleTerminalUI.gd")
