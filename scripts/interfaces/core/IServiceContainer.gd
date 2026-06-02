@@ -1,10 +1,10 @@
 # res://scripts/interfaces/core/IServiceContainer.gd
 class_name IServiceContainer extends RefCounted
 
-var events: Object
-var states: Object
-var builder: Object
-var inventory: Object
-var data: Object
-var factory3d: Object
-var world: Object
+var game_events: RefCounted
+var player_states: Node
+var interaction_builder: Node
+var inventory_system: Node
+var player_data: Node
+var factory3d: Node
+var world: Node
