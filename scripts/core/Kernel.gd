@@ -1,13 +1,25 @@
 extends Node
 
-## Kernel — Zentrale Service-Registry.
-## Speichert Node-basierte Services (ServiceNode) und Pure Services (Service/RefCounted).
-## Autoload: Kernel (muss nach Logger in project.godot stehen)
+## Kernel — Zentrale Service-Registry + Typed Shortcuts.
+## Autoload: nach Logger, nach SimpleTerminal.
+##
+## Shortcuts sind null bis ServiceLoader.bind_shortcuts() nach Phase 3 läuft.
+## Gameplay-Code nutzt Shortcuts. Bootstrap-Code nutzt get_service().
 
 signal service_registered(service_name: String)
 signal service_unregistered(service_name: String)
 
-## Alle registrierten Services. Key: lowercase service name.
+# ─────────────────────────────────────────────
+# Typed Shortcuts — null bis bind_shortcuts()
+# ─────────────────────────────────────────────
+var events:    GameEvents         = null
+var states:    PlayerStateService = null
+var builder:   InteractionBuilder = null
+var inventory: InventorySystem    = null
+var data:      DataService        = null
+var factory3d: Factory3D          = null
+var world:     WorldService       = null
+
 var _services: Dictionary = {}
 
 # ─────────────────────────────────────────────
@@ -18,64 +30,48 @@ func _ready() -> void:
 	Logger.log_debug("Kernel bereit.", "Kernel")
 
 # ─────────────────────────────────────────────
-# Öffentliche API
+# Registry API
 # ─────────────────────────────────────────────
 
-## Registriert einen Service (Node oder RefCounted).
-## Wird automatisch von ServiceNode._ready() aufgerufen.
-## Pure Services werden manuell von ServiceFactory registriert.
 func register_service(service: Object) -> void:
 	if not is_instance_valid(service):
-		Logger.log_error("Versuch, ein ungültiges Objekt als Service zu registrieren!", "Kernel")
+		Logger.log_error("Ungültiges Objekt — Registrierung abgebrochen.", "Kernel")
 		return
-
 	var s_name := _resolve_name(service)
 	if s_name.is_empty():
-		Logger.log_error("Service hat keinen auflösbaren Namen — Registrierung abgebrochen.", "Kernel")
+		Logger.log_error("Service hat keinen auflösbaren Namen.", "Kernel")
 		return
-
 	if _services.has(s_name):
-		Logger.log_warn("Service '%s' bereits registriert — wird überschrieben." % s_name, "Kernel")
-
+		Logger.log_warn("Service '%s' überschrieben." % s_name, "Kernel")
 	_services[s_name] = service
-	Logger.log_debug("Service registriert: '%s' (%s)" % [s_name, service.get_class()], "Kernel")
+	Logger.log_debug("Registriert: '%s'" % s_name, "Kernel")
 	service_registered.emit(s_name)
 
-## Holt einen Service über seinen Namen. Gibt null zurück wenn nicht gefunden.
 func get_service(service_name: String) -> Object:
 	var key := service_name.to_lower()
-	var svc = _services.get(key)
+	var svc  = _services.get(key)
 	if not svc:
 		Logger.log_error("Service nicht gefunden: '%s'" % service_name, "Kernel")
 		return null
 	if not is_instance_valid(svc):
-		Logger.log_error("Service '%s' existiert in Registry, ist aber ungültig (freed?)." % service_name, "Kernel")
+		Logger.log_error("Service '%s' ist freigegeben." % service_name, "Kernel")
 		_services.erase(key)
 		return null
 	return svc
 
-## Prüft ob ein Service registriert ist ohne einen Error-Log auszulösen.
 func has_service(service_name: String) -> bool:
 	return _services.has(service_name.to_lower())
 
-## Entfernt einen Service aus der Registry.
-## Sollte in _exit_tree() von ServiceNode aufgerufen werden.
 func unregister_service(service: Object) -> void:
 	if not is_instance_valid(service):
 		return
-
 	var s_name := _resolve_name(service)
 	if s_name.is_empty():
 		return
-
-	if _services.has(s_name):
-		_services.erase(s_name)
-		Logger.log_debug("Service entfernt: '%s'" % s_name, "Kernel")
+	if _services.erase(s_name):
+		Logger.log_debug("Entfernt: '%s'" % s_name, "Kernel")
 		service_unregistered.emit(s_name)
-	else:
-		Logger.log_warn("unregister_service: '%s' war nicht registriert." % s_name, "Kernel")
 
-## Gibt alle registrierten Service-Namen zurück (für Debugging).
 func get_registered_names() -> Array[String]:
 	var names: Array[String] = []
 	for key in _services.keys():
@@ -83,22 +79,43 @@ func get_registered_names() -> Array[String]:
 	return names
 
 # ─────────────────────────────────────────────
+# Shortcuts binden — aufgerufen von ServiceLoader nach Phase 3
+# ─────────────────────────────────────────────
+
+func bind_shortcuts() -> void:
+	Logger.log_info("Binde Kernel-Shortcuts...", "Kernel")
+
+	events    = get_service("gameevents")   as GameEvents
+	states    = get_service("playerstates") as PlayerStateService
+	builder   = get_service("builder")      as InteractionBuilder
+	inventory = get_service("inventory")    as InventorySystem
+	data      = get_service("data")         as DataService
+	factory3d = get_service("factory3d")    as Factory3D
+	world     = get_service("world")        as WorldService
+
+	var checks := {
+		"events": events, "states": states, "builder": builder,
+		"inventory": inventory, "data": data,
+		"factory3d": factory3d, "world": world,
+	}
+	for k in checks:
+		if not checks[k]:
+			Logger.log_warn("Shortcut '%s' ist null." % k, "Kernel")
+
+	Logger.log_info("Shortcuts gebunden.", "Kernel")
+
+# ─────────────────────────────────────────────
 # Intern
 # ─────────────────────────────────────────────
 
-## Löst den Registry-Schlüsselnamen eines Service-Objekts auf.
-## Priorität: Node.name → get_class()
 func _resolve_name(service: Object) -> String:
 	if service is Node:
-		var node_name := (service as Node).name
-		if not node_name.is_empty():
-			return node_name.to_lower()
-
-	# RefCounted / Pure Service: hat kein Node.name
-	# Wir nutzen get_class() als Fallback — nicht ideal, aber deterministisch.
-	# Besser: Pure Services setzen service_name in ihrer Service-Basisklasse.
+		var n := (service as Node).name
+		if not n.is_empty():
+			return n.to_lower()
+	if service is Service:
+		var sn := (service as Service).service_name
+		if not sn.is_empty():
+			return sn.to_lower()
 	var cls := service.get_class()
-	if not cls.is_empty():
-		return cls.to_lower()
-
-	return ""
+	return cls.to_lower() if not cls.is_empty() else ""
