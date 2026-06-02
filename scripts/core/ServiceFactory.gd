@@ -64,6 +64,10 @@ func _create_from_script(script: GDScript, definition: ServiceDefinition, parent
 	var instance = script.new()
 
 	if instance is Node:
+    if not instance is ServiceNode:
+        Logger.log_error("Service '%s' ist ein Node, erbt aber nicht von ServiceNode! Er wird sich nie im Kernel registrieren." % definition.service_name, LOG_CAT)
+    instance.name = definition.service_name
+    parent.add_child(instance)
 		# Node-Service: In den Baum hängen → ServiceNode._ready() registriert ihn selbst.
 		instance.name = definition.service_name
 		parent.add_child(instance)
