@@ -1,7 +1,8 @@
-class_name SaveSystem extends Service
+extends Service
+class_name SaveSystem
 
-## SaveSystem — Pure Service (kein Node nötig).
-## Provider-Pattern: Jeder Service registriert sich selbst und liefert seine Daten.
+## SaveSystem — Pure Service.
+## Verarbeitet das Speichern und Laden von JSON-Daten über das Provider-Pattern.
 
 const LOG_CAT      := "SaveSystem"
 const SAVE_PATH    := "user://savegame.json"
@@ -15,92 +16,84 @@ var _loaded_state:   Dictionary = {}
 # ─────────────────────────────────────────────
 
 func init() -> void:
-	super.init()
+	# Hier rufen wir nicht Kernel auf, sondern bereiten nur die Daten vor.
+	# Falls wir beim Booten sofort den letzten Spielstand im Speicher haben wollen:
+	if has_save():
+		_loaded_state = _read_from_disk()
+		Logger.log_info("Initialer Spielstand in Speicher geladen.", LOG_CAT)
+	
 	Logger.log_info("SaveSystem bereit.", LOG_CAT)
 
 # ─────────────────────────────────────────────
-# Provider-Registrierung
+# Provider-Logik (unverändert, da sie schon sauber ist)
 # ─────────────────────────────────────────────
 
-## Provider muss get_save_key() → String und get_save_data() → Dictionary haben.
 func register_save_provider(provider: Object) -> void:
+	# Duck-Typing Check bleibt, da Provider Nodes oder RefCounted sein können
 	if not provider.has_method("get_save_key") or not provider.has_method("get_save_data"):
-		Logger.log_error("Provider hat kein gültiges Save-Interface!", LOG_CAT)
+		Logger.log_error("Provider %s erfüllt Save-Interface nicht!" % provider.get_class(), LOG_CAT)
 		return
-	if provider in _save_providers:
-		Logger.log_warn("Provider bereits registriert.", LOG_CAT)
-		return
-	_save_providers.append(provider)
-	Logger.log_debug("Save-Provider registriert: %s" % provider.get_class(), LOG_CAT)
+	
+	if not provider in _save_providers:
+		_save_providers.append(provider)
+		Logger.log_debug("Provider registriert: %s" % provider.get_class(), LOG_CAT)
 
 # ─────────────────────────────────────────────
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-func has_save() -> bool:
-	return FileAccess.file_exists(SAVE_PATH)
-
-## Gibt den zuletzt geladenen State zurück (oder leeres Dict wenn nie geladen).
-## Wird von Services in init() genutzt um ihren Zustand wiederherzustellen.
-func get_state() -> Dictionary:
-	return _loaded_state
-
-## Gibt den State-Teil eines bestimmten Keys zurück.
-func get_state_for(key: String) -> Dictionary:
-	return _loaded_state.get(key, {})
-
 func save_game() -> bool:
-	Logger.log_info("Speichern...", LOG_CAT)
-	var full_state: Dictionary = {"version": SAVE_VERSION}
+	# EventBus nutzen, um den Start zu signalisieren (für UI-Overlay etc.)
+	EventBus.system.emit_save_started()
+	
+	var full_state: Dictionary = {"version": SAVE_VERSION, "timestamp": Time.get_datetime_string_from_system()}
 
 	for provider in _save_providers:
-		if not is_instance_valid(provider):
-			Logger.log_warn("Provider ist freigegeben — übersprungen.", LOG_CAT)
-			continue
-		var key: String  = provider.get_save_key()
-		var data: Dictionary = provider.get_save_data()
-		full_state[key] = data
+		if is_instance_valid(provider):
+			full_state[provider.get_save_key()] = provider.get_save_data()
 
 	var success := _write_to_disk(full_state)
-	if success:
-		Logger.log_info("Gespeichert.", LOG_CAT)
-	else:
-		Logger.log_error("Speichern fehlgeschlagen!", LOG_CAT)
+	
+	# EventBus informiert alle über das Ergebnis
+	EventBus.system.emit_save_completed(success)
 	return success
 
 func load_game() -> Dictionary:
-	if not has_save():
-		Logger.log_info("Kein Spielstand vorhanden.", LOG_CAT)
+	EventBus.system.emit_load_started()
+	
+	var data := _read_from_disk()
+	if data.is_empty():
+		EventBus.system.emit_load_completed(false)
 		return {}
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if not file:
-		Logger.log_error("Spielstand konnte nicht geöffnet werden.", LOG_CAT)
-		return {}
-
-	var text    := file.get_as_text()
-	file.close()
-
-	var parsed = JSON.parse_string(text)
-	if not parsed is Dictionary:
-		Logger.log_error("Spielstand ist kein gültiges JSON!", LOG_CAT)
-		return {}
-
-	_loaded_state = _migrate_if_needed(parsed)
-	Logger.log_info("Spielstand geladen (v%d)." % _loaded_state.get("version", 0), LOG_CAT)
+	_loaded_state = _migrate_if_needed(data)
+	EventBus.system.emit_load_completed(true)
 	return _loaded_state
 
 # ─────────────────────────────────────────────
 # Intern
 # ─────────────────────────────────────────────
 
+func _read_from_disk() -> Dictionary:
+	if not has_save(): return {}
+	
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if not file: return {}
+	
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	
+	return parsed if parsed is Dictionary else {}
+
 func _write_to_disk(state: Dictionary) -> bool:
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if not file:
-		return false
+	if not file: return false
 	file.store_string(JSON.stringify(state, "\t"))
 	file.close()
 	return true
+    
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
 
 func _migrate_if_needed(state: Dictionary) -> Dictionary:
 	var version: int = state.get("version", 0)
