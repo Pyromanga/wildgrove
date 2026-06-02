@@ -1,13 +1,6 @@
-class_name GameConfig extends Resource
+[gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3]
 
-# Das bleibt ein Dictionary, damit es flexibel ist
-@export var valid_transitions: Dictionary = {
-		GameState.BOOT:      [GameState.MAIN_MENU, GameState.LOADING],
-		GameState.MAIN_MENU: [GameState.LOADING, GameState.CREDITS],
-		GameState.LOADING:   [GameState.PLAYING, GameState.MAIN_MENU],
-		GameState.PLAYING:   [GameState.PAUSED, GameState.GAME_OVER, GameState.CUTSCENE, GameState.LOADING, GameState.MAIN_MENU],
-		GameState.PAUSED:    [GameState.PLAYING, GameState.MAIN_MENU],
-		GameState.CUTSCENE:  [GameState.PLAYING, GameState.MAIN_MENU],
-		GameState.GAME_OVER: [GameState.MAIN_MENU, GameState.LOADING],
-		GameState.CREDITS:   [GameState.MAIN_MENU],
-	}
+[ext_resource type="Script" path="res://scripts/core/GameConfig.gd" id="1_x1y2z"]
+
+[resource]
+script = ExtResource("1_x1y2z")
