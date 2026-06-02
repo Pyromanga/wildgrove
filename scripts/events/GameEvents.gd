@@ -1,10 +1,13 @@
-extends ServiceNode
+extends Service
 class_name GameEvents
 
-## GameEvents — Dünner Orchestrator, registriert alle Event-Namespaces.
+## GameEvents — Container für alle Event-Namespaces.
+## Erbt von Service (RefCounted) — kein Node nötig, keine Szenen-Präsenz.
+## Erbt NICHT von BaseEvents — es ist kein Namespace, sondern ein Orchestrator.
+##
 ## Neuen Namespace hinzufügen:
-##   1. NeuesEvents.gd in res://scripts/events/ anlegen
-##   2. Hier eine Zeile eintragen — das war's.
+##   1. NeuesEvents.gd in res://scripts/events/ anlegen (extends BaseEvents)
+##   2. Hier eine Property + Zeile in init() eintragen — das war's.
 
 const LOG_CAT := "Events"
 
@@ -13,18 +16,21 @@ var world:  WorldEvents
 var system: SystemEvents
 var ui:     UIEvents
 
-func _ready() -> void:
+# ─────────────────────────────────────────────
+# Lifecycle
+# ─────────────────────────────────────────────
+
+func init() -> void:
+	super.init()
+	# Namespaces hier erstellen — init() ist Phase 2, alle Autoloads längst bereit
 	player = PlayerEvents.new()
 	world  = WorldEvents.new()
 	system = SystemEvents.new()
 	ui     = UIEvents.new()
 	Logger.log_debug("Namespaces bereit: player, world, system, ui", LOG_CAT)
-	super._ready()
-
-func init() -> void:
-	super.init()
 
 func on_ready() -> void:
 	super.on_ready()
+	# Signal für Main._on_services_ready() — feuert als letzter Service in Phase 3
 	system.emit_services_initialized()
-	Logger.log_debug("EventSystem aktiv.", LOG_CAT)
+	Logger.log_info("EventSystem aktiv.", LOG_CAT)
