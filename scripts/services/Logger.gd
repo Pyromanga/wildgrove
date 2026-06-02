@@ -1,3 +1,4 @@
+class_name Logger
 extends Node
 
 ## Logger — Zentraler Logger für das gesamte Projekt.
