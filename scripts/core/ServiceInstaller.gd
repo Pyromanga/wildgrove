@@ -15,16 +15,12 @@ const LOG_CAT := "ServiceInstaller"
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-func install(registry: ServiceRegistry) -> void:
-	Logger.log_debug("Fülle DependencyContainer...", LOG_CAT)
-
-	# Alle bekannten Services in den Container eintragen
-	Services.populate(registry)
-
-	# Signal: alle Services sind bereit und der Container ist befüllt
-	EventBus.system.services_initialized.emit()
-
-	Logger.log_info("DependencyContainer befüllt. System bereit.", LOG_CAT)
+func install(registry: ServiceRegistry) -> ServiceRegistry:
+    # Optional: Prüfe hier, ob kritische Services da sind
+    if not registry.has_service("world"):
+        Logger.log_warn("WorldService fehlt beim Installieren!", "Installer")
+    
+    return registry
 
 func uninstall() -> void:
 	Services.clear()
