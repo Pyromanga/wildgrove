@@ -53,7 +53,8 @@ lights_and_shadows/directional_shadow/size=2048
 # ─────────────────────────────────────────────────────────────────────────────
 
 [autoload]
-Logger="*res://scripts/services/Logger.gd"
+Logger="*res://scripts/logger/Logger.gd"
+EventBus="*res://scripts/events/EventBus.gd
 SimpleTerminal="*res://scripts/debug/SimpleTerminal.gd"
 [autoload_backup]
 Kernel="*res://scripts/core/Kernel.gd"
