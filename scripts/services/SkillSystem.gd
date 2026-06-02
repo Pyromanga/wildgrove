@@ -1,15 +1,12 @@
 extends ServiceNode
 class_name SkillSystem
 
-## SkillSystem — Verwaltet XP und Levels aller Skills.
-## Lauscht auf player.xp_gained über den Event-Bus.
-
-signal level_up(skill_name: String, new_level: int)
+## SkillSystem — Berechnet XP-Fortschritt und Level-Ups.
+## Emittiert level_up über Kernel.events.player (PlayerEvents),
+## weil Level-Ups Spieler-Events sind — nicht Service-interne Events.
 
 const LOG_CAT := "SkillSystem"
 
-## Alle Skills mit ihren Startwerten.
-## Erweiterbar ohne Code-Änderung — einfach neuen Key hinzufügen.
 var skills: Dictionary = {
 	"woodcutting": {"xp": 0, "level": 1},
 	"mining":      {"xp": 0, "level": 1},
@@ -43,7 +40,7 @@ func add_xp(skill_name: String, amount: int) -> void:
 		Logger.log_warn("Unbekannter Skill: '%s'" % skill_name, LOG_CAT)
 		return
 	skills[skill_name]["xp"] += amount
-	Logger.log_debug("+%d XP in '%s' (gesamt: %d)" % [amount, skill_name, skills[skill_name]["xp"]], LOG_CAT)
+	Logger.log_debug("+%d XP '%s' (gesamt: %d)" % [amount, skill_name, skills[skill_name]["xp"]], LOG_CAT)
 	_check_level_up(skill_name)
 
 func get_level(skill_name: String) -> int:
@@ -53,8 +50,7 @@ func get_xp(skill_name: String) -> int:
 	return skills.get(skill_name, {"xp": 0})["xp"]
 
 func get_xp_for_next_level(skill_name: String) -> int:
-	var current_level := get_level(skill_name)
-	return _calculate_required_xp(current_level + 1)
+	return _calculate_required_xp(get_level(skill_name) + 1)
 
 # ─────────────────────────────────────────────
 # Intern
@@ -62,17 +58,18 @@ func get_xp_for_next_level(skill_name: String) -> int:
 
 func _check_level_up(skill_name: String) -> void:
 	var entry: Dictionary = skills[skill_name]
-	var xp:    int        = entry["xp"]
-	var lvl:   int        = entry["level"]
+	if entry["xp"] < _calculate_required_xp(entry["level"] + 1):
+		return
 
-	if xp >= _calculate_required_xp(lvl + 1):
-		entry["level"] += 1
-		Logger.log_info("Level Up! '%s' → Level %d" % [skill_name, entry["level"]], LOG_CAT)
-		level_up.emit(skill_name, entry["level"])
+	entry["level"] += 1
+	Logger.log_info("Level Up! '%s' → %d" % [skill_name, entry["level"]], LOG_CAT)
 
-		# Sofort weiteres Level-Up prüfen (Mehrfach-Levelup durch viel XP möglich)
-		_check_level_up(skill_name)
+	# Event über PlayerEvents — level_up gehört dem Spieler, nicht dem Service
+	if Kernel.events and Kernel.events.player:
+		Kernel.events.player.emit_level_up(skill_name, entry["level"])
 
-## Runescape-inspirierte XP-Formel.
+	# Mehrfach-Levelup möglich bei sehr viel XP auf einmal
+	_check_level_up(skill_name)
+
 func _calculate_required_xp(level: int) -> int:
 	return int(0.25 * floor(float(level) + 300.0 * pow(2.0, float(level) / 7.0)))
