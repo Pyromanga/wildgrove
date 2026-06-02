@@ -1,9 +1,22 @@
+# res://scripts/core/services/ServiceFactory.gd
 class_name ServiceFactory extends RefCounted
 
-## ServiceFactory — Instanziiert Services aus ServiceDefinition-Einträgen.
-## Unterscheidet zwischen Node-Services (ServiceNode) und Pure Services (Service).
-## Node-Services werden in den Baum gehängt → _ready() registriert sie im Kernel.
-## Pure Services werden direkt erstellt und manuell im Kernel registriert.
+## ServiceFactory — Phase 3 der Boot-Pipeline.
+##
+## Instanziiert alle Services und registriert sie direkt in der Registry.
+## Die Factory ist der einzige Ort wo Registrierung stattfindet —
+## ServiceNode._ready() macht das NICHT (kein Baum-Suchen nötig).
+##
+## Ablauf für Node-Services:
+##   1. instance.name setzen
+##   2. registry.register(instance)  ← VOR add_child()
+##   3. parent.add_child(instance)   ← _ready() läuft, aber ohne Registrierungslogik
+##
+## Ablauf für Pure Services:
+##   1. instance.service_name setzen
+##   2. registry.register(instance)
+##
+## Gibt true zurück wenn alle Services erstellt wurden, sonst false.
 
 const LOG_CAT := "ServiceFactory"
 
@@ -11,81 +24,110 @@ const LOG_CAT := "ServiceFactory"
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-## Erstellt einen Service anhand seiner Definition.
-## Gibt das erstellte Objekt zurück oder null bei Fehler.
-func create_service(definition: ServiceDefinition, parent: Node) -> Object:
-	assert(definition != null, "ServiceFactory.create_service: definition darf nicht null sein!")
-	assert(not definition.service_name.is_empty(), "ServiceDefinition.service_name darf nicht leer sein!")
-	assert(not definition.path.is_empty(), "ServiceDefinition.path darf nicht leer sein!")
+func instantiate_all(
+	defs: Array[ServiceDefinition],
+	registry: ServiceRegistry,
+	parent: Node
+) -> bool:
+	var ok    := 0
+	var total := defs.size()
 
-	var loaded = load(definition.path)
-	if not loaded:
-		Logger.log_error(
-			"Ressource nicht ladbar: '%s' (Service: '%s')" % [definition.path, definition.service_name],
-			LOG_CAT
-		)
-		return null
+	for def in defs:
+		if _create_service(def, registry, parent) != null:
+			ok += 1
+		else:
+			Logger.log_error("Konnte '%s' nicht erstellen!" % def.service_name, LOG_CAT)
 
-	Logger.log_debug(
-		"Erstelle Service '%s' von '%s' (node_service: %s)" % [
-			definition.service_name, definition.path, definition.is_node_service
-		],
-		LOG_CAT
-	)
-
-	if loaded is PackedScene:
-		return _create_from_scene(loaded, definition, parent)
-	elif loaded is GDScript:
-		return _create_from_script(loaded, definition, parent)
-	else:
-		Logger.log_error(
-			"Unbekannter Ressourcentyp für '%s': %s" % [definition.service_name, loaded.get_class()],
-			LOG_CAT
-		)
-		return null
+	Logger.log_info("%d/%d Services erstellt." % [ok, total], LOG_CAT)
+	return ok == total
 
 # ─────────────────────────────────────────────
 # Intern
 # ─────────────────────────────────────────────
 
-func _create_from_scene(scene: PackedScene, definition: ServiceDefinition, parent: Node) -> Node:
-	var instance = scene.instantiate()
-	if not instance is Node:
-		Logger.log_error("PackedScene für '%s' ist kein Node nach instantiate()!" % definition.service_name, LOG_CAT)
-		instance.free()
+func _create_service(
+	def: ServiceDefinition,
+	registry: ServiceRegistry,
+	parent: Node
+) -> Object:
+	assert(def != null,                     "ServiceFactory: def darf nicht null sein!")
+	assert(not def.service_name.is_empty(), "ServiceFactory: service_name darf nicht leer sein!")
+	assert(not def.path.is_empty(),         "ServiceFactory: path darf nicht leer sein!")
+
+	var loaded = load(def.path)
+	if not loaded:
+		Logger.log_error(
+			"Ressource nicht ladbar: '%s' (Service: '%s')" % [def.path, def.service_name],
+			LOG_CAT
+		)
 		return null
 
-	instance.name = definition.service_name
+	Logger.log_debug("Erstelle '%s' von '%s'" % [def.service_name, def.path], LOG_CAT)
+
+	if loaded is PackedScene:
+		return _from_scene(loaded, def, registry, parent)
+	elif loaded is GDScript:
+		return _from_script(loaded, def, registry, parent)
+	else:
+		Logger.log_error(
+			"Unbekannter Ressourcentyp für '%s': %s" % [def.service_name, loaded.get_class()],
+			LOG_CAT
+		)
+		return null
+
+func _from_scene(
+	scene: PackedScene,
+	def: ServiceDefinition,
+	registry: ServiceRegistry,
+	parent: Node
+) -> Node:
+	var instance: Node = scene.instantiate()
+	if instance == null:
+		Logger.log_error("PackedScene für '%s' ergab null nach instantiate()." % def.service_name, LOG_CAT)
+		return null
+
+	instance.name = def.service_name
+	# Registrierung VOR add_child — damit ist der Service in der Registry
+	# bevor _ready() auf dem Node läuft. Kein Baum-Suchen nötig.
+	registry.register(instance)
 	parent.add_child(instance)
-	Logger.log_debug("Scene-Service '%s' erstellt und in Baum gehängt." % definition.service_name, LOG_CAT)
+	Logger.log_debug("Scene-Service '%s' registriert und in Baum gehängt." % def.service_name, LOG_CAT)
 	return instance
 
-func _create_from_script(script: GDScript, definition: ServiceDefinition, parent: Node) -> Object:
-	var instance = script.new()
+func _from_script(
+	script: GDScript,
+	def: ServiceDefinition,
+	registry: ServiceRegistry,
+	parent: Node
+) -> Object:
+	var instance: Object = script.new()
 
 	if instance is Node:
-		# Sicherheits-Check: Erbt der Node auch wirklich von unserer Basisklasse?
 		if not instance is ServiceNode:
-			Logger.log_error("Service '%s' ist ein Node, erbt aber nicht von ServiceNode! Er wird sich nie im Kernel registrieren." % definition.service_name, LOG_CAT)
-		
-		# Node-Service: Namen setzen und in den Baum hängen.
-		# ServiceNode._ready() übernimmt dann automatisch die Kernel-Registrierung.
-		instance.name = definition.service_name
+			Logger.log_warn(
+				"'%s' ist ein Node aber kein ServiceNode — lifecycle-Methoden werden nicht aufgerufen!" % def.service_name,
+				LOG_CAT
+			)
+		instance.name = def.service_name
+		# Registrierung VOR add_child — gleiche Garantie wie bei PackedScene
+		registry.register(instance)
 		parent.add_child(instance)
-		Logger.log_debug("Node-Service '%s' erstellt und in Baum gehängt." % definition.service_name, LOG_CAT)
+		Logger.log_debug("Node-Service '%s' registriert und in Baum gehängt." % def.service_name, LOG_CAT)
 		return instance
 
 	elif instance is RefCounted:
-		# Pure Service: Muss manuell im Kernel registriert werden.
 		if instance is Service:
-			instance.service_name = definition.service_name
+			instance.service_name = def.service_name
 		else:
-			Logger.log_warn("Pure Service '%s' erbt nicht von Service-Basisklasse." % definition.service_name, LOG_CAT)
-		
-		Kernel.register_service(instance)
-		Logger.log_debug("Pure Service '%s' erstellt und im Kernel registriert." % definition.service_name, LOG_CAT)
+			Logger.log_warn(
+				"Pure Service '%s' erbt nicht von Service — service_name nicht gesetzt." % def.service_name,
+				LOG_CAT
+			)
+		registry.register(instance)
+		Logger.log_debug("Pure Service '%s' in Registry eingetragen." % def.service_name, LOG_CAT)
 		return instance
 
 	else:
-		Logger.log_error("Service '%s' ist weder Node noch RefCounted!" % definition.service_name, LOG_CAT)
+		Logger.log_error("Service '%s' ist weder Node noch RefCounted!" % def.service_name, LOG_CAT)
+		instance.free()
 		return null
