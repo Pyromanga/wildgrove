@@ -21,7 +21,3 @@ func install(registry: ServiceRegistry) -> ServiceRegistry:
         Logger.log_warn("WorldService fehlt beim Installieren!", "Installer")
     
     return registry
-
-func uninstall() -> void:
-	Services.clear()
-	Logger.log_debug("DependencyContainer geleert.", LOG_CAT)
