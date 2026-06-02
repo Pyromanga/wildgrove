@@ -1,6 +1,96 @@
 extends ServiceNode
 class_name GameManager
 
+const LOG_CAT := "GameManager"
+
+# ─────────────────────────────────────────────
+# State & Config
+# ─────────────────────────────────────────────
+var _current_state:  GameEnums.State = GameEnums.State.BOOT
+var _previous_state: GameEnums.State = GameEnums.State.BOOT
+
+@export var config: GameConfig
+
+# ─────────────────────────────────────────────
+# Lifecycle
+# ─────────────────────────────────────────────
+
+## Phase 4: Abhängigkeiten verknüpfen.
+## WICHTIG: Da 'savesystem' in den deps steht, ist Services.save_system garantiert nicht null!
+func init() -> void:
+	Logger.log_debug("init() — Verbinde SaveSystem...", LOG_CAT)
+	Services.save_system.register_save_provider(self)
+
+## Phase 5: Signale connecten.
+## WICHTIG: EventBus ist ein AutoLoad, also immer verfügbar.
+func on_ready() -> void:
+	Logger.log_debug("on_ready() — Verbinde Events...", LOG_CAT)
+	
+	# Wir nutzen den EventBus direkt, statt ihn als Service zu suchen
+	EventBus.player.player_died.connect(_on_player_died)
+	
+	Logger.log_info("GameManager vollständig aktiv.", LOG_CAT)
+
+# ─────────────────────────────────────────────
+# Öffentliche API
+# ─────────────────────────────────────────────
+func get_state() -> GameEnums.State:
+	return _current_state
+
+func get_state_name() -> String:
+	return _state_name(_current_state)
+
+func is_playing() -> bool:
+	return _current_state == GameEnums.State.PLAYING
+
+func is_paused() -> bool:
+	return _current_state == GameEnums.State.PAUSED
+	
+func change_state(new_state: GameEnums.State) -> void:
+	if new_state == _current_state: return
+
+	if not _is_valid_transition(_current_state, new_state):
+		Logger.log_error("Ungültiger Übergang: %s -> %s" % [_state_name(_current_state), _state_name(new_state)], LOG_CAT)
+		return
+
+	_previous_state = _current_state
+	_current_state  = new_state
+
+	Logger.log_info("State gewechselt -> %s" % _state_name(_current_state), LOG_CAT)
+
+	# Signal über den EventBus feuern
+	EventBus.system.emit_state_changed(_current_state)
+
+func revert_state() -> void:
+	Logger.log_info(
+		"revert_state(): %s → %s" % [_state_name(_current_state), _state_name(_previous_state)],
+		LOG_CAT
+	)
+	change_state(_previous_state)
+
+## Speichert den aktuellen Spielstand.
+func save_game(player_data: Dictionary) -> bool:
+	var state := _build_save_state(player_data)
+	
+	# Direkter Zugriff auf Services
+	var success: bool = Services.save_system.save_state(state)
+	return success
+
+# ─────────────────────────────────────────────
+# Private & Helfer
+# ─────────────────────────────────────────────
+
+func _build_save_state(player_data: Dictionary) -> Dictionary:
+	return {
+		"player": player_data,
+		"world": Services.world.get_save_data() if Services.world else {},
+	}
+
+# ... (_is_valid_transition, _state_name etc. bleiben identisch) ...
+
+extends ServiceNode
+class_name GameManager
+
 ## GameManager — Verwaltet den globalen GameState und koordiniert State-Übergänge.
 ## Abhängigkeiten (in BootstrapConfig deps): ["gameevents", "savesystem"]
 
@@ -59,17 +149,7 @@ func on_ready() -> void:
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-func get_state() -> GameEnums.State:
-	return _current_state
 
-func get_state_name() -> String:
-	return _state_name(_current_state)
-
-func is_playing() -> bool:
-	return _current_state == GameEnums.State.PLAYING
-
-func is_paused() -> bool:
-	return _current_state == GameEnums.State.PAUSED
 
 ## Wechselt in einen neuen GameState.
 ## Validiert den Übergang gegen die Config (mit Fallback wenn Config fehlt).
