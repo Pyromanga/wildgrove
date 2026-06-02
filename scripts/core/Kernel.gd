@@ -12,13 +12,13 @@ signal service_unregistered(service_name: String)
 # ─────────────────────────────────────────────
 # Typed Shortcuts — null bis bind_shortcuts()
 # ─────────────────────────────────────────────
-var events:    GameEvents         = null
-var states:    PlayerStateService = null
-var builder:   InteractionBuilder = null
-var inventory: InventorySystem    = null
-var data:      DataService        = null
-var factory3d: Factory3D          = null
-var world:     WorldService       = null
+var events
+var states
+var builder
+var inventory
+var data
+var factory3d
+var world
 
 var _services: Dictionary = {}
 
@@ -85,13 +85,13 @@ func get_registered_names() -> Array[String]:
 func bind_shortcuts() -> void:
 	Logger.log_info("Binde Kernel-Shortcuts...", "Kernel")
 
-	events    = get_service("gameevents")   as GameEvents
-	states    = get_service("playerstates") as PlayerStateService
-	builder   = get_service("builder")      as InteractionBuilder
-	inventory = get_service("inventory")    as InventorySystem
-	data      = get_service("data")         as DataService
-	factory3d = get_service("factory3d")    as Factory3D
-	world     = get_service("world")        as WorldService
+	events    = get_service("gameevents")
+	states    = get_service("playerstates")
+	builder   = get_service("builder")
+	inventory = get_service("inventory")
+	data      = get_service("data")
+	factory3d = get_service("factory3d")
+	world     = get_service("world")
 
 	var checks := {
 		"events": events, "states": states, "builder": builder,
