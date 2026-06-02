@@ -42,8 +42,8 @@ lights_and_shadows/directional_shadow/size=2048
 [autoload]
 Logger="*res://scripts/logger/Logger.gd"
 EventBus="*res://scripts/event/EventBus.gd"
-Services="*res://scripts/core/Services.gd"
 SimpleTerminal="*res://scripts/debug/SimpleTerminal.gd"
+Services="*res://scripts/core/Services.gd"
 
 [ToBeImplementedForAutoLoader]
 SceneManager="*res://scripts/core/SceneManager.gd"
