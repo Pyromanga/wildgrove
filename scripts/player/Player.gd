@@ -1,129 +1,162 @@
 extends CharacterBody3D
 
-signal inventory_changed(items: Array)
+## Player.gd — Spieler-Controller.
+## TouchInput ist ein direktes Child, kein Service.
+## Nutzt Kernel-Shortcuts für Events und States.
 
-func emit_inventory_changed(items: Array) -> void:
-    _log("Inventar aktualisiert (%d Items)" % items.size())
-    inventory_changed.emit(items)
-    
-@onready var speed: float = Kernel.data.get_player_stat("speed", 6.0)
-@onready var gravity: float = Kernel.data.get_player_stat("gravity", 12.0)
-@onready var interact_range: float = Kernel.data.get_player_stat("interact_range", 4.0)
+const LOG_CAT := "Player"
 
-var _target_zoom: float = 8.0
-var _target_yaw: float = 0.0
+# Stats — aus DataService geladen
+var _speed:          float = 6.0
+var _gravity:        float = 12.0
+var _interact_range: float = 4.0
+
+# Kamera-State
+var _target_zoom:  float = 8.0
+var _target_yaw:   float = 0.0
 var _target_pitch: float = deg_to_rad(-35.0)
 
+# Nodes (alle programmatisch gebaut)
 var _spring_arm: SpringArm3D
-var _mesh: MeshInstance3D
-var _touch: TouchInput 
+var _mesh:       MeshInstance3D
+var _touch:      TouchInput
+var _sensor:     InteractionSensor
+
+# ─────────────────────────────────────────────
+# Lifecycle
+# ─────────────────────────────────────────────
 
 func _ready() -> void:
 	add_to_group("player")
-	_build_player_nodes()
-	position = Vector3(0, 1.5, 0)
-	Logger.log_debug("Player bereit", "Player")
+	_load_stats()
+	_build_nodes()
+	Logger.log_debug("Player bereit.", LOG_CAT)
 
 func _physics_process(delta: float) -> void:
-	if _touch == null:
+	if not _touch:
 		return
-	if not Kernel.states.is_free():
-		if _touch.js_vec.length() > 0.3:
+
+	if Kernel.states and not Kernel.states.is_free():
+		# Wenn BUSY und Joystick bewegt → Interaktion abbrechen
+		if _touch.js_vec.length() > 0.3 and Kernel.events:
 			Kernel.events.player.emit_movement_interrupted()
-		velocity.x = 0
-		velocity.z = 0
+		velocity.x = 0.0
+		velocity.z = 0.0
 		move_and_slide()
 		return
+
 	_handle_camera(_touch, delta)
 	_handle_movement(_touch, delta)
 
+# ─────────────────────────────────────────────
+# Öffentliche API
+# ─────────────────────────────────────────────
+
+func try_default_interact() -> void:
+	var target := _sensor.get_closest() if _sensor else null
+	if not target:
+		Logger.log_debug("Kein Interaktionsziel in Reichweite.", LOG_CAT)
+		return
+	if target.has_method("start_default_interaction"):
+		target.start_default_interaction()
+	else:
+		Logger.log_warn("Ziel '%s' hat keine start_default_interaction()." % target.name, LOG_CAT)
+
+func get_closest_interactable() -> Node3D:
+	return _sensor.get_closest() if _sensor else null
+
+# ─────────────────────────────────────────────
+# Privat — Kamera & Bewegung
+# ─────────────────────────────────────────────
+
+func _load_stats() -> void:
+	if not Kernel.data:
+		Logger.log_warn("DataService nicht verfügbar — nutze Standardwerte.", LOG_CAT)
+		return
+	_speed          = Kernel.data.get_player_stat("speed",          _speed)
+	_gravity        = Kernel.data.get_player_stat("gravity",        _gravity)
+	_interact_range = Kernel.data.get_player_stat("interact_range", _interact_range)
+
 func _handle_camera(touch: TouchInput, delta: float) -> void:
-	var c_delta: Vector2 = touch.cam_delta
+	var c_delta := touch.cam_delta
 	touch.cam_delta = Vector2.ZERO
-	var z_delta: float = touch.zoom_delta
+	var z_delta := touch.zoom_delta
 	touch.zoom_delta = 0.0
 
 	if c_delta != Vector2.ZERO:
-		_target_yaw -= c_delta.x * 0.006
-		_target_pitch = clamp(_target_pitch - c_delta.y * 0.005, deg_to_rad(-75), deg_to_rad(0))
-	
+		_target_yaw   -= c_delta.x * 0.006
+		_target_pitch  = clamp(_target_pitch - c_delta.y * 0.005, deg_to_rad(-75.0), deg_to_rad(0.0))
+
 	if z_delta != 0.0:
 		_target_zoom = clamp(_target_zoom + z_delta, 3.0, 15.0)
 
-	_spring_arm.rotation.y = lerp_angle(_spring_arm.rotation.y, _target_yaw, 10.0 * delta)
-	_spring_arm.rotation.x = lerp(_spring_arm.rotation.x, _target_pitch, 10.0 * delta)
-	_spring_arm.spring_length = lerp(_spring_arm.spring_length, _target_zoom, 5.0 * delta)
+	_spring_arm.rotation.y    = lerp_angle(_spring_arm.rotation.y,    _target_yaw,   10.0 * delta)
+	_spring_arm.rotation.x    = lerp(_spring_arm.rotation.x,          _target_pitch, 10.0 * delta)
+	_spring_arm.spring_length = lerp(_spring_arm.spring_length,        _target_zoom,  5.0  * delta)
 
-func _handle_movement(touch: Node, delta: float) -> void:
-	var input: Vector2 = touch.js_vec
+func _handle_movement(touch: TouchInput, delta: float) -> void:
+	var input := touch.js_vec
+
 	if not is_on_floor():
-		velocity.y -= gravity * delta
+		velocity.y -= _gravity * delta
 	else:
-		velocity.y = 0
-		
+		velocity.y = 0.0
+
 	if input.length() > 0.1:
-		var move_dir: Vector3 = MathHelper.calculate_move_direction(_spring_arm, input)
-		velocity.x = move_dir.x * speed
-		velocity.z = move_dir.z * speed
+		var move_dir := MathHelper.calculate_move_direction(_spring_arm, input)
+		velocity.x = move_dir.x * _speed
+		velocity.z = move_dir.z * _speed
 		_mesh.rotation.y = lerp_angle(_mesh.rotation.y, atan2(move_dir.x, move_dir.z), 10.0 * delta)
 	else:
-		velocity.x = move_toward(velocity.x, 0, speed)
-		velocity.z = move_toward(velocity.z, 0, speed)
+		velocity.x = move_toward(velocity.x, 0.0, _speed)
+		velocity.z = move_toward(velocity.z, 0.0, _speed)
+
 	move_and_slide()
 
-# --- Interaktions-Logik ---
+# ─────────────────────────────────────────────
+# Node-Aufbau
+# ─────────────────────────────────────────────
 
-func try_default_interact() -> void:
-	_with_closest_target(func(target: Node3D):
-		# target ist jetzt die InteractableComponent!
-		if target.has_method("start_default_interaction"):
-			target.start_default_interaction()
-		else:
-			Logger.log_error("Target in Gruppe 'interactable' hat keine Start-Methode!", "Player")
-	)
+func _build_nodes() -> void:
+	_build_collision()
+	_build_mesh()
+	_build_camera()
+	_build_touch_input()
+	_build_sensor()
 
-func _get_closest_interactable() -> Node3D:
-    # Anstatt Kernel.utils.get_closest_node...
-    return _sensor.get_closest()
-
-func _with_closest_target(callback: Callable) -> void:
-    var target: Node3D = _get_closest_interactable()
-    if not target:
-        # LOG ERWEITERN:
-        var all_interactables = get_tree().get_nodes_in_group("interactable")
-        Logger.log_debug("Kein Ziel. In Gruppe 'interactable' sind: " + str(all_interactables.size()) + " Objekte.", "Player")
-        return
-    callback.call(target)
-
-func _build_player_nodes() -> void:
+func _build_collision() -> void:
 	var col := CollisionShape3D.new()
-	col.shape = CapsuleShape3D.new()
-	col.position.y = 1.0
+	var shape := CapsuleShape3D.new()
+	col.shape    = shape
+	col.position = Vector3(0.0, 1.0, 0.0)
 	add_child(col)
 
-	_mesh = MeshInstance3D.new()
-	_mesh.mesh = CapsuleMesh.new()
-	_mesh.position.y = 1.0
+func _build_mesh() -> void:
+	_mesh          = MeshInstance3D.new()
+	_mesh.mesh     = CapsuleMesh.new()
+	_mesh.position = Vector3(0.0, 1.0, 0.0)
 	add_child(_mesh)
 
-	_spring_arm = SpringArm3D.new()
-	_spring_arm.position = Vector3(0, 1.6, 0)
+func _build_camera() -> void:
+	_spring_arm          = SpringArm3D.new()
+	_spring_arm.position = Vector3(0.0, 1.6, 0.0)
 	add_child(_spring_arm)
 
 	var cam := Camera3D.new()
 	cam.current = true
 	_spring_arm.add_child(cam)
 
-	var touch_node := Node.new()
-	touch_node.name = "TouchInput"
-	touch_node.set_script(load("res://scripts/player/TouchInput.gd"))
-	add_child(touch_node)
-	_touch = touch_node as TouchInput
-	
-# Im Player-Skript
-func try_open_context_menu() -> void:
-    var target = _sensor.get_closest()
-    if target:
-        # Hier schießen wir das Event ab!
-        # Kein Kernel.ui_factory mehr im Player!
-        Kernel.events.player.request_context_actions.emit(target)
+func _build_touch_input() -> void:
+	var touch_script = load("res://scripts/player/TouchInput.gd")
+	assert(touch_script != null, "TouchInput.gd nicht gefunden!")
+	_touch      = Node.new()
+	_touch.name = "TouchInput"
+	_touch.set_script(touch_script)
+	add_child(_touch)
+	# In Gruppe damit PlayerStateService reset_input() aufrufen kann
+	_touch.add_to_group("touch_input")
+
+func _build_sensor() -> void:
+	_sensor = InteractionSensor.new()
+	_sensor.name = "InteractionSensor"
+	add_child(_sensor)
