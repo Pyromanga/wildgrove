@@ -1,33 +1,33 @@
 class_name HUDBuilder
 
+## HUDBuilder — Baut alle HUD-Komponenten und gibt ihre Controller zurück.
+## Wird von HUDManager.setup() aufgerufen.
+## Nutzt Kernel-Shortcuts (verfügbar ab Phase 4 / bind_shortcuts).
+
 static func build_all(hud: HUD) -> Dictionary:
-    var registry = {}
-    
-    # Zentrale Event-Bus-Referenzen
-    var world_events = Kernel.events.world
-    var player_events = Kernel.events.player
-    var skill_events = Kernel.events.skill_system
-    var ui_events = Kernel.events.ui
+	assert(Kernel.events   != null, "HUDBuilder: Kernel.events ist null — bind_shortcuts() noch nicht aufgerufen?")
+	assert(Kernel.inventory != null, "HUDBuilder: Kernel.inventory ist null.")
 
-    # 1. Interaktion & Fortschritt
-    registry["interaction"] = InteractionComponent.new().build(hud, world_events)
-    registry["interaction_button"] = InteractionButtonComponent.new().build(hud)
-    
-    # 2. Kontext-System (Entkoppelt)
-    registry["context_button"] = ContextButtonComponent.new().build(hud, ui_events)
-    registry["context_menu"]   = ContextMenuComponent.new().build(hud, ui_events)
-    
-    # 3. Joystick
-    registry["joystick"] = JoystickComponent.new().build(hud, ui_events)
-    
-    # 4. Inventar
-    registry["inventory"] = InventoryComponent.new().build(hud, Kernel.inventory)
-    
-    # 5. Feedback
-    registry["notification"] = NotificationComponent.new().build(hud)
-    
-    # Hier ist die wichtige Anpassung für FloatingText:
-    # Wir übergeben jetzt die beiden benötigten Event-Objekte aus dem Kernel
-    registry["floating_text"] = FloatingTextComponent.new().build(hud, player_events, skill_events)
+	var registry: Dictionary = {}
 
-    return registry
+	# 1. Interaktion & Fortschritt
+	registry["interaction"]        = InteractionComponent.new().build(hud, Kernel.events.world)
+	registry["interaction_button"] = InteractionButtonComponent.new().build(hud)
+
+	# 2. Kontext-Menü
+	registry["context_button"] = ContextButtonComponent.new().build(hud, Kernel.events.ui)
+	registry["context_menu"]   = ContextMenuComponent.new().build(hud, Kernel.events.ui)
+
+	# 3. Joystick
+	registry["joystick"] = JoystickComponent.new().build(hud, Kernel.events.ui)
+
+	# 4. Inventar
+	registry["inventory"] = InventoryComponent.new().build(hud, Kernel.inventory)
+
+	# 5. Feedback
+	registry["notification"]   = NotificationComponent.new().build(hud)
+	registry["floating_text"]  = FloatingTextComponent.new().build(
+		hud, Kernel.events.player, Kernel.events.skill_system if Kernel.events.has("skill_system") else null
+	)
+
+	return registry
