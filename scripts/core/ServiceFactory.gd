@@ -64,32 +64,28 @@ func _create_from_script(script: GDScript, definition: ServiceDefinition, parent
 	var instance = script.new()
 
 	if instance is Node:
-    if not instance is ServiceNode:
-        Logger.log_error("Service '%s' ist ein Node, erbt aber nicht von ServiceNode! Er wird sich nie im Kernel registrieren." % definition.service_name, LOG_CAT)
-    instance.name = definition.service_name
-    parent.add_child(instance)
-		# Node-Service: In den Baum hängen → ServiceNode._ready() registriert ihn selbst.
+		# Sicherheits-Check: Erbt der Node auch wirklich von unserer Basisklasse?
+		if not instance is ServiceNode:
+			Logger.log_error("Service '%s' ist ein Node, erbt aber nicht von ServiceNode! Er wird sich nie im Kernel registrieren." % definition.service_name, LOG_CAT)
+		
+		# Node-Service: Namen setzen und in den Baum hängen.
+		# ServiceNode._ready() übernimmt dann automatisch die Kernel-Registrierung.
 		instance.name = definition.service_name
 		parent.add_child(instance)
 		Logger.log_debug("Node-Service '%s' erstellt und in Baum gehängt." % definition.service_name, LOG_CAT)
 		return instance
 
 	elif instance is RefCounted:
-		# Pure Service: Kernel-Registrierung muss manuell passieren.
+		# Pure Service: Muss manuell im Kernel registriert werden.
 		if instance is Service:
 			instance.service_name = definition.service_name
 		else:
-			Logger.log_warn(
-				"Pure Service '%s' erbt nicht von Service-Basisklasse. service_name nicht gesetzt!" % definition.service_name,
-				LOG_CAT
-			)
+			Logger.log_warn("Pure Service '%s' erbt nicht von Service-Basisklasse." % definition.service_name, LOG_CAT)
+		
 		Kernel.register_service(instance)
 		Logger.log_debug("Pure Service '%s' erstellt und im Kernel registriert." % definition.service_name, LOG_CAT)
 		return instance
 
 	else:
-		Logger.log_error(
-			"Service '%s' ist weder Node noch RefCounted — kann nicht verwaltet werden!" % definition.service_name,
-			LOG_CAT
-		)
+		Logger.log_error("Service '%s' ist weder Node noch RefCounted!" % definition.service_name, LOG_CAT)
 		return null
