@@ -11,9 +11,7 @@ class_name ServiceTeardownManager extends RefCounted
 
 const LOG_CAT := "TeardownManager"
 
-func execute(registry: ServiceRegistry, installer: ServiceInstaller) -> void:
-	# 1. Container leeren — ab jetzt kein Services.xyz mehr möglich
-	installer.uninstall()
+func execute(registry: ServiceRegistry) -> void:
 
 	# 2. Services in umgekehrter Reihenfolge aufräumen
 	var all_services := registry.get_all()
