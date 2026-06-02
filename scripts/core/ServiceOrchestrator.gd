@@ -57,6 +57,7 @@ func boot() -> void:
 	var defs := validator.validate()
 	if defs.is_empty():
 		Logger.log_error("Validierung fehlgeschlagen — Boot abgebrochen.", LOG_CAT)
+		EventBus.system.boot_failed.emit("validate", "BootstrapConfig ungültig")
 		return
 
 	# Phase 2 — Dependency-Auflösung
@@ -64,6 +65,7 @@ func boot() -> void:
 	var ordered := resolver.resolve(defs)
 	if ordered.is_empty():
 		Logger.log_error("Dependency-Auflösung fehlgeschlagen — Boot abgebrochen.", LOG_CAT)
+		EventBus.system.boot_failed.emit("validate", "BootstrapConfig ungültig")
 		return
 
 	# Phase 3 — Instanziierung
@@ -71,6 +73,7 @@ func boot() -> void:
 	var ok := factory.instantiate_all(defs, registry, self)
 	if not ok:
 		Logger.log_error("Instanziierung fehlgeschlagen — Boot abgebrochen.", LOG_CAT)
+		EventBus.system.boot_failed.emit("validate", "BootstrapConfig ungültig")
 		return
 
 	# Phase 4 — Init
