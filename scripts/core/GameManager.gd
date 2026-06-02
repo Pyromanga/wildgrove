@@ -28,7 +28,7 @@ func on_ready() -> void:
 	
 	# Wir nutzen den EventBus direkt, statt ihn als Service zu suchen
 	EventBus.player.player_died.connect(_on_player_died)
-	
+	Services.save_system.load_game()
 	Logger.log_info("GameManager vollständig aktiv.", LOG_CAT)
 
 # ─────────────────────────────────────────────
