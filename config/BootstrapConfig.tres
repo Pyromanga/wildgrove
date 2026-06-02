@@ -81,13 +81,6 @@ name = "world"
 path = "res://scripts/world/WorldService.gd"
 deps = ["savesystem", "data"]
 
-[sub_resource type="Resource" id="gameevents"]
-script = ExtResource("2_def")
-service_name = "gameevents"
-path = "res://scripts/events/GameEvents.gd"
-deps = []
-is_node_service = false
-
 [resource]
 script = ExtResource("1_config")
 services = [SubResource("Resource_savesystem"), SubResource("Resource_events"), SubResource("Resource_data"), SubResource("Resource_touchinput"), SubResource("Resource_states"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory")]
