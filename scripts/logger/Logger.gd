@@ -26,7 +26,8 @@ var _muted_categories: Array[String] = []
 # ─────────────────────────────────────────────
 
 func log_debug(msg: String, cat: String = "General") -> void:
-	_print_log(msg, cat, LogLevel.DEBUG)
+    if not enabled_levels.get(LogLevel.DEBUG, true): return # Check VOR Stringbau
+    _print_log(msg, cat, LogLevel.DEBUG)
 
 func log_info(msg: String, cat: String = "General") -> void:
 	_print_log(msg, cat, LogLevel.INFO)
