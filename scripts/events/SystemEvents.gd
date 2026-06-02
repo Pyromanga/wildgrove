@@ -9,7 +9,8 @@ signal save_started()
 signal save_completed(success: bool)
 signal load_started()
 signal load_completed(success: bool)
-signal services_initialized() # <--- Neu!
+signal services_initialized()
+signal boot_failed(phase: String, reason: String)
 
 func _init() -> void:
 	super._init("Events/System")
