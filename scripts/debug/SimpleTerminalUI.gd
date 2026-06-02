@@ -30,7 +30,7 @@ var _btn_toggle: Button
 # Referenzen
 # ─────────────────────────────────────────────
 var _terminal: Node
-var _controller: TerminalController
+var _controller: Node
 
 # ─────────────────────────────────────────────
 # Lifecycle
