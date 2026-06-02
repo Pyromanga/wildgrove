@@ -10,7 +10,7 @@ path = "res://scripts/services/SaveSystem.gd"
 deps = []
 is_node_service = false
 
-[sub_resource type="Resource" id="Resource_events"]
+[sub_resource type="Resource" id="Resource_gameevents"]
 script = ExtResource("2_def")
 name = "gameevents"
 path = "res://scripts/events/GameEvents.gd"
@@ -24,7 +24,7 @@ path = "res://scripts/services/DataService.gd"
 deps = []
 is_node_service = false
 
-[sub_resource type="Resource" id="Resource_states"]
+[sub_resource type="Resource" id="Resource_playerstates"]
 script = ExtResource("2_def")
 name = "playerstates"
 path = "res://scripts/player/PlayerStateService.gd"
