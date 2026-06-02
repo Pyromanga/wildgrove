@@ -47,7 +47,7 @@ func on_ready() -> void:
 	super.on_ready()
 	Logger.log_debug("on_ready() — verbinde Events...", LOG_CAT)
 
-	_events = Kernel.get_service("gameevents") as GameEvents
+	_events = Kernel.get_service("gameevents")
 	if not _events:
 		Logger.log_warn("GameEvents nicht gefunden — State-Änderungen werden nicht gebroadcastet.", LOG_CAT)
 		return
