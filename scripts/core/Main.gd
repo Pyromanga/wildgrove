@@ -19,7 +19,7 @@ func _bootstrap() -> void:
 	await get_tree().process_frame
 
 	# Signal connecten BEVOR Phase 3 läuft (GameEvents.on_ready emittiert es)
-	var events := Kernel.get_service("gameevents") as GameEvents
+	var events := Kernel.get_service("gameevents")
 	if events:
 		events.system.services_initialized.connect(_on_services_ready, CONNECT_ONE_SHOT)
 	else:
