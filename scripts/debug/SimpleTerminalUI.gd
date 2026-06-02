@@ -30,7 +30,7 @@ var _btn_toggle: Button
 # Referenzen
 # ─────────────────────────────────────────────
 var _terminal: Node
-var _controller: Node
+var _controller: TerminalController
 
 # ─────────────────────────────────────────────
 # Lifecycle
@@ -40,7 +40,7 @@ func _ready() -> void:
 	layer = LAYER_ORDER
 
 	# Typisierte Parent-Referenz — crasht früh mit klarer Meldung wenn Hierarchie falsch ist
-	_terminal = get_parent() as SimpleTerminal
+	_terminal = get_parent()
 	assert(_terminal != null, "SimpleTerminalUI MUSS ein Kind von SimpleTerminal sein!")
 
 	_controller = TerminalController.new(_terminal, self)
