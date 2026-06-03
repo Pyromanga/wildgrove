@@ -37,7 +37,7 @@ deps = Array[String](["savesystem"])
 script = ExtResource("2_def")
 service_name = "skill_system"
 path = "res://scripts/services/SkillSystem.gd"
-deps = Array[String](["data"])
+deps = Array[String](["data", "savesystem"])
 
 [sub_resource type="Resource" id="Resource_factory3d"]
 script = ExtResource("2_def")
