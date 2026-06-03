@@ -3,32 +3,24 @@ class_name HUDBuilder
 static func build_all(hud: HUD) -> Dictionary:
     var registry: Dictionary = {}
 
-    # Interaktion & Fortschritt (Nutzen jetzt den EventBus oder Services)
-    registry["interaction"] = InteractionComponent.new().build(hud)
-    registry["interaction_button"] = InteractionButtonComponent.new().build(hud)
+        # 1. Interaktion (Balken) - braucht World-Events
+            registry["interaction"] = InteractionComponent.new().build(hud, EventBus.world)
 
-    # Inventar (Direkter Zugriff auf den Service)
-    registry["inventory"] = InventoryComponent.new().build(hud, Services.inventory)
+                # 2. Interaktion (Button)
+                    registry["interaction_button"] = InteractionButtonComponent.new().build(hud)
 
-    # Feedback (Floating Text hört auf den EventBus)
-    registry["floating_text"] = FloatingTextComponent.new().build(hud)
-# Innerhalb von HUDBuilder.build_all(hud):
+                        # 3. Inventar - braucht den Service
+                            registry["inventory"] = InventoryComponent.new().build(hud, Services.inventory)
 
-# 1. Floating Text (XP & Level-Ups)
-    var float_ctrl = FloatingTextController.new()
-# Nutzt direkt den globalen EventBus
-    float_ctrl.setup(visuals_ft, EventBus.player) 
-    registry["floating_text"] = float_ctrl
+                                # 4. Floating Text - braucht Player-Events
+                                    registry["floating_text"] = FloatingTextComponent.new().build(hud, EventBus.player)
 
-# 2. Inventory (Service-Anbindung)
-    var inv_ctrl = InventoryUIController.new()
-# Nutzt den echten Service
-    inv_ctrl.setup(visuals_inv, Services.inventory) 
-    registry["inventory"] = inv_ctrl
+                                        # 5. Benachrichtigungen & Rest
+                                            registry["notification"] = NotificationComponent.new().build(hud)
+                                                registry["joystick"] = JoystickComponent.new().build(hud)
+                                                    
+                                                        # Kontext-Menü
+                                                            registry["context_button"] = ContextButtonComponent.new().build(hud, EventBus.ui)
+                                                                registry["context_menu"] = ContextMenuComponent.new().build(hud, EventBus.ui)
 
-# 3. Context & Joystick
-    var joy_ctrl = JoystickController.new()
-# Nutzt den UI-Zweig des EventBus
-    joy_ctrl.setup(visuals_joy, EventBus.ui) 
-     registry["joystick"] = joy_ctrl
-    return registry
+                                                                    return registry

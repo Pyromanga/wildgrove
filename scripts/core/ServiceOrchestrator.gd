@@ -2,21 +2,6 @@
 class_name ServiceOrchestrator extends Node
 
 ## ServiceOrchestrator — Zentrale Boot- und Teardown-Drehscheibe.
-##
-## Lebt als Node im SceneTree (z.B. als Child von Main.tscn).
-## Hält alle Pipeline-Objekte und koordiniert die 6 Boot-Phasen + Teardown.
-##
-## AutoLoads (Logger, EventBus, SceneManager, GameSettings) existieren bereits
-## wenn dieser Node _ready() erreicht — kein Timing-Problem.
-##
-## Boot-Reihenfolge:
-##   Phase 1 · Validate    — BootstrapConfig auf Vollständigkeit prüfen
-##   Phase 2 · Resolve     — Topologische Sortierung der Abhängigkeiten
-##   Phase 3 · Instantiate — Services erstellen (ServiceFactory)
-##   Phase 4 · Init        — service.init() in Dep-Reihenfolge
-##   Phase 5 · Activate    — service.on_ready() in Dep-Reihenfolge
-##   Phase 6 · Install     — DependencyContainer befüllen, services_initialized feuern
-##   Phase 7 · Teardown    — beim Beenden sauber aufräumen
 
 const LOG_CAT := "Orchestrator"
 
@@ -84,12 +69,11 @@ func boot() -> void:
 	Logger.log_info("── Phase 5 · Activate", LOG_CAT)
 	activator.run(ordered, registry)
 
-	# Phase 6 — Install (DependencyContainer + services_initialized)
-	# ServiceOrchestrator.gd (Phase 6)
-  Logger.log_info("── Phase 6 · Install", LOG_CAT)
-  var final_registry = installer.install(registry)
-  Services.populate(final_registry) # Orchestrator verheiratet die Registry mit dem Container
-  EventBus.system.services_initialized.emit()
+	# Phase 6 — Install
+	Logger.log_info("── Phase 6 · Install", LOG_CAT)
+	var final_registry = installer.install(registry)
+	Services.populate(final_registry) 
+	EventBus.system.services_initialized.emit()
 
 	var elapsed := Time.get_ticks_msec() - started
 	Logger.log_info("╚══ BOOT FERTIG (%d ms) ══╝" % elapsed, LOG_CAT)
@@ -101,5 +85,5 @@ func boot() -> void:
 func _teardown() -> void:
 	Logger.log_info("── Teardown gestartet", LOG_CAT)
 	Services.clear() 
-  teardown.execute(registry)
+	teardown.execute(registry)
 	Logger.log_info("── Teardown fertig", LOG_CAT)
