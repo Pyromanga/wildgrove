@@ -16,7 +16,11 @@ func configure(deps: Dictionary) -> void:
 
 
 func start_game() -> void:
-	change_state(GameEnums.State.MAIN_MENU)
+	# MainMenu ist bereits die laufende Startszene (run/main_scene in project.godot).
+	# Wir setzen den State intern ohne einen Szenenwechsel auszulösen.
+	_current_state = GameEnums.State.MAIN_MENU
+	Logger.log_info("State initialisiert: MAIN_MENU", LOG_CAT)
+	EventBus.system.emit_state_changed(_current_state)
 
 
 func change_state(new_state: GameEnums.State) -> void:
