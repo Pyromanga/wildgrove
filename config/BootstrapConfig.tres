@@ -3,6 +3,13 @@
 [ext_resource type="Script" path="res://scripts/core/BootstrapConfig.gd" id="1_config"]
 [ext_resource type="Script" path="res://scripts/core/ServiceDefinition.gd" id="2_def"]
 
+# Neuer Eintrag in deiner Resource-Liste (id 3_ticker oder ähnlich)
+[sub_resource type="Resource" id="Resource_ticker"]
+script = ExtResource("2_def")
+service_name = "ticker"
+path = "res://scripts/core/ServiceTicker.gd"
+deps = Array[String]([])
+
 [sub_resource type="Resource" id="Resource_savesystem"]
 script = ExtResource("2_def")
 service_name = "savesystem"
@@ -77,4 +84,4 @@ deps = Array[String](["data", "savesystem"])
 
 [resource]
 script = ExtResource("1_config")
-services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager"), SubResource("Resource_questservice")])
+services = Array[Resource]([SubResource("Resource_ticker"), SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager"), SubResource("Resource_questservice")])
