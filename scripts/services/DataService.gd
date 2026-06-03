@@ -5,7 +5,7 @@ class_name DataService
 ## Lädt die PlayerData-Ressource als Single Source of Truth für Stats.
 
 const LOG_CAT   := "DataService"
-const DATA_PATH := "res://config/player_data.tres"
+const DATA_PATH := "res://config/PlayerData.tres"
 
 var player_data: PlayerData
 
