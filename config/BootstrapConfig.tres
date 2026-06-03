@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BootstrapConfig" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="BootstrapConfig" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/BootstrapConfig.gd" id="1_config"]
 [ext_resource type="Script" path="res://scripts/core/ServiceDefinition.gd" id="2_def"]
@@ -63,6 +63,12 @@ service_name = "world"
 path = "res://scripts/world/WorldService.gd"
 deps = Array[String](["savesystem", "data"])
 
+[sub_resource type="Resource" id="Resource_hudmanager"]
+script = ExtResource("2_def")
+service_name = "hud"
+path = "res://scripts/ui/HUDManager.gd"
+deps = Array[String](["inventory", "playerstates"])
+
 [resource]
 script = ExtResource("1_config")
-services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory")])
+services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager")])
