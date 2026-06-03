@@ -69,6 +69,12 @@ service_name = "hud"
 path = "res://scripts/ui/HUDManager.gd"
 deps = Array[String](["inventory", "playerstates"])
 
+[sub_resource type="Resource" id="Resource_questservice"]
+script = ExtResource("2_def")
+service_name = "quest"
+path = "res://scripts/services/QuestService.gd"
+deps = Array[String](["data", "savesystem"])
+
 [resource]
 script = ExtResource("1_config")
-services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager")])
+services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager")], SubResource("Resource_questservice"))
