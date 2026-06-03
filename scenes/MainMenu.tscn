@@ -1,8 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/MainMenuController.gd" id="1_ctrl"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
+script = ExtResource("1_ctrl")
 
 [node name="StartButton" type="Button" parent="."]
 layout_mode = 0
@@ -11,14 +14,3 @@ offset_top = 500.0
 offset_right = 1120.0
 offset_bottom = 580.0
 text = "Spiel Starten"
-
-[node name="Script" type="Node" parent="."]
-script = """
-extends Control
-func _ready():
-    $StartButton.pressed.connect(_on_start_pressed)
-
-func _on_start_pressed():
-    # Greife auf den globalen Service zu
-    Services.gamemanager.change_state(GameEnums.State.PLAYING)
-"""
