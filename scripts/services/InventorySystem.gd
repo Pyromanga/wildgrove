@@ -17,9 +17,21 @@ var _item_registry: Dictionary = {}
 # Lifecycle
 # ─────────────────────────────────────────────
 
-func init() -> void:
-	_load_item_database()
-	Services.save_system.register_save_provider(self)
+# res://scripts/services/InventorySystem.gd
+var _save_system: SaveSystem # Expliziter Typ für Autocomplete!
+
+func init(deps: Dictionary) -> void:
+    _load_item_database()
+    
+    # Typsichere Extraktion (Enterprise-Standard)
+    _save_system = deps.get("savesystem") as SaveSystem
+    
+    if not _save_system:
+        Logger.log_error("Abhängigkeit 'savesystem' fehlt!", LOG_CAT)
+        return
+
+    _save_system.register_save_provider(self)
+    # ... Rest der Logik ...
 
 	# FIX: War `var saved := ...` — gleicher Typfehler wie WorldService/SkillSystem.
 	var saved: Dictionary = Services.save_system.get_state_for(SAVE_KEY)
