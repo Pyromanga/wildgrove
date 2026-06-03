@@ -8,7 +8,7 @@ class_name HUDBuilder
 ##   nicht auflösen. Seit BaseUIComponent kein build() mehr hat, compilieren
 ##   alle Components — und dieser Fehler verschwindet automatisch.
 
-static func build_all(hud: HUD) -> Dictionary:
+static func build_all(hud: HUD, context: Dictionary) -> Dictionary:
 	var registry: Dictionary = {}
 
 	# 1. Interaktions-Fortschrittsbalken — braucht WorldEvents
