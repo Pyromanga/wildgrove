@@ -28,7 +28,7 @@ func get_player_stat(stat_name: String, default_val: float = 0.0) -> float:
 	var value = player_data.get(stat_name)
 	
 	if value != null:
-		Logger.log_trace("Stat-Abfrage: %s = %s" % [stat_name, str(value)], LOG_CAT)
+    Logger.log_trace("Stat-Abfrage: %s" % stat_name, {"value": str(value)}, LOG_CAT)
 		return float(value)
 	
 	Logger.log_warn("Stat '%s' existiert nicht in PlayerData.tres!" % stat_name, LOG_CAT)
