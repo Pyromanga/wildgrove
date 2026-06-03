@@ -1,51 +1,59 @@
 extends CharacterBody3D
 class_name Player
 
-## Die Zentrale. Sie hält die Referenzen und steuert den Lifecycle.
+const LOG_CAT := "Player"
 
-@onready var visuals: Node3D = $Visuals
-@onready var camera:  PlayerCamera = $CameraRig
-@onready var input:   TouchInput  = $InputProvider
-@onready var sensor:  InteractionSensor = $InteractionSensor
+# Komponenten-Referenzen (werden in _build_nodes initialisiert)
+var mover:   PlayerMover
+var visuals: PlayerVisuals
+var camera:  PlayerCamera
+var input:   TouchInput
+var sensor:  InteractionSensor
 
 func _ready() -> void:
-	# 1. Schlafen bis Orchestrator fertig
+	add_to_group("player")
 	set_physics_process(false)
 	EventBus.system.services_initialized.connect(_wake_up)
 
 func _wake_up() -> void:
-	# 2. Stats laden & Komponenten initialisieren
-	_apply_stats()
+	_build_nodes()
 	set_physics_process(true)
-
-func _apply_stats() -> void:
-	var speed = Services.data.get_player_stat("speed", 6.0)
-	# Wir geben die Stats an die Fach-Komponenten weiter (Dependency Injection)
-	# $Mover.setup(speed) 
-	pass
+	Logger.log_info("Pro-Player erwacht.", LOG_CAT)
 
 func _physics_process(delta: float) -> void:
-	var state = Services.player_states.get_state()
+	# 1. State abfragen
+	if not Services.player_states.is_free():
+		velocity = Vector3.ZERO # Im Menü/Busy nicht bewegen
+		move_and_slide()
+		return
+
+	# 2. Input verarbeiten
+	# Wir delegieren die Arbeit an die Spezialisten:
+	var move_dir = MathHelper.calculate_move_direction(camera, input.js_vec)
 	
-	match state:
-		PlayerStateService.State.FREE:
-			_handle_standard_loop(delta)
-		PlayerStateService.State.BUSY:
-			_handle_busy_loop(delta)
+	# Mover berechnet die Geschwindigkeit
+	velocity = mover.calculate_velocity(velocity, move_dir, delta, is_on_floor())
+	move_and_slide()
+	
+	# Visuals kümmert sich um die Drehung des Charakters
+	visuals.handle_rotation(move_dir, delta)
+	
+	# Camera verarbeitet den Rest des Touch-Inputs
+	camera.handle_input(input, delta)
 
-func _handle_standard_loop(delta: float) -> void:
-	# Hier rufen wir die spezialisierten Funktionen auf
-	var move_vec = MathHelper.calculate_move_direction(camera, input.js_vec)
-
-func _setup_collision() -> void:
-    var col_shape := CollisionShape3D.new()
-    var capsule   := CapsuleShape3D.new()
-    
-    capsule.radius = 0.45
-    capsule.height = 1.8
-    
-    col_shape.shape = capsule
-    # WICHTIG: Die Kapsel so verschieben, dass die Füße am Boden des Player-Nodes sind
-    col_shape.position = Vector3(0, 0.9, 0) 
-    
-    add_child(col_shape)
+func _build_nodes() -> void:
+	# Hier rufen wir die spezialisierten "Builder" auf
+	# Die Collision bleibt im Root, da CharacterBody3D sie dort erwartet
+	_setup_main_collision()
+	
+	mover   = PlayerMover.new()
+	visuals = PlayerVisuals.new() # Erzeugt Mesh & Dreh-Logik
+	camera  = PlayerCamera.new()  # Erzeugt SpringArm & Cam
+	input   = TouchInput.new()
+	sensor  = InteractionSensor.new()
+	
+	add_child(visuals)
+	add_child(camera)
+	add_child(input)
+	add_child(sensor)
+	# Mover ist ein reines Logik-Objekt (RefCounted), braucht kein add_child
