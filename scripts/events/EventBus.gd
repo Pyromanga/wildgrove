@@ -31,6 +31,9 @@ var system: SystemEvents
 ## UI-Signale (Menü öffnen/schließen, HUD-Updates …)
 var ui: UIEvents
 
+#Quests
+var quest: QuestEvents
+
 # ─────────────────────────────────────────────
 # Lifecycle
 # ─────────────────────────────────────────────
@@ -40,6 +43,7 @@ func _ready() -> void:
 	world  = WorldEvents.new()
 	system = SystemEvents.new()
 	ui     = UIEvents.new()
+	quest = QuestEvents.new()
 	Logger.log_info("EventBus bereit. Namespaces: player, world, system, ui", "EventBus")
 
 # ─────────────────────────────────────────────
