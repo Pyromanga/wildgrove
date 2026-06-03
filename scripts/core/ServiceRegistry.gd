@@ -1,12 +1,7 @@
-# res://scripts/core/services/ServiceRegistry.gd
 class_name ServiceRegistry extends RefCounted
 
-## ServiceRegistry — Internes Service-Verzeichnis.
-##
-## Nur der ServiceOrchestrator und seine Pipeline-Klassen sprechen direkt
-## mit der Registry. Gameplay-Code nutzt den DependencyContainer.
-##
-## Schlüssel sind immer lowercase (service_name.to_lower()).
+## ServiceRegistry — Internes Service-Verzeichnis & Definitions-Speicher.
+## Hält sowohl die Live-Instanzen als auch deren Baupläne (Definitionen).
 
 signal service_registered(service_name: String)
 signal service_unregistered(service_name: String)
@@ -14,86 +9,74 @@ signal service_unregistered(service_name: String)
 const LOG_CAT := "ServiceRegistry"
 
 var _services: Dictionary = {}
+var _definitions: Dictionary = {} # Speichert die ServiceDefinition Objekte
 
 # ─────────────────────────────────────────────
 # Schreiben
 # ─────────────────────────────────────────────
 
-func register(service: Object) -> void:
+## Registriert einen Service zusammen mit seinem Bauplan.
+func register(service: Object, definition: ServiceDefinition) -> void:
 	if not is_instance_valid(service):
-		Logger.log_error("Ungültiges Objekt — Registrierung abgebrochen.", LOG_CAT)
+		Logger.log_error("Ungültiges Objekt bei Registrierung.", LOG_CAT)
+		return
+	
+	if definition == null or definition.service_name.is_empty():
+		Logger.log_error("Registrierung fehlgeschlagen: Definition ungültig.", LOG_CAT)
 		return
 
-	var key := _resolve_key(service)
-	if key.is_empty():
-		Logger.log_error("Service hat keinen auflösbaren Namen — Registrierung abgebrochen.", LOG_CAT)
-		return
-
+	var key := definition.service_name.to_lower()
+	
 	if _services.has(key):
 		Logger.log_warn("Service '%s' wird überschrieben." % key, LOG_CAT)
 
 	_services[key] = service
+	_definitions[key] = definition
+	
 	Logger.log_debug("Registriert: '%s'" % key, LOG_CAT)
 	service_registered.emit(key)
 
-func unregister(service: Object) -> void:
-	if not is_instance_valid(service):
-		return
-	var key := _resolve_key(service)
-	if key.is_empty():
-		return
+func unregister(service_name: String) -> void:
+	var key := service_name.to_lower()
 	if _services.erase(key):
+		_definitions.erase(key)
 		Logger.log_debug("Entfernt: '%s'" % key, LOG_CAT)
 		service_unregistered.emit(key)
 
 func clear() -> void:
 	_services.clear()
+	_definitions.clear()
 	Logger.log_debug("Registry geleert.", LOG_CAT)
 
 # ─────────────────────────────────────────────
 # Lesen
 # ─────────────────────────────────────────────
 
+## Gibt die Live-Instanz eines Services zurück.
 func get_service(service_name: String) -> Object:
 	var key := service_name.to_lower()
 	var svc: Object = _services.get(key)
+	
 	if svc == null:
-		Logger.log_error("Service nicht gefunden: '%s'" % service_name, LOG_CAT)
-		return null
+		return null # Silent fail für den Initializer-Check
+		
 	if not is_instance_valid(svc):
-		Logger.log_error("Service '%s' ist bereits freigegeben." % service_name, LOG_CAT)
+		Logger.log_error("Service '%s' ist bereits freigegeben (Stale Reference)." % service_name, LOG_CAT)
 		_services.erase(key)
+		_definitions.erase(key)
 		return null
+		
 	return svc
+
+## NEU: Gibt den Bauplan zurück (wichtig für Dependency Injection).
+func get_definition(service_name: String) -> ServiceDefinition:
+	return _definitions.get(service_name.to_lower()) as ServiceDefinition
 
 func has_service(service_name: String) -> bool:
 	return _services.has(service_name.to_lower())
-
-func get_all() -> Array[Object]:
-	var result: Array[Object] = []
-	for svc in _services.values():
-		if is_instance_valid(svc):
-			result.append(svc)
-	return result
 
 func get_all_names() -> Array[String]:
 	var names: Array[String] = []
 	for key in _services.keys():
 		names.append(key)
 	return names
-
-# ─────────────────────────────────────────────
-# Intern
-# ─────────────────────────────────────────────
-
-func _resolve_key(service: Object) -> String:
-	if service is Node:
-		var n := (service as Node).name
-		if not n.is_empty():
-			return n.to_lower()
-	if service is Service:
-		var sn := (service as Service).service_name
-		if not sn.is_empty():
-			return sn.to_lower()
-	var cls := service.get_class()
-	return cls.to_lower() if not cls.is_empty() else ""
