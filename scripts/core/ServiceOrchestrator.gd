@@ -1,5 +1,5 @@
-# res://scripts/core/ServiceOrchestrator.gd
-class_name ServiceOrchestrator extends Node
+extends Node
+class_name ServiceOrchestrator
 
 ## ServiceOrchestrator — Zentrale Boot- und Teardown-Drehscheibe.
 
