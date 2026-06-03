@@ -15,18 +15,30 @@ const LOG_CAT := "ServiceInitializer"
 # ─────────────────────────────────────────────
 
 # res://scripts/core/pipeline/ServiceInitializer.gd
+
 func run(ordered: Array[String], registry: ServiceRegistry) -> void:
     for service_name in ordered:
         var svc := registry.get_service(service_name)
-        var definition := registry.get_definition(service_name) # Wir brauchen die Metadaten
+        var definition := registry.get_definition(service_name)
         
-        # Wir bauen ein passgenaues Paket nur mit den benötigten Services
+        if svc == null or definition == null:
+            Logger.log_error("Kritischer Fehler: '%s' nicht in Registry gefunden!" % service_name, LOG_CAT)
+            continue
+
+        # Dependency Injection Paket schnüren
         var dependencies := {}
         for dep_name in definition.deps:
-            dependencies[dep_name] = registry.get_service(dep_name)
+            var dep_svc = registry.get_service(dep_name)
+            if dep_svc:
+                dependencies[dep_name] = dep_svc
+            else:
+                Logger.log_warn("Abhängigkeit '%s' für '%s' ist NULL!" % [dep_name, service_name], LOG_CAT)
             
-        Logger.log_debug("Injecting deps into -> '%s'" % service_name, LOG_CAT)
-        svc.init(dependencies) # Nur das Nötigste!
+        if svc.has_method("init"):
+            Logger.log_debug("init(deps) -> '%s'" % service_name, LOG_CAT)
+            svc.init(dependencies)
+        else:
+            Logger.log_warn("'%s' hat keine init()-Methode." % service_name, LOG_CAT)
 
 # ─────────────────────────────────────────────
 # Phase 5 — on_ready()
