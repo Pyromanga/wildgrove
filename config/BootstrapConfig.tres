@@ -3,7 +3,6 @@
 [ext_resource type="Script" path="res://scripts/core/BootstrapConfig.gd" id="1_config"]
 [ext_resource type="Script" path="res://scripts/core/ServiceDefinition.gd" id="2_def"]
 
-# Neuer Eintrag in deiner Resource-Liste (id 3_ticker oder ähnlich)
 [sub_resource type="Resource" id="Resource_ticker"]
 script = ExtResource("2_def")
 service_name = "ticker"
