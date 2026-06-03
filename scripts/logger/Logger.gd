@@ -51,19 +51,29 @@ func get_muted_categories() -> Array[String]:
 # Intern
 # ─────────────────────────────────────────────
 
-func _print_log(msg: String, cat: String, level: LogLevel) -> void:
-	if not enabled_levels.get(level, true):
-		return
-	if cat.to_lower() in _muted_categories:
-		return
+# res://scripts/logger/Logger.gd
 
-	var time: String    = Time.get_datetime_string_from_system(false, true)
-	# FIX: Expliziter String-Typ verhindert den "cannot infer type" Fehler.
-	# LogLevel.keys() gibt ein ungetyptes Array zurück — direkte Zuweisung
-	# mit := lässt GDScript den Typ nicht ableiten.
-	var lvl_str: String = LogLevel.keys()[level]
-	var formatted: String = "[%s] [%s] [%s] %s" % [time, lvl_str, cat, msg]
+# ... (enum und Variablen bleiben gleich)
+
+## Für tiefgehende Debug-Infos mit Daten-Snapshot
+func log_trace(msg: String, data: Dictionary = {}, cat: String = "General") -> void:
+	if not enabled_levels.get(LogLevel.DEBUG, true): return
+	_print_log(msg, cat, LogLevel.DEBUG, data)
+
+# Wir erweitern die interne Methode um einen optionalen Data-Parameter
+func _print_log(msg: String, cat: String, level: LogLevel, data: Dictionary = {}) -> void:
+	if not enabled_levels.get(level, true): return
+	if cat.to_lower() in _muted_categories: return
+
+	var time := Time.get_datetime_string_from_system(false, true)
+	var lvl_str := LogLevel.keys()[level]
+	
+	# Daten-String bauen falls vorhanden
+	var data_str := ""
+	if not data.is_empty():
+		data_str = " | DATA: " + JSON.stringify(data)
+
+	var formatted := "[%s] [%s] [%s] %s%s" % [time, lvl_str, cat, msg, data_str]
 
 	print(formatted)
-	# Signal mit int statt LogLevel emittieren (kompatibel mit allen Subscribern)
 	on_log.emit(formatted, cat, level as int)
