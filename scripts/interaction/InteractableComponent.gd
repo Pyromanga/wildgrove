@@ -2,7 +2,6 @@ extends Node3D
 class_name InteractableComponent
 
 ## InteractableComponent — Koppelt ein World-Objekt an das Interaktions-System.
-## Füge diese Komponente als Child zu jedem interagierbaren Objekt hinzu.
 
 @export var data: InteractableData
 @export var detection_radius: float = 3.0
@@ -19,6 +18,7 @@ var _label:  Label3D         = null
 func _ready() -> void:
 	assert(data != null, "InteractableComponent braucht InteractableData!")
 	add_to_group("interactable")
+	
 	_setup_visuals()
 	_setup_detection()
 	_connect_builder_signals()
@@ -35,8 +35,9 @@ func _setup_visuals() -> void:
 	_label.visible  = false
 	add_child(_label)
 
-	if Kernel.factory3d:
-		_bar_3d = Kernel.factory3d.create_3d_bar(self)
+	# NEU: Sicherer Zugriff über Services
+	if Services.factory3d:
+		_bar_3d = Services.factory3d.create_3d_bar(self)
 	else:
 		Logger.log_warn("Factory3D nicht verfügbar — 3D-Bar fehlt.", LOG_CAT)
 
@@ -59,39 +60,45 @@ func _setup_detection() -> void:
 	)
 
 func _connect_builder_signals() -> void:
-	if not Kernel.builder:
-		Logger.log_warn("InteractionBuilder nicht verfügbar — Bar-Updates deaktiviert.", LOG_CAT)
+	# NEU: Der InteractionBuilder ist jetzt ein Service
+	if not Services.builder:
+		Logger.log_warn("InteractionBuilder Service nicht verfügbar.", LOG_CAT)
 		return
-	Kernel.builder.interaction_started.connect(_on_started)
-	Kernel.builder.interaction_completed.connect(_on_ended)
-	Kernel.builder.interaction_cancelled.connect(_on_ended)
+		
+	Services.builder.interaction_started.connect(_on_started)
+	Services.builder.interaction_completed.connect(_on_ended)
+	Services.builder.interaction_cancelled.connect(_on_ended)
 
 # ─────────────────────────────────────────────
 # Interaktion
 # ─────────────────────────────────────────────
 
 func start_default_interaction() -> void:
-	if not Kernel.builder:
-		Logger.log_error("InteractionBuilder nicht verfügbar!", LOG_CAT)
+	if not Services.builder:
+		Logger.log_error("InteractionBuilder Service fehlt!", LOG_CAT)
 		return
 
 	var action              := InteractableAction.new(data.id, data.label)
 	action.duration         = data.duration
 	action.on_complete      = _handle_completion
-	Kernel.builder.execute_action(action)
+	
+	Services.builder.execute_action(action)
 
 func _handle_completion() -> void:
-	if data.xp_type != "none" and Kernel.events:
-		Kernel.events.player.emit_xp(data.xp_type, data.xp_amount)
+	# 1. XP vergeben über EventBus
+	if data.xp_type != "none":
+		EventBus.player.emit_xp(data.xp_type, data.xp_amount)
 
-	if Kernel.inventory:
+	# 2. Loot ins Inventar
+	if Services.inventory:
 		for item_id in data.drops:
-			Kernel.inventory.add_item(item_id, data.drops[item_id])
+			Services.inventory.add_item(item_id, data.drops[item_id])
 
-	if not data.inspect_text.is_empty() and Kernel.events:
-		# Notification über Events statt direkten UIFactory-Aufruf
-		Kernel.events.ui.emit_overlay_changed("notification:" + data.inspect_text, true)
+	# 3. UI-Benachrichtigung über EventBus
+	if not data.inspect_text.is_empty():
+		EventBus.ui.emit_overlay_changed("notification:" + data.inspect_text, true)
 
+	# 4. Rückmeldung an das Parent-Objekt (OakTree/IronOre)
 	if get_parent().has_method("_on_interacted"):
 		get_parent()._on_interacted(data.id)
 
@@ -102,10 +109,12 @@ func _handle_completion() -> void:
 func _on_started(label: String, duration: float) -> void:
 	if label != data.label or not _bar_3d:
 		return
+	
 	_bar_3d.visible = true
 	var t := create_tween()
+	# Update der Bar über die Factory3D Hilfsklasse
 	t.tween_method(func(v: float): _bar_3d.update(v), 0.0, 1.0, duration)
 
-func _on_ended(_label: String) -> void:
-	if _bar_3d:
+func _on_ended(label: String) -> void:
+	if label == data.label and _bar_3d:
 		_bar_3d.visible = false
