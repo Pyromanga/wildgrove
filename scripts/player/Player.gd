@@ -83,5 +83,9 @@ func _setup_collision() -> void:
 	add_child(col)
 
 func _apply_stats() -> void:
-	_mover.speed   = Services.data.get_player_stat("speed",   6.0)
-	_mover.gravity = Services.data.get_player_stat("gravity", 12.0)
+	var s = Services.data.get_player_stat("speed", 6.0)
+	var g = Services.data.get_player_stat("gravity", 12.0)
+	_mover.speed = s
+	_mover.gravity = g
+	# Best Practice: Ein aggregierter Log-Eintrag nach dem Setup
+	Logger.log_info("Stats angewandt: Speed=%f, Gravity=%f" % [s, g], LOG_CAT)
