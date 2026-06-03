@@ -24,7 +24,11 @@ func init() -> void:
 	# 2. Daten wiederherstellen (sofort aus dem RAM)
 	var saved := Services.save_system.get_state_for(SAVE_KEY)
 	if not saved.is_empty():
-		skills = saved # In diesem Fall können wir das Dict direkt übernehmen
+		for skill_name in saved:
+      if skills.has(skill_name):
+        skills[skill_name] = saved[skill_name]
+      else:
+        Logger.log_debug("Veralteter Skill im Save gefunden: %s" % skill_name, LOG_CAT)
 		
 	Logger.log_info("Initialisiert.", LOG_CAT)
 
