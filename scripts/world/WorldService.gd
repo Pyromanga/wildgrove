@@ -7,118 +7,112 @@ class_name WorldService
 const LOG_CAT := "World"
 const SAVE_KEY := "world_state"
 
-# Diese Variablen werden jetzt via configure() befüllt
 var _save_system: SaveSystem
 
-var data:    WorldData
+var data: WorldData
 var factory: WorldFactory
 
-var day_time:  float = 6.0
-var day_count: int   = 1
+var day_time: float = 6.0
+var day_count: int = 1
 @export var time_speed: float = 0.05
 
-# ─────────────────────────────────────────────
-# Lifecycle (Enterprise DI)
-# ─────────────────────────────────────────────
 
-## Schritt 1: Konfiguration & Injection
 func configure(deps: Dictionary) -> void:
-	# Wir holen uns das SaveSystem direkt aus dem Paket
 	_save_system = deps.get("savesystem") as SaveSystem
-	
-	# Interne Objekte erstellen
-	data    = WorldData.new()
+
+	data = WorldData.new()
 	factory = WorldFactory.new()
 
 	if _save_system:
-		# Wir registrieren uns beim SaveSystem
 		_save_system.register_save_provider(self)
-		
-		# Wir laden den Zustand direkt hier
 		var saved: Dictionary = _save_system.get_state_for(SAVE_KEY)
 		if not saved.is_empty():
 			_restore_world(saved)
 	else:
 		Logger.log_error("SaveSystem fehlt in den Dependencies!", LOG_CAT)
 
-	Logger.log_info("WorldService konfiguriert (Tag %d, %02d:00)." % [day_count, int(day_time)], LOG_CAT)
+	Logger.log_info(
+		"WorldService konfiguriert (Tag %d, %02d:00)." % [day_count, int(day_time)], LOG_CAT
+	)
 
-## Schritt 2: Aktivierung
-# Ergänzung in res://scripts/world/WorldService.gd
 
 func on_ready() -> void:
-    # Registriere dich auf den State-Wechsel des GameManagers
-    EventBus.system.state_changed.connect(_on_state_changed)
-    Logger.log_info("WorldService bereit.", LOG_CAT)
+	EventBus.system.state_changed.connect(_on_state_changed)
+	Logger.log_info("WorldService bereit.", LOG_CAT)
 
-func _on_state_changed(new_state: GameEnums.State) -> void:
-    if new_state == GameEnums.State.PLAYING:
-        # Hier triggern wir die Generierung
-        _initialize_scene_world()
+
+func _on_state_changed(new_state: int) -> void:
+	if new_state == GameEnums.State.PLAYING:
+		# Szene ist per call_deferred gewechselt — einen Frame warten
+		call_deferred("_initialize_scene_world")
+
 
 func _initialize_scene_world() -> void:
-    # 1. Wir holen uns die aktuelle World-Szene aus dem Tree
-    # Wichtig: Die Szene "res://scenes/World.tscn" wurde bereits vom 
-    # GameManager via change_scene_to_file geladen.
-    var world_root = get_tree().current_scene
-    
-    # 2. Wir prüfen, ob das die World-Szene ist
-    if world_root.name == "World":
-        # 3. Wir lassen die Factory die Kinder erstellen
-        var generated_world = factory.create_world()
-        
-        # 4. Wir verschieben die Kinder vom generierten Objekt in unseren Root
-        for child in generated_world.get_children():
-            generated_world.remove_child(child)
-            world_root.add_child(child)
-            
-        generated_world.queue_free() # Factory-Objekt aufräumen
-        Logger.log_info("Welt wurde prozedural in World.tscn eingefügt.", LOG_CAT)
+	var world_root = get_tree().current_scene
+	if world_root == null:
+		Logger.log_error("Keine aktive Szene beim World-Init!", LOG_CAT)
+		return
+
+	if world_root.name == "World":
+		var generated_world = factory.create_world()
+		for child in generated_world.get_children():
+			generated_world.remove_child(child)
+			world_root.add_child(child)
+		generated_world.queue_free()
+		Logger.log_info("Welt prozedural in World.tscn eingefügt.", LOG_CAT)
+	else:
+		Logger.log_warn("Aktive Szene ist nicht 'World' (%s) — kein World-Init." % world_root.name, LOG_CAT)
+
 
 func _process(delta: float) -> void:
-	# WICHTIG: Im Prozess nutzen wir Services.game_manager, 
-	# da der Bootvorgang hier längst abgeschlossen ist.
+	# is_playing() prüfen über game_manager falls verfügbar
 	if is_instance_valid(Services.game_manager) and Services.game_manager.is_playing():
 		_update_time(delta)
 
+
 # ─────────────────────────────────────────────
-# Save-Interface (Unverändert)
+# Save-Interface
 # ─────────────────────────────────────────────
 
 func get_save_key() -> String:
 	return SAVE_KEY
 
+
 func get_save_data() -> Dictionary:
 	return {
-		"day_time":       day_time,
-		"day_count":      day_count,
+		"day_time": day_time,
+		"day_count": day_count,
 		"tree_positions": var_to_str(data.tree_positions),
-		"player_pos":     var_to_str(data.player_position),
+		"player_pos": var_to_str(data.player_position),
 	}
 
+
 # ─────────────────────────────────────────────
-# Öffentliche API & Intern (Unverändert)
+# Öffentliche API
 # ─────────────────────────────────────────────
 
 func create_world() -> Node3D:
 	return factory.create_world()
 
+
 func get_formatted_time() -> String:
-	var hours:   int = int(day_time)
+	var hours: int = int(day_time)
 	var minutes: int = int((day_time - hours) * 60)
 	return "%02d:%02d" % [hours, minutes]
+
 
 func _update_time(delta: float) -> void:
 	day_time += delta * time_speed
 	if day_time >= 24.0:
-		day_time   = fmod(day_time, 24.0)
+		day_time = fmod(day_time, 24.0)
 		day_count += 1
-		EventBus.world.emit_time_of_day_changed(0) 
+		EventBus.world.emit_time_of_day_changed(0)
 		Logger.log_info("Ein neuer Tag bricht an: Tag %d" % day_count, LOG_CAT)
 
+
 func _restore_world(state: Dictionary) -> void:
-	day_time  = state.get("day_time",  6.0)
+	day_time = state.get("day_time", 6.0)
 	day_count = state.get("day_count", 1)
-	data.tree_positions   = str_to_var(state.get("tree_positions", "[]"))
-	data.player_position  = str_to_var(state.get("player_pos", "Vector3(0,0,0)"))
+	data.tree_positions = str_to_var(state.get("tree_positions", "[]"))
+	data.player_position = str_to_var(state.get("player_pos", "Vector3(0,0,0)"))
 	Logger.log_debug("Welt-Zustand aus Save wiederhergestellt.", LOG_CAT)
