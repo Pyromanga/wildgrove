@@ -1,7 +1,7 @@
 extends ServiceNode
 class_name GameManager
 
-## GameManager — Verwaltet den globalen Spielzustand (State Machine).
+## GameManager — Verwaltet den globalen Spielzustand.
 ## Abhängigkeiten (deps): ["savesystem", "playerstates"]
 
 const LOG_CAT := "GameManager"
@@ -9,21 +9,48 @@ const LOG_CAT := "GameManager"
 var _current_state:  GameEnums.State = GameEnums.State.BOOT
 var _previous_state: GameEnums.State = GameEnums.State.BOOT
 
+# Lokale Referenzen statt globalem Zugriff während des Bootens
+var _save_system: SaveSystem
+
 @export var config: GameConfig
 
 # ─────────────────────────────────────────────
-# Lifecycle
+# Phase 4: Configure (Injection)
 # ─────────────────────────────────────────────
 
-func init() -> void:
-	Logger.log_debug("init() — Verbinde SaveSystem...", LOG_CAT)
-	Services.save_system.register_save_provider(self)
+func configure(deps: Dictionary) -> void:
+	_save_system = deps.get("savesystem") as SaveSystem
+	
+	if _save_system:
+		Logger.log_debug("configure() — Registriere als SaveProvider...", LOG_CAT)
+		_save_system.register_save_provider(self)
+	else:
+		Logger.log_error("SaveSystem fehlt in Dependencies!", LOG_CAT)
+
+# ─────────────────────────────────────────────
+# Phase 5: Activate
+# ─────────────────────────────────────────────
 
 func on_ready() -> void:
 	Logger.log_debug("on_ready() — Verbinde Events...", LOG_CAT)
+	# EventBus ist ein globales Infrastruktur-Autoload, das ist hier sicher.
 	EventBus.player.player_died.connect(_on_player_died)
-	Services.save_system.load_game()
-	Logger.log_info("GameManager vollständig aktiv.", LOG_CAT)
+
+# ─────────────────────────────────────────────
+# Phase 6: Start (Gerufen vom Orchestrator)
+# ─────────────────────────────────────────────
+
+func start_game() -> void:
+	Logger.log_info("start_game() — Orchestrator gibt Startschuss.", LOG_CAT)
+	
+	# JETZT erst laden wir das Spiel, da alle Services (Inventory etc.) 
+	# im Services-Autoload bereitstehen.
+	if _save_system:
+		_save_system.load_game()
+	
+	# Erster State-Wechsel
+	change_state(GameEnums.State.MAIN_MENU)
+	Logger.log_info("GameManager vollständig aktiv. State: MAIN_MENU", LOG_CAT)
 
 # ─────────────────────────────────────────────
 # Save-Interface
@@ -39,31 +66,39 @@ func get_save_data() -> Dictionary:
 # Öffentliche API
 # ─────────────────────────────────────────────
 
+func is_playing() -> bool:
+	return _current_state == GameEnums.State.PLAYING
+
+func change_state(new_state: GameEnums.State) -> void:
+	if new_state == _current_state: return
+	
+	if not _is_valid_transition(_current_state, new_state):
+		Logger.log_error("Ungültiger Übergang: %s → %s" % [_state_name(_current_state), _state_name(new_state)], LOG_CAT)
+		return
+		
+	_previous_state = _current_state
+	_current_state  = new_state
+	Logger.log_info("State → %s" % _state_name(_current_state), LOG_CAT)
+	EventBus.system.emit_state_changed(_current_state)
+
+# Die save_game Methode nutzt jetzt die lokale Referenz
+func save_game() -> bool:
+	if _save_system:
+		return _save_system.save_game()
+	return false
+
+# ─────────────────────────────────────────────
+# Ergänzende Öffentliche API
+# ─────────────────────────────────────────────
+
 func get_state() -> GameEnums.State:
 	return _current_state
 
 func get_state_name() -> String:
 	return _state_name(_current_state)
 
-func is_playing() -> bool:
-	return _current_state == GameEnums.State.PLAYING
-
 func is_paused() -> bool:
 	return _current_state == GameEnums.State.PAUSED
-
-func change_state(new_state: GameEnums.State) -> void:
-	if new_state == _current_state:
-		return
-	if not _is_valid_transition(_current_state, new_state):
-		Logger.log_error(
-			"Ungültiger Übergang: %s → %s" % [_state_name(_current_state), _state_name(new_state)],
-			LOG_CAT
-		)
-		return
-	_previous_state = _current_state
-	_current_state  = new_state
-	Logger.log_info("State → %s" % _state_name(_current_state), LOG_CAT)
-	EventBus.system.emit_state_changed(_current_state)
 
 func revert_state() -> void:
 	Logger.log_info(
@@ -72,30 +107,17 @@ func revert_state() -> void:
 	)
 	change_state(_previous_state)
 
-func save_game(player_data: Dictionary) -> bool:
-	# FIX: War Services.save_system.save_state(state) — Methode heißt save_game().
-	# GameManager sammelt hier den State und delegiert an SaveSystem.
-	# SaveSystem selbst fragt alle Provider via get_save_data() ab,
-	# daher reicht ein einfacher save_game()-Aufruf ohne Extra-Payload.
-	return Services.save_system.save_game()
-
 func apply_save_state(state: Dictionary) -> void:
+	# Wird vom SaveSystem gerufen, wenn Daten geladen wurden
 	Logger.log_debug("apply_save_state() aufgerufen.", LOG_CAT)
-	var world_data:  Dictionary = state.get("world",  {})
-	var player_data: Dictionary = state.get("player", {})
-	Logger.log_debug(
-		"Welt: Tag %d, Stunde %d" % [world_data.get("day", 1), world_data.get("hour", 6)],
-		LOG_CAT
-	)
-	Logger.log_debug(
-		"Spieler: '%s', Level %d" % [player_data.get("name", "?"), player_data.get("level", 0)],
-		LOG_CAT
-	)
+	
+	# Hier setzen wir den geladenen State um
+	# Falls im Save "PLAYING" stand, gehen wir zum Main Menu (Sicherheits-Standard)
 	_current_state = GameEnums.State.MAIN_MENU
 	Logger.log_info("State nach Save-Load: MAIN_MENU", LOG_CAT)
 
 # ─────────────────────────────────────────────
-# Intern
+# Intern & Hilfsfunktionen
 # ─────────────────────────────────────────────
 
 func _is_valid_transition(from: GameEnums.State, to: GameEnums.State) -> bool:
@@ -105,9 +127,10 @@ func _is_valid_transition(from: GameEnums.State, to: GameEnums.State) -> bool:
 		var allowed: Array   = config.valid_transitions.get(from_str, [])
 		var ok := to_str in allowed
 		if not ok:
-			Logger.log_warn("Übergang %s → %s nicht in Config erlaubt." % [from_str, to_str], LOG_CAT)
+			Logger.log_warn("Übergang %s → %s laut Config nicht erlaubt." % [from_str, to_str], LOG_CAT)
 		return ok
-	Logger.log_warn("Keine GameConfig — nutze Fallback-Transitions.", LOG_CAT)
+	
+	# Fallback, falls keine Resource zugewiesen ist
 	return _fallback_transition_allowed(from, to)
 
 func _fallback_transition_allowed(from: GameEnums.State, to: GameEnums.State) -> bool:
@@ -125,6 +148,7 @@ func _fallback_transition_allowed(from: GameEnums.State, to: GameEnums.State) ->
 	return to in allowed
 
 func _state_name(state: GameEnums.State) -> String:
+	# Gibt den String-Namen des Enums zurück (z.B. "PLAYING")
 	return GameEnums.State.keys()[state]
 
 func _on_player_died() -> void:
