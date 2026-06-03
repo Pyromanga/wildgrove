@@ -78,7 +78,26 @@ func change_state(new_state: GameEnums.State) -> void:
 		
 	_previous_state = _current_state
 	_current_state  = new_state
+	
 	Logger.log_info("State → %s" % _state_name(_current_state), LOG_CAT)
+	
+	# --- SZENENWECHSEL LOGIK ---
+	var target_scene := ""
+	match _current_state:
+		GameEnums.State.MAIN_MENU:
+			target_scene = "res://scenes/MainMenu.tscn"
+		GameEnums.State.PLAYING:
+			target_scene = "res://scenes/World.tscn"
+		GameEnums.State.GAME_OVER:
+			# Optional: target_scene = "res://scenes/GameOver.tscn"
+			pass
+			
+	if not target_scene.is_empty():
+		Logger.log_info("Wechsle Szene zu: %s" % target_scene, LOG_CAT)
+		# deferred ist wichtig, um Crashs während des laufenden Frame-Updates zu vermeiden
+		get_tree().call_deferred("change_scene_to_file", target_scene)
+	# ---------------------------
+
 	EventBus.system.emit_state_changed(_current_state)
 
 # Die save_game Methode nutzt jetzt die lokale Referenz
