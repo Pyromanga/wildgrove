@@ -2,40 +2,29 @@ extends ServiceNode
 class_name HUDManager
 
 ## HUDManager — Verwaltet das UI-System und die Controller.
-## Abhängigkeiten: ["savesystem", "inventory", "player_states"]
+## Abhängigkeiten: ["inventory", "playerstates"]
+##
+## HINWEIS: HUDManager ist nicht in bootstrap_config.tres eingetragen —
+## entweder dort hinzufügen oder manuell in Main._on_services_ready() instanziieren.
 
 const LOG_CAT := "HUD"
 
-var hud: HUD
+var hud:         HUD        = null
 var controllers: Dictionary = {}
 
-# ─────────────────────────────────────────────
-# Lifecycle
-# ─────────────────────────────────────────────
-
 func init() -> void:
-    # Wir erstellen das HUD (CanvasLayer)
-    hud = HUD.new()
-    hud.name = "GameHUD"
-    # Wir hängen es an den Orchestrator (damit es im Baum ist)
-    get_parent().add_child(hud)
-    
-    Logger.log_debug("HUD Instanz erstellt.", LOG_CAT)
+	hud      = HUD.new()
+	hud.name = "GameHUD"
+	get_parent().add_child(hud)
+	Logger.log_debug("HUD Instanz erstellt.", LOG_CAT)
 
 func on_ready() -> void:
-    # Erst jetzt, wo alle Services (Inventory, Skills etc.) bereit sind,
-    # bauen wir die Komponenten zusammen.
-    _setup_ui()
-    Logger.log_info("HUD-System vollständig initialisiert.", LOG_CAT)
+	_setup_ui()
+	Logger.log_info("HUD-System vollständig initialisiert.", LOG_CAT)
 
-# ─────────────────────────────────────────────
-# Intern
-# ─────────────────────────────────────────────
+func get_controller(id: String) -> Variant:
+	return controllers.get(id)
 
 func _setup_ui() -> void:
-    # Der Builder nutzt jetzt die 'Services' statt 'Kernel'
-    controllers = HUDBuilder.build_all(hud)
-    Logger.log_debug("Controller-Registry befüllt: %d Einheiten." % controllers.size(), LOG_CAT)
-
-func get_controller(id: String):
-    return controllers.get(id)
+	controllers = HUDBuilder.build_all(hud)
+	Logger.log_debug("Controller-Registry befüllt: %d Einheiten." % controllers.size(), LOG_CAT)
