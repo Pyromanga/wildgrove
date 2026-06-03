@@ -13,6 +13,7 @@ extends Node
 # Typisierte Service-Shortcuts
 # ─────────────────────────────────────────────
 var ticker: ServiceTicker = null
+var scene: SceneManager = null 
 var save_system:    SaveSystem         = null
 var data:           DataService        = null
 var inventory:      InventorySystem    = null
@@ -33,6 +34,7 @@ var hud: HUDManager = null
 func populate(registry: ServiceRegistry) -> void:
 	ticker = _resolve(registry, "ticker") as ServiceTicker
 	save_system   = _resolve(registry, "savesystem")
+	scene   = _resolve(registry, "scenemanager")
 	data          = _resolve(registry, "data")
 	inventory     = _resolve(registry, "inventory")
 	skill_system  = _resolve(registry, "skill_system")
