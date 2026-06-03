@@ -8,7 +8,7 @@ class_name ServiceValidator extends RefCounted
 ## bei Fehler ein leeres Array (Boot wird abgebrochen).
 
 const LOG_CAT     := "ServiceValidator"
-const CONFIG_PATH := "res://config/bootstrap_config.tres"
+const CONFIG_PATH := "res://config/BootstrapConfig.tres"
 
 # ─────────────────────────────────────────────
 # Öffentliche API
