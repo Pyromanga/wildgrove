@@ -1,4 +1,4 @@
-# res://scripts/interfaces/i_tickable.gd
+# res://scripts/interfaces/core/ITickable.gd
 class_name ITickable
 
 ## Wird jeden Frame aufgerufen (wie _process)
