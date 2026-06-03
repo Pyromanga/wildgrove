@@ -21,11 +21,16 @@ func init() -> void:
 
 func get_player_stat(stat_name: String, default_val: float = 0.0) -> float:
 	if not player_data:
+		Logger.log_error("Versuch Stat '%s' zu lesen, aber player_data ist NULL!" % stat_name, LOG_CAT)
 		return default_val
-	var value: Variant = player_data.get(stat_name)
+	
+	var value = player_data.get(stat_name)
 	if value != null:
+		# EXZESSIV: Wir loggen jeden Zugriff, damit du im Terminal siehst, wer was fragt
+		Logger.log_trace("Stat-Abfrage", {"stat": stat_name, "value": value}, LOG_CAT)
 		return float(value)
-	Logger.log_warn("Stat '%s' nicht in PlayerData gefunden." % stat_name, LOG_CAT)
+	
+	Logger.log_warn("Stat '%s' fehlt in .tres!" % stat_name, LOG_CAT)
 	return default_val
 
 func set_player_stat(stat_name: String, value: float) -> void:
