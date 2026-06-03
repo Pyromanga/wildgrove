@@ -1,7 +1,6 @@
 extends Node
 
 ## SimpleTerminal — Logik-Schicht der In-Game Debug-Konsole.
-## Autoload: SimpleTerminal (muss VOR Kernel in project.godot stehen!)
 ## Sammelt Log-Einträge, verwaltet Befehle, toggled Sichtbarkeit.
 ## Die UI wird als Kind-Node separat geladen (SimpleTerminalUI).
 
@@ -27,16 +26,12 @@ var _commands: Dictionary = {}
 # ─────────────────────────────────────────────
 
 func _init() -> void:
-	pass # Hier nichts tun! Zu gefährlich für Autoloads.
+	pass # Hier nichts tun — zu gefährlich für Autoloads.
 
 func _ready() -> void:
-	# 1. Verbindung zum Logger herstellen (Sicher in _ready)
 	Logger.on_log.connect(_on_log_entry)
-	
-	# 2. Befehle registrieren
 	_register_default_commands()
-	
-	# 3. UI als Kind laden (CanvasLayer mit layer=128)
+
 	var ui_script = load("res://scripts/debug/SimpleTerminalUI.gd")
 	if ui_script:
 		add_child(ui_script.new())
@@ -49,19 +44,16 @@ func _ready() -> void:
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-## Schaltet die Terminal-Sichtbarkeit um.
 func toggle() -> void:
 	is_visible = !is_visible
 	toggled.emit(is_visible)
 
-## Gibt alle Einträge als einzelnen String zurück (für Copy-Button).
 func get_all_text() -> String:
 	var lines := PackedStringArray()
 	for e in entries:
 		lines.append(e.formatted)
 	return "\n".join(lines)
 
-## Führt einen Befehl aus.
 func execute(raw_input: String) -> void:
 	var trimmed := raw_input.strip_edges()
 	if trimmed.is_empty():
@@ -80,9 +72,6 @@ func execute(raw_input: String) -> void:
 # Intern
 # ─────────────────────────────────────────────
 
-## Empfängt Log-Einträge direkt von Logger.on_log.
-## HINWEIS: Wir nutzen den bereits formatierten String aus Logger,
-##          statt die Zeit nochmal abzurufen (verhindert Timestamp-Abweichungen).
 func _on_log_entry(formatted: String, _cat: String, _level: int) -> void:
 	var entry := LogEntry.new(formatted)
 	entries.append(entry)
@@ -128,12 +117,19 @@ func _register_default_commands() -> void:
 				Logger.log_info("Stummgeschaltet: %s" % str(muted), "Terminal")
 	}
 	_commands["services"] = {
+		# FIX: Kernel existiert nicht als Autoload — ersetzt durch Services-Autoload.
+		# Services.world etc. sind null bis Phase 6 abgeschlossen ist,
+		# deshalb prüfen wir ob der ServiceOrchestrator schon fertig ist.
 		"fn": func(_args: Array):
-			# Kernel ist ggf. noch nicht verfügbar wenn Terminal als erstes startet
-			if not is_instance_valid(Kernel):
-				Logger.log_warn("Kernel noch nicht verfügbar.", "Terminal")
+			# Services ist immer verfügbar (Autoload #4), aber erst nach Boot befüllt.
+			# Wir fragen die Registry direkt über den Orchestrator — falls verfügbar.
+			var orch := get_node_or_null("/root/ServiceOrchestrator")
+			if orch == null:
+				Logger.log_warn("ServiceOrchestrator nicht im Baum — Services noch nicht gebootet.", "Terminal")
 				return
-			var names := Kernel.get_registered_names()
+			# FIX: War Kernel.get_registered_names() — Methode existiert nicht.
+			# ServiceRegistry hat get_all_names().
+			var names: Array[String] = orch.registry.get_all_names()
 			names.sort()
 			Logger.log_info("Registrierte Services (%d): %s" % [names.size(), str(names)], "Terminal")
 	}
