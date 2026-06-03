@@ -12,7 +12,7 @@ extends Node
 # ─────────────────────────────────────────────
 # Typisierte Service-Shortcuts
 # ─────────────────────────────────────────────
-
+var ticker: ServiceTicker = null
 var save_system:    SaveSystem         = null
 var data:           DataService        = null
 var inventory:      InventorySystem    = null
@@ -31,6 +31,7 @@ var hud: HUDManager = null
 
 ## Befüllt alle Shortcuts aus der Registry.
 func populate(registry: ServiceRegistry) -> void:
+	ticker = _resolve(registry, "ticker") as ServiceTicker
 	save_system   = _resolve(registry, "savesystem")
 	data          = _resolve(registry, "data")
 	inventory     = _resolve(registry, "inventory")
@@ -47,6 +48,7 @@ func populate(registry: ServiceRegistry) -> void:
 
 ## Leert alle Shortcuts (aufgerufen beim Teardown).
 func clear() -> void:
+	ticker = null
 	save_system   = null
 	data          = null
 	inventory     = null
