@@ -11,7 +11,7 @@ var _previous_state: GameEnums.State = GameEnums.State.BOOT
 
 # Lokale Referenzen statt globalem Zugriff während des Bootens
 var _save_system: SaveSystem
-
+var _scene_manager: SceneManager
 @export var config: GameConfig
 
 # ─────────────────────────────────────────────
@@ -20,6 +20,10 @@ var _save_system: SaveSystem
 
 func configure(deps: Dictionary) -> void:
 	_save_system = deps.get("savesystem") as SaveSystem
+  _scene_manager = deps.get("scenemanager") as SceneManager
+	
+  if not _scene_manager:
+    Logger.log_error("SceneManager fehlt in den Dependencies!", LOG_CAT)
 	
 	if _save_system:
 		Logger.log_debug("configure() — Registriere als SaveProvider...", LOG_CAT)
@@ -73,7 +77,7 @@ func change_state(new_state: GameEnums.State) -> void:
 	if new_state == _current_state: return
 	
 	if not _is_valid_transition(_current_state, new_state):
-		Logger.log_error("Ungültiger Übergang: %s → %s" % [_state_name(_current_state), _state_name(new_state)], LOG_CAT)
+		Logger.log_error("Ungültiger Übergang...", LOG_CAT)
 		return
 		
 	_previous_state = _current_state
@@ -81,22 +85,14 @@ func change_state(new_state: GameEnums.State) -> void:
 	
 	Logger.log_info("State → %s" % _state_name(_current_state), LOG_CAT)
 	
-	# --- SZENENWECHSEL LOGIK ---
-	var target_scene := ""
-	match _current_state:
-		GameEnums.State.MAIN_MENU:
-			target_scene = "res://scenes/MainMenu.tscn"
-		GameEnums.State.PLAYING:
-			target_scene = "res://scenes/World.tscn"
-		GameEnums.State.GAME_OVER:
-			# Optional: target_scene = "res://scenes/GameOver.tscn"
-			pass
-			
-	if not target_scene.is_empty():
-		Logger.log_info("Wechsle Szene zu: %s" % target_scene, LOG_CAT)
-		# deferred ist wichtig, um Crashs während des laufenden Frame-Updates zu vermeiden
-		get_tree().call_deferred("change_scene_to_file", target_scene)
-	# ---------------------------
+	# --- NEUE, SAUBERE SZENENWECHSEL LOGIK ---
+	if _scene_manager:
+		match _current_state:
+			GameEnums.State.MAIN_MENU:
+				_scene_manager.change_scene("res://scenes/MainMenu.tscn")
+			GameEnums.State.PLAYING:
+				_scene_manager.change_scene("res://scenes/World.tscn")
+	# ----------------------------------------
 
 	EventBus.system.emit_state_changed(_current_state)
 
