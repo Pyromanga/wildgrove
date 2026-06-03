@@ -81,11 +81,21 @@ func boot() -> void:
 	Logger.log_info("── Phase 5 · Activate", LOG_CAT)
 	initializer.run_on_ready(ordered, registry)
 
-	# Phase 6 — Install (DependencyContainer befüllen)
-	Logger.log_info("── Phase 6 · Install", LOG_CAT)
-	var final_registry := installer.install(registry)
-	Services.populate(final_registry)
-	EventBus.system.services_initialized.emit()
+  # Im ServiceOrchestrator.gd
+
+  # ... Phase 1 bis 5 ...
+
+  # Phase 6 — Install
+  Logger.log_info("── Phase 6 · Install", LOG_CAT)
+  var final_registry := installer.install(registry)
+  Services.populate(final_registry) # Jetzt ist das Autoload bereit!
+
+  # JETZT darf der GameManager das Kommando übernehmen
+  var gm = registry.get_service("gamemanager") as GameManager
+  if gm:
+    gm.start_game() # Oder gm.load_initial_state()
+    
+  EventBus.system.services_initialized.emit()
 
 	var elapsed := Time.get_ticks_msec() - started
 	Logger.log_info("╚══ BOOT FERTIG (%d ms) ══╝" % elapsed, LOG_CAT)
