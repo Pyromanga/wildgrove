@@ -56,27 +56,48 @@ func get_muted_categories() -> Array[String]:
 # ─────────────────────────────────────────────
 
 func _print_log(msg: String, cat: String, level: int, data: Dictionary = {}) -> void:
-	# 1. Filtern
 	if not enabled_levels.get(level, true): return
 	if cat.to_lower() in _muted_categories: return
 
-	# 2. Zeitstempel
 	var time: String = Time.get_datetime_string_from_system(false, true)
-	
-	# 3. Level-String sicher auflösen (Der FIX für deinen Compiler-Fehler)
 	var keys: Array = LogLevel.keys()
 	var lvl_str: String = "UNKNOWN"
 	if level >= 0 and level < keys.size():
 		lvl_str = str(keys[level])
-	
-	# 4. Daten-String bauen falls vorhanden
+
+	# Automatischer Stacktrace für ERROR
+	var stack_str := ""
+	if level == LogLevel.ERROR:
+		stack_str = _format_stacktrace(get_stack())
+		if not stack_str.is_empty():
+			msg += "\n" + stack_str
+
 	var data_str: String = ""
 	if not data.is_empty():
 		data_str = " | DATA: " + JSON.stringify(data)
 
-	# 5. Formatierung
 	var formatted: String = "[%s] [%s] [%s] %s%s" % [time, lvl_str, cat, msg, data_str]
 
-	# 6. Ausgabe
+	# Puffer (für Terminal)
+	var entry := {"formatted": formatted, "category": cat, "level": level}
+	_log_buffer.append(entry)
+	if _log_buffer.size() > MAX_BUFFER:
+		_log_buffer.pop_front()
+
 	print(formatted)
 	on_log.emit(formatted, cat, level)
+
+# Hilfsfunktion: formatiert die Stacktrace-Frames
+func _format_stacktrace(stack: Array) -> String:
+	if stack.is_empty():
+		return ""
+	var result := "Stacktrace:"
+	for frame in stack:
+		var source := frame.get("source", "")
+		var function := frame.get("function", "?")
+		var line := frame.get("line", 0)
+		# Überspringe die ersten Frames des Loggers selbst
+		if source.ends_with("Logger.gd") or function == "_print_log":
+			continue
+		result += "\n  %s:%d in %s()" % [source, line, function]
+	return result
