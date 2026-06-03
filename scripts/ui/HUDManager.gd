@@ -40,7 +40,19 @@ func on_ready() -> void:
 		Logger.log_info("HUD-System aktiv.", LOG_CAT)
 
 func _setup_ui() -> void:
-	# Wir geben dem HUDBuilder vielleicht sogar die deps mit, 
-	# wenn die Controller direkt Zugriff brauchen
-	controllers = HUDBuilder.build_all(hud)
-	Logger.log_debug("Controller-Registry befüllt: %d Einheiten." % controllers.size(), LOG_CAT)
+	# Hier ist der Clou: Wir geben dem Builder die Services mit, 
+	# die er in die einzelnen Controller injizieren muss.
+	# So müssen Controller nicht selbst nach Services suchen.
+	
+	var context = {
+		"inventory": _inventory,
+		"player_states": _player_states
+	}
+	
+	controllers = HUDBuilder.build_all(hud, context)
+	Logger.log_debug("HUD-Controller mit Kontext befüllt: %d Einheiten." % controllers.size(), LOG_CAT)
+
+# Optional: Falls das HUD auf Ticks reagieren muss (z.B. für Animationen oder Timer)
+func on_tick(_delta: float) -> void:
+	# Update Logik für UI-Animationen oder ähnliches
+	pass
