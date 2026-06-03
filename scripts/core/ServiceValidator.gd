@@ -1,4 +1,3 @@
-# res://scripts/core/services/ServiceValidator.gd
 class_name ServiceValidator extends RefCounted
 
 ## ServiceValidator — Phase 1 der Boot-Pipeline.
@@ -15,8 +14,6 @@ const CONFIG_PATH := "res://config/bootstrap_config.tres"
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-## Lädt und validiert die BootstrapConfig.
-## Rückgabe: befülltes Array[ServiceDefinition] oder [] bei Fehler.
 func validate() -> Array[ServiceDefinition]:
 	var config := _load_config()
 	if config == null:
@@ -26,9 +23,13 @@ func validate() -> Array[ServiceDefinition]:
 		Logger.log_warn("BootstrapConfig ist leer — keine Services definiert.", LOG_CAT)
 		return []
 
-	var defs: Array[ServiceDefinition] = config.services
-	var errors := 0
+	# FIX: Expliziter Typ nötig — config.services ist ein ungetyptes Array (Resource-Property).
+	# Direkte Zuweisung mit := würde Array[Variant] ergeben, nicht Array[ServiceDefinition].
+	var defs: Array[ServiceDefinition] = []
+	for s in config.services:
+		defs.append(s as ServiceDefinition)
 
+	var errors := 0
 	for def in defs:
 		errors += _check_definition(def)
 
@@ -57,6 +58,10 @@ func _load_config() -> BootstrapConfig:
 
 func _check_definition(def: ServiceDefinition) -> int:
 	var errors := 0
+
+	if def == null:
+		Logger.log_error("ServiceDefinition in Array ist null!", LOG_CAT)
+		return 1
 
 	if def.service_name.is_empty():
 		Logger.log_error("ServiceDefinition ohne Namen gefunden!", LOG_CAT)
