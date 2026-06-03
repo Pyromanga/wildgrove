@@ -1,4 +1,3 @@
-# res://scripts/core/services/ServiceDependencyResolver.gd
 class_name ServiceDependencyResolver extends RefCounted
 
 ## ServiceDependencyResolver — Phase 2 der Boot-Pipeline.
@@ -13,12 +12,11 @@ const LOG_CAT := "DependencyResolver"
 # Öffentliche API
 # ─────────────────────────────────────────────
 
-## Berechnet die Initialisierungs-Reihenfolge.
-## Rückgabe: sortierte Service-Namen (lowercase) oder [] bei Zyklus/Fehler.
 func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 	if defs.is_empty():
 		return []
 
+	# Bekannte Service-Namen sammeln für Abhängigkeits-Prüfung
 	var known: Dictionary = {}
 	for d in defs:
 		known[d.service_name.to_lower()] = true
@@ -35,17 +33,17 @@ func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 	for d in defs:
 		var key := d.service_name.to_lower()
 		for dep_raw in d.deps:
-			var dep := dep_raw.to_lower()
+			var dep := (dep_raw as String).to_lower()
 			if not known.has(dep):
 				Logger.log_error(
-					"Unbekannte Abhängigkeit '%s' in '%s'!" % [dep, d.service_name],
+					"Unbekannte Abhängigkeit '%s' in '%s'! Prüfe bootstrap_config.tres." % [dep, d.service_name],
 					LOG_CAT
 				)
 				return []
 			adj[dep].append(key)
 			in_degree[key] += 1
 
-	# Kahn's Algorithmus
+	# Kahn's Algorithmus — Quellen zuerst in die Queue
 	var queue: Array[String] = []
 	for name in in_degree:
 		if in_degree[name] == 0:
@@ -60,7 +58,7 @@ func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 			if in_degree[neighbor] == 0:
 				queue.append(neighbor)
 
-	# Zyklus-Erkennung
+	# Zyklus-Erkennung — result muss alle Services enthalten
 	if result.size() != defs.size():
 		var result_set: Dictionary = {}
 		for r in result:
