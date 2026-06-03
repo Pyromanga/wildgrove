@@ -23,7 +23,8 @@ var world:          WorldService       = null
 var ui_factory:     UIFactory          = null
 var game_manager:   GameManager        = null
 var player_states:  PlayerStateService = null
-var quesr:  QuestService = null
+var quest:  QuestService = null
+var hud: HUDManager = null
 # ─────────────────────────────────────────────
 # Intern — aufgerufen von ServiceOrchestrator
 # ─────────────────────────────────────────────
@@ -41,6 +42,7 @@ func populate(registry: ServiceRegistry) -> void:
 	game_manager  = _resolve(registry, "gamemanager")
 	player_states = _resolve(registry, "playerstates")
 	quest = _resolve(registry, "quest")
+	hud = _resolve(registry, "hud")
 	Logger.log_info("DependencyContainer befüllt.", "Services")
 
 ## Leert alle Shortcuts (aufgerufen beim Teardown).
@@ -56,6 +58,7 @@ func clear() -> void:
 	game_manager  = null
 	player_states = null
 	quest         = null
+	hud           = null
 	Logger.log_debug("DependencyContainer geleert.", "Services")
 
 # ─────────────────────────────────────────────
