@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BootstrapConfig" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="BootstrapConfig" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/BootstrapConfig.gd" id="1_config"]
 [ext_resource type="Script" path="res://scripts/core/ServiceDefinition.gd" id="2_def"]
