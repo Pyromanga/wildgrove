@@ -83,7 +83,7 @@ func complete_quest(quest_id: String) -> void:
 
 func _on_item_collected(item_id: String, _amount: int) -> void:
 	# Logik zum Prüfen, ob dieses Item für eine aktive Quest gebraucht wird
-	Logger.log_trace("Prüfe Quest-Ziele für Item: %s" % item_id, LOG_CAT)
+	Logger.log_trace("Prüfe Quest-Ziele für Item: %s" % item_id, {"item_id": item_id}, LOG_CAT)
 
 func _restore_from_save(data: Dictionary) -> void:
 	active_quests = data.get("active", {})
