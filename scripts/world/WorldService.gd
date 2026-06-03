@@ -44,8 +44,36 @@ func configure(deps: Dictionary) -> void:
 	Logger.log_info("WorldService konfiguriert (Tag %d, %02d:00)." % [day_count, int(day_time)], LOG_CAT)
 
 ## Schritt 2: Aktivierung
+# Ergänzung in res://scripts/world/WorldService.gd
+
 func on_ready() -> void:
-	Logger.log_info("WorldService bereit.", LOG_CAT)
+    # Registriere dich auf den State-Wechsel des GameManagers
+    EventBus.system.state_changed.connect(_on_state_changed)
+    Logger.log_info("WorldService bereit.", LOG_CAT)
+
+func _on_state_changed(new_state: GameEnums.State) -> void:
+    if new_state == GameEnums.State.PLAYING:
+        # Hier triggern wir die Generierung
+        _initialize_scene_world()
+
+func _initialize_scene_world() -> void:
+    # 1. Wir holen uns die aktuelle World-Szene aus dem Tree
+    # Wichtig: Die Szene "res://scenes/World.tscn" wurde bereits vom 
+    # GameManager via change_scene_to_file geladen.
+    var world_root = get_tree().current_scene
+    
+    # 2. Wir prüfen, ob das die World-Szene ist
+    if world_root.name == "World":
+        # 3. Wir lassen die Factory die Kinder erstellen
+        var generated_world = factory.create_world()
+        
+        # 4. Wir verschieben die Kinder vom generierten Objekt in unseren Root
+        for child in generated_world.get_children():
+            generated_world.remove_child(child)
+            world_root.add_child(child)
+            
+        generated_world.queue_free() # Factory-Objekt aufräumen
+        Logger.log_info("Welt wurde prozedural in World.tscn eingefügt.", LOG_CAT)
 
 func _process(delta: float) -> void:
 	# WICHTIG: Im Prozess nutzen wir Services.game_manager, 
