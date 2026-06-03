@@ -1,5 +1,4 @@
 extends Node
-class_name ServiceOrchestrator
 
 ## ServiceOrchestrator — Zentrale Boot- und Teardown-Drehscheibe.
 
