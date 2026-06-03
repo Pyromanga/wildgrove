@@ -1,27 +1,41 @@
-extends Node
+extends ServiceNode
 class_name HUDManager
 
-# Die Controller werden hier als Referenzen gehalten.
-# Wir setzen sie initial auf null, damit wir später prüfen können, ob sie existieren.
-var inventory_ctrl: InventoryUIController
-var joystick_ctrl: JoystickController
-var context_ctrl: ContextMenuController
-var interact_ctrl: InteractionUIController
-var btn_ctrl: InteractionButtonController
-var notif_ctrl: NotificationController
-var float_text_ctrl: FloatingTextController
+## HUDManager — Verwaltet das UI-System und die Controller.
+## Abhängigkeiten: ["savesystem", "inventory", "player_states"]
 
-func setup(hud: HUD) -> void:
-    # Der Manager delegiert den Aufbau an den Builder
-    var registry = HUDBuilder.build_all(hud)
+const LOG_CAT := "HUD"
+
+var hud: HUD
+var controllers: Dictionary = {}
+
+# ─────────────────────────────────────────────
+# Lifecycle
+# ─────────────────────────────────────────────
+
+func init() -> void:
+    # Wir erstellen das HUD (CanvasLayer)
+    hud = HUD.new()
+    hud.name = "GameHUD"
+    # Wir hängen es an den Orchestrator (damit es im Baum ist)
+    get_parent().add_child(hud)
     
-    # Referenzen übernehmen (mit Fallback, um Crashes zu vermeiden)
-    inventory_ctrl = registry.get("inventory")
-    joystick_ctrl = registry.get("joystick")
-    context_ctrl = registry.get("context")
-    interact_ctrl = registry.get("interaction")
-    btn_ctrl = registry.get("interaction_button")
-    notif_ctrl = registry.get("notification")
-    float_text_ctrl = registry.get("floating_text")
-    
-    Logger.log_debug("HUDManager: Initialisierung durch HUDBuilder abgeschlossen", "HUDManager")
+    Logger.log_debug("HUD Instanz erstellt.", LOG_CAT)
+
+func on_ready() -> void:
+    # Erst jetzt, wo alle Services (Inventory, Skills etc.) bereit sind,
+    # bauen wir die Komponenten zusammen.
+    _setup_ui()
+    Logger.log_info("HUD-System vollständig initialisiert.", LOG_CAT)
+
+# ─────────────────────────────────────────────
+# Intern
+# ─────────────────────────────────────────────
+
+func _setup_ui() -> void:
+    # Der Builder nutzt jetzt die 'Services' statt 'Kernel'
+    controllers = HUDBuilder.build_all(hud)
+    Logger.log_debug("Controller-Registry befüllt: %d Einheiten." % controllers.size(), LOG_CAT)
+
+func get_controller(id: String):
+    return controllers.get(id)
