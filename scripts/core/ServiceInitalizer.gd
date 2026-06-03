@@ -14,18 +14,19 @@ const LOG_CAT := "ServiceInitializer"
 # Phase 4 — init()
 # ─────────────────────────────────────────────
 
+# res://scripts/core/pipeline/ServiceInitializer.gd
 func run(ordered: Array[String], registry: ServiceRegistry) -> void:
-	for service_name in ordered:
-		var svc := registry.get_service(service_name)
-		if svc == null:
-			continue
-
-		if not svc.has_method("init"):
-			Logger.log_warn("'%s' hat keine init()-Methode — übersprungen." % service_name, LOG_CAT)
-			continue
-
-		Logger.log_debug("init() → '%s'" % service_name, LOG_CAT)
-		svc.init()
+    for service_name in ordered:
+        var svc := registry.get_service(service_name)
+        var definition := registry.get_definition(service_name) # Wir brauchen die Metadaten
+        
+        # Wir bauen ein passgenaues Paket nur mit den benötigten Services
+        var dependencies := {}
+        for dep_name in definition.deps:
+            dependencies[dep_name] = registry.get_service(dep_name)
+            
+        Logger.log_debug("Injecting deps into -> '%s'" % service_name, LOG_CAT)
+        svc.init(dependencies) # Nur das Nötigste!
 
 # ─────────────────────────────────────────────
 # Phase 5 — on_ready()
