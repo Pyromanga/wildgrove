@@ -1,58 +1,46 @@
-# res://scripts/core/Services.gd
 extends Node
 
 ## Services — Typisierter DependencyContainer.
 ##
-## AutoLoad #5 (nach Logger, EventBus, SceneManager, GameSettings).
-## Wird leer gestartet und von ServiceInstaller in Phase 6 befüllt.
+## AutoLoad #4 (nach Logger, EventBus, SimpleTerminal).
+## Wird leer gestartet und von ServiceOrchestrator in Phase 6 befüllt.
 ##
 ## Gameplay-Code greift NUR über diesen Container auf Services zu:
 ##   Services.inventory.add_item(...)
 ##   Services.world.get_chunk(pos)
-##
-## NICHT für Bootstrap-Code — der nutzt direkt die ServiceRegistry
-## über den Orchestrator.
-##
-## Neuen Service hinzufügen:
-##   1. Property hier eintragen (typisiert, Standardwert null)
-##   2. In populate() die Zeile ergänzen
-##   3. In clear() auf null setzen
 
 # ─────────────────────────────────────────────
 # Typisierte Service-Shortcuts
-# Null bis Phase 6 (install) abgeschlossen ist.
 # ─────────────────────────────────────────────
 
 var save_system:    SaveSystem         = null
-var data:          DataService         = null
-var inventory:     InventorySystem     = null
-var skill_system:  SkillSystem         = null
-var factory3d:     Factory3D           = null
-var builder:       InteractionBuilder  = null
-var world:         WorldService        = null
-var ui_factory:    UIFactory           = null
-var game_manager:  GameManager         = null
-
-## player_states separat — häufig gebraucht, eigener Typ
-var player_states: PlayerStateService  = null
+var data:           DataService        = null
+var inventory:      InventorySystem    = null
+var skill_system:   SkillSystem        = null
+var factory3d:      Factory3D          = null
+var builder:        InteractionBuilder = null
+var world:          WorldService       = null
+var ui_factory:     UIFactory          = null
+var game_manager:   GameManager        = null
+var player_states:  PlayerStateService = null
 
 # ─────────────────────────────────────────────
-# Intern — aufgerufen von ServiceInstaller
+# Intern — aufgerufen von ServiceOrchestrator
 # ─────────────────────────────────────────────
 
 ## Befüllt alle Shortcuts aus der Registry.
-## Fehlende Services erzeugen nur einen Warn-Log, kein Crash.
 func populate(registry: ServiceRegistry) -> void:
-	save_system   = _get(registry, "savesystem")
-	data          = _get(registry, "data")
-	inventory     = _get(registry, "inventory")
-	skill_system  = _get(registry, "skill_system")
-	factory3d     = _get(registry, "factory3d")
-	builder       = _get(registry, "builder")
-	world         = _get(registry, "world")
-	ui_factory    = _get(registry, "ui_factory")
-	game_manager  = _get(registry, "gamemanager")
-	player_states = _get(registry, "playerstates")
+	save_system   = _resolve(registry, "savesystem")
+	data          = _resolve(registry, "data")
+	inventory     = _resolve(registry, "inventory")
+	skill_system  = _resolve(registry, "skill_system")
+	factory3d     = _resolve(registry, "factory3d")
+	builder       = _resolve(registry, "builder")
+	world         = _resolve(registry, "world")
+	ui_factory    = _resolve(registry, "ui_factory")
+	game_manager  = _resolve(registry, "gamemanager")
+	player_states = _resolve(registry, "playerstates")
+	Logger.log_info("DependencyContainer befüllt.", "Services")
 
 ## Leert alle Shortcuts (aufgerufen beim Teardown).
 func clear() -> void:
@@ -72,8 +60,12 @@ func clear() -> void:
 # Hilfsfunktion
 # ─────────────────────────────────────────────
 
-func _get(registry: ServiceRegistry, key: String) -> Object:
-	var svc := registry.get_service(key)
+# FIX: Umbenannt von _get() → _resolve() um den Konflikt mit der
+# Node-Built-in-Methode _get(StringName) -> Variant zu vermeiden.
+# GDScript erzwingt die Parent-Signatur — eigene Überladung mit
+# anderer Parameterliste ist ein Parse Error.
+func _resolve(registry: ServiceRegistry, key: String) -> Object:
+	var svc: Object = registry.get_service(key)
 	if svc == null:
 		Logger.log_warn("Services.populate: '%s' nicht in Registry." % key, "Services")
 	return svc
