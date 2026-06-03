@@ -1,22 +1,18 @@
-# res://scripts/core/services/ServiceFactory.gd
 class_name ServiceFactory extends RefCounted
 
 ## ServiceFactory — Phase 3 der Boot-Pipeline.
 ##
 ## Instanziiert alle Services und registriert sie direkt in der Registry.
-## Die Factory ist der einzige Ort wo Registrierung stattfindet —
-## ServiceNode._ready() macht das NICHT (kein Baum-Suchen nötig).
+## Die Factory ist der einzige Ort wo Registrierung stattfindet.
 ##
 ## Ablauf für Node-Services:
 ##   1. instance.name setzen
 ##   2. registry.register(instance)  ← VOR add_child()
-##   3. parent.add_child(instance)   ← _ready() läuft, aber ohne Registrierungslogik
+##   3. parent.add_child(instance)   ← _ready() läuft danach
 ##
-## Ablauf für Pure Services:
-##   1. instance.service_name setzen
+## Ablauf für Pure Services (RefCounted):
+##   1. instance.service_name setzen (falls extends Service)
 ##   2. registry.register(instance)
-##
-## Gibt true zurück wenn alle Services erstellt wurden, sonst false.
 
 const LOG_CAT := "ServiceFactory"
 
@@ -87,8 +83,7 @@ func _from_scene(
 		return null
 
 	instance.name = def.service_name
-	# Registrierung VOR add_child — damit ist der Service in der Registry
-	# bevor _ready() auf dem Node läuft. Kein Baum-Suchen nötig.
+	# Registrierung VOR add_child — Service ist in Registry bevor _ready() läuft
 	registry.register(instance)
 	parent.add_child(instance)
 	Logger.log_debug("Scene-Service '%s' registriert und in Baum gehängt." % def.service_name, LOG_CAT)
