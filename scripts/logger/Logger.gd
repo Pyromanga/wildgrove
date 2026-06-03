@@ -7,7 +7,6 @@ signal on_log(formatted: String, category: String, level: int)
 
 enum LogLevel { DEBUG, INFO, WARN, ERROR }
 
-## Welche Log-Level aktiv sind.
 var enabled_levels: Dictionary = {
 	LogLevel.DEBUG: true,
 	LogLevel.INFO:  true,
@@ -15,12 +14,12 @@ var enabled_levels: Dictionary = {
 	LogLevel.ERROR: true,
 }
 
-## Kategorien die stummgeschaltet sind (case-insensitive).
 var _muted_categories: Array[String] = []
 
-# ─────────────────────────────────────────────
-# Öffentliche API
-# ─────────────────────────────────────────────
+# ---- Puffer für frühe Logs (bevor Terminal bereit ist) ----
+const MAX_BUFFER := 200
+var _log_buffer: Array[Dictionary] = []
+# ----------------------------------------------------------
 
 func log_debug(msg: String, cat: String = "General") -> void:
 	_print_log(msg, cat, LogLevel.DEBUG)
@@ -33,10 +32,8 @@ func log_warn(msg: String, cat: String = "General") -> void:
 
 func log_error(msg: String, cat: String = "General") -> void:
 	_print_log(msg, cat, LogLevel.ERROR)
-	# push_error spiegelt den Fehler zusätzlich im Godot-Debugger wider
 	push_error("[%s] %s" % [cat, msg])
 
-## Für tiefgehende Debug-Infos mit Daten-Snapshot
 func log_trace(msg: String, data: Dictionary = {}, cat: String = "General") -> void:
 	_print_log(msg, cat, LogLevel.DEBUG, data)
 
@@ -51,9 +48,10 @@ func unmute_category(cat: String) -> void:
 func get_muted_categories() -> Array[String]:
 	return _muted_categories.duplicate()
 
-# ─────────────────────────────────────────────
-# Intern
-# ─────────────────────────────────────────────
+func flush_log_buffer() -> Array[Dictionary]:
+	var copy := _log_buffer.duplicate()
+	_log_buffer.clear()
+	return copy
 
 func _print_log(msg: String, cat: String, level: int, data: Dictionary = {}) -> void:
 	if not enabled_levels.get(level, true): return
@@ -65,20 +63,20 @@ func _print_log(msg: String, cat: String, level: int, data: Dictionary = {}) -> 
 	if level >= 0 and level < keys.size():
 		lvl_str = str(keys[level])
 
-	# Automatischer Stacktrace für ERROR
-	var stack_str := ""
+	# Automatischer Stacktrace bei ERROR
+	var final_msg := msg
 	if level == LogLevel.ERROR:
-		stack_str = _format_stacktrace(get_stack())
-		if not stack_str.is_empty():
-			msg += "\n" + stack_str
+		var stack := _format_stacktrace(get_stack())
+		if not stack.is_empty():
+			final_msg += "\n" + stack
 
 	var data_str: String = ""
 	if not data.is_empty():
 		data_str = " | DATA: " + JSON.stringify(data)
 
-	var formatted: String = "[%s] [%s] [%s] %s%s" % [time, lvl_str, cat, msg, data_str]
+	var formatted: String = "[%s] [%s] [%s] %s%s" % [time, lvl_str, cat, final_msg, data_str]
 
-	# Puffer (für Terminal)
+	# Puffer
 	var entry := {"formatted": formatted, "category": cat, "level": level}
 	_log_buffer.append(entry)
 	if _log_buffer.size() > MAX_BUFFER:
@@ -87,17 +85,17 @@ func _print_log(msg: String, cat: String, level: int, data: Dictionary = {}) -> 
 	print(formatted)
 	on_log.emit(formatted, cat, level)
 
-# Hilfsfunktion: formatiert die Stacktrace-Frames
 func _format_stacktrace(stack: Array) -> String:
 	if stack.is_empty():
 		return ""
-	var result := "Stacktrace:"
+	var lines: PackedStringArray = PackedStringArray(["Stacktrace:"])
 	for frame in stack:
-		var source := frame.get("source", "")
-		var function := frame.get("function", "?")
-		var line := frame.get("line", 0)
-		# Überspringe die ersten Frames des Loggers selbst
+		# frame ist Dictionary, aber wir müssen die Typen sichern
+		var source: String = str(frame.get("source", ""))
+		var function: String = str(frame.get("function", "?"))
+		var line: int = int(frame.get("line", 0))
+		# Logger-interne Frames überspringen
 		if source.ends_with("Logger.gd") or function == "_print_log":
 			continue
-		result += "\n  %s:%d in %s()" % [source, line, function]
-	return result
+		lines.append("  %s:%d in %s()" % [source, line, function])
+	return "\n".join(lines)
