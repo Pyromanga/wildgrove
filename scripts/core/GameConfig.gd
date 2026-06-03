@@ -1,18 +1,17 @@
 class_name GameConfig extends Resource
 
 ## GameConfig — Konfiguriert erlaubte State-Übergänge.
-## Wird GameManager als @export zugewiesen.
-## HINWEIS: Nutzt GameEnums.State (nicht mehr GameState).
+## WICHTIG: Keys sind Strings (z.B. "BOOT"), keine Enum-Ints.
+## StateValidator.is_transition_allowed() nutzt GameEnums.State.keys()[state]
+## um den int in einen String zu konvertieren, und schlägt dann hier nach.
 
 @export var valid_transitions: Dictionary = {
-	GameEnums.State.BOOT:      [GameEnums.State.MAIN_MENU, GameEnums.State.LOADING],
-	GameEnums.State.MAIN_MENU: [GameEnums.State.LOADING, GameEnums.State.CREDITS],
-	GameEnums.State.LOADING:   [GameEnums.State.PLAYING, GameEnums.State.MAIN_MENU],
-	GameEnums.State.PLAYING:   [GameEnums.State.PAUSED, GameEnums.State.GAME_OVER,
-								GameEnums.State.CUTSCENE, GameEnums.State.LOADING,
-								GameEnums.State.MAIN_MENU],
-	GameEnums.State.PAUSED:    [GameEnums.State.PLAYING, GameEnums.State.MAIN_MENU],
-	GameEnums.State.CUTSCENE:  [GameEnums.State.PLAYING, GameEnums.State.MAIN_MENU],
-	GameEnums.State.GAME_OVER: [GameEnums.State.MAIN_MENU, GameEnums.State.LOADING],
-	GameEnums.State.CREDITS:   [GameEnums.State.MAIN_MENU],
+	"BOOT": ["MAIN_MENU", "LOADING"],
+	"MAIN_MENU": ["LOADING", "CREDITS", "PLAYING"],
+	"LOADING": ["PLAYING", "MAIN_MENU"],
+	"PLAYING": ["PAUSED", "GAME_OVER", "CUTSCENE", "LOADING", "MAIN_MENU"],
+	"PAUSED": ["PLAYING", "MAIN_MENU"],
+	"CUTSCENE": ["PLAYING", "MAIN_MENU"],
+	"GAME_OVER": ["MAIN_MENU", "LOADING"],
+	"CREDITS": ["MAIN_MENU"],
 }
