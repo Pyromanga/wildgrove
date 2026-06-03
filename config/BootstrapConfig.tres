@@ -77,4 +77,4 @@ deps = Array[String](["data", "savesystem"])
 
 [resource]
 script = ExtResource("1_config")
-services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager")], SubResource("Resource_questservice"))
+services = Array[Resource]([SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager"), SubResource("Resource_questservice")])
