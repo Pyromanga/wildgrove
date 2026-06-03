@@ -44,7 +44,7 @@ deps = Array[String](["data"])
 script = ExtResource("2_def")
 service_name = "builder"
 path = "res://scripts/interaction/InteractionBuilder.gd"
-Array[String](["playerstates"])
+deps = Array[String](["playerstates"])
 
 [sub_resource type="Resource" id="Resource_gamemanager"]
 script = ExtResource("2_def")
