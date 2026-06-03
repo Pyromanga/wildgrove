@@ -40,11 +40,23 @@ anti_aliasing/quality/msaa_3d=0
 lights_and_shadows/directional_shadow/size=2048
 
 [autoload]
+; !! Reihenfolge ist wichtig — jeder Autoload darf nur auf frühere zugreifen !!
+; 1. Logger     — keine Abhängigkeiten
+; 2. EventBus   — braucht nur Logger
+; 3. SimpleTerminal — braucht Logger + EventBus
+; 4. Services   — Platzhalter-Container, wird von ServiceOrchestrator befüllt
+
 Logger="*res://scripts/logger/Logger.gd"
-EventBus="*res://scripts/event/EventBus.gd"
+
+; FIX: Pfad war scripts/event/ (ohne s) — korrigiert auf scripts/events/
+EventBus="*res://scripts/events/EventBus.gd"
+
 SimpleTerminal="*res://scripts/debug/SimpleTerminal.gd"
 Services="*res://scripts/core/Services.gd"
 
-[ToBeImplementedForAutoLoader]
-SceneManager="*res://scripts/core/SceneManager.gd"
-GameSettings="*res://scripts/core/GameSettings.gd"
+; ServiceOrchestrator ist KEIN Autoload — wird von Main.tscn als Node instanziiert,
+; damit er einen definierten Platz im Szenenbaum hat und add_child() nutzen kann.
+
+; Auskommentiert bis implementiert:
+;SceneManager="*res://scripts/core/SceneManager.gd"
+;GameSettings="*res://scripts/core/GameSettings.gd"
