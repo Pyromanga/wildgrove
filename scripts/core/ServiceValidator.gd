@@ -64,10 +64,10 @@ func _load_config() -> BootstrapConfig:
 	return res as BootstrapConfig
 
 func _check_definition(def: ServiceDefinition, index: int) -> int:
-	# Hier sind wir sicher, dass 'def' nicht null ist wegen der Vorprüfung oben
 	var errors := 0
 	var identifier := "'%s'" % def.service_name if not def.service_name.is_empty() else "Index %d" % index
 
+	# 1. Basis-Checks (Hast du schon)
 	if def.service_name.is_empty():
 		Logger.log_error("Service am Index %d hat keinen 'service_name'!" % index, LOG_CAT)
 		errors += 1
@@ -76,7 +76,26 @@ func _check_definition(def: ServiceDefinition, index: int) -> int:
 		Logger.log_error("Service %s: Pfad-Variable ist leer." % identifier, LOG_CAT)
 		errors += 1
 	elif not ResourceLoader.exists(def.path):
-		Logger.log_error("Service %s: Pfad '%s' existiert nicht im Dateisystem." % [identifier, def.path], LOG_CAT)
+		Logger.log_error("Service %s: Pfad '%s' existiert nicht." % [identifier, def.path], LOG_CAT)
+		errors += 1
+
+	# 2. NEU: Check der Daten-Ressourcen (.tres)
+	for res_path in def.required_data_files:
+		if res_path.is_empty():
+			Logger.log_warn("Service %s: Leerer Pfad in 'required_data_files' gefunden." % identifier, LOG_CAT)
+			continue
+			
+		if not ResourceLoader.exists(res_path):
+			# Hier exzessives Logging nutzen
+			Logger.log_error("Service %s: Benötigte Datei fehlt: '%s'" % [identifier, res_path], LOG_CAT)
+			errors += 1
+		else:
+			# Nur ein kleiner Trace, damit du im Log siehst, dass er es geprüft hat
+			Logger.log_debug("Ressource validiert: '%s'" % res_path, LOG_CAT)
+
+	# 3. NEU: Check auf zirkuläre Abhängigkeiten (Self-Reference)
+	if def.service_name in def.deps:
+		Logger.log_error("Service %s: Abhängigkeit auf sich selbst gefunden (Circular)!" % identifier, LOG_CAT)
 		errors += 1
 
 	return errors
