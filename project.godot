@@ -10,9 +10,9 @@ config_version=5
 
 config/name="WildGrove"
 config/description="Ein Abenteuer-RPG mit Farming, Dorfbau und Dungeons"
-config/version="0.1.0"
+config/version="0.1.1"
 config/tags=PackedStringArray("mobile", "rpg", "3d")
-run/main_scene="res://scenes/Main.tscn"
+run/main_scene="res://scenes/MainMenu.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
 
 [display]
@@ -40,23 +40,15 @@ anti_aliasing/quality/msaa_3d=0
 lights_and_shadows/directional_shadow/size=2048
 
 [autoload]
-; !! Reihenfolge ist wichtig — jeder Autoload darf nur auf frühere zugreifen !!
-; 1. Logger     — keine Abhängigkeiten
-; 2. EventBus   — braucht nur Logger
-; 3. SimpleTerminal — braucht Logger + EventBus
-; 4. Services   — Platzhalter-Container, wird von ServiceOrchestrator befüllt
+; Reihenfolge ist wichtig — jeder Autoload darf nur auf frühere zugreifen.
+; 1. Logger           — keine Abhängigkeiten
+; 2. EventBus         — braucht nur Logger
+; 3. SimpleTerminal   — braucht Logger + EventBus
+; 4. Services         — Platzhalter, wird von Orchestrator befüllt
+; 5. ServiceOrchestrator — bootet alle Services, überlebt Szenenwechsel
 
 Logger="*res://scripts/logger/Logger.gd"
-
-; FIX: Pfad war scripts/event/ (ohne s) — korrigiert auf scripts/events/
 EventBus="*res://scripts/events/EventBus.gd"
-
 SimpleTerminal="*res://scripts/debug/SimpleTerminal.gd"
 Services="*res://scripts/core/Services.gd"
-
-; ServiceOrchestrator ist KEIN Autoload — wird von Main.tscn als Node instanziiert,
-; damit er einen definierten Platz im Szenenbaum hat und add_child() nutzen kann.
-
-; Auskommentiert bis implementiert:
-;SceneManager="*res://scripts/core/SceneManager.gd"
-;GameSettings="*res://scripts/core/GameSettings.gd"
+ServiceOrchestrator="*res://scripts/core/ServiceOrchestrator.gd"
