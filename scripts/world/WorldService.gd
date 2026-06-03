@@ -3,6 +3,10 @@ class_name WorldService
 
 ## WorldService — Zentrale Anlaufstelle für Welt-Daten, Generierung und Zeit.
 ## Abhängigkeiten (deps): ["savesystem", "data"]
+##
+## Welt-Initialisierung: World.gd ruft on_world_scene_ready() aus seinem _ready() auf.
+## Das garantiert, dass der SceneTree-Wechsel vollständig abgeschlossen ist
+## bevor wir Kinder in die Szene einfügen.
 
 const LOG_CAT := "World"
 const SAVE_KEY := "world_state"
@@ -37,35 +41,26 @@ func configure(deps: Dictionary) -> void:
 
 
 func on_ready() -> void:
-	EventBus.system.state_changed.connect(_on_state_changed)
 	Logger.log_info("WorldService bereit.", LOG_CAT)
 
 
-func _on_state_changed(new_state: int) -> void:
-	if new_state == GameEnums.State.PLAYING:
-		# Szene ist per call_deferred gewechselt — einen Frame warten
-		call_deferred("_initialize_scene_world")
+## Wird von World.gd._ready() aufgerufen.
+## Zu diesem Zeitpunkt ist die Szene garantiert im SceneTree —
+## kein call_deferred / Frame-Warten nötig.
+func on_world_scene_ready(world_root: Node3D) -> void:
+	Logger.log_info("World-Init gestartet.", LOG_CAT)
 
+	var generated_world: Node3D = factory.create_world()
+	# Kinder aus dem temporären Node in die echte Szene verschieben
+	for child in generated_world.get_children():
+		generated_world.remove_child(child)
+		world_root.add_child(child)
+	generated_world.queue_free()
 
-func _initialize_scene_world() -> void:
-	var world_root = get_tree().current_scene
-	if world_root == null:
-		Logger.log_error("Keine aktive Szene beim World-Init!", LOG_CAT)
-		return
-
-	if world_root.name == "World":
-		var generated_world = factory.create_world()
-		for child in generated_world.get_children():
-			generated_world.remove_child(child)
-			world_root.add_child(child)
-		generated_world.queue_free()
-		Logger.log_info("Welt prozedural in World.tscn eingefügt.", LOG_CAT)
-	else:
-		Logger.log_warn("Aktive Szene ist nicht 'World' (%s) — kein World-Init." % world_root.name, LOG_CAT)
+	Logger.log_info("Welt prozedural in World.tscn eingefügt.", LOG_CAT)
 
 
 func _process(delta: float) -> void:
-	# is_playing() prüfen über game_manager falls verfügbar
 	if is_instance_valid(Services.game_manager) and Services.game_manager.is_playing():
 		_update_time(delta)
 
@@ -73,6 +68,7 @@ func _process(delta: float) -> void:
 # ─────────────────────────────────────────────
 # Save-Interface
 # ─────────────────────────────────────────────
+
 
 func get_save_key() -> String:
 	return SAVE_KEY
@@ -90,6 +86,7 @@ func get_save_data() -> Dictionary:
 # ─────────────────────────────────────────────
 # Öffentliche API
 # ─────────────────────────────────────────────
+
 
 func create_world() -> Node3D:
 	return factory.create_world()
