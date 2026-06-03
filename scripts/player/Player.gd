@@ -1,12 +1,11 @@
 extends CharacterBody3D
 
-## Player.gd — Spieler-Controller.
-## TouchInput ist ein direktes Child, kein Service.
-## Nutzt Kernel-Shortcuts für Events und States.
+## Player.gd — Zentraler Spieler-Controller.
+## Nutzt das neue Services-System und den EventBus.
 
 const LOG_CAT := "Player"
 
-# Stats — aus DataService geladen
+# Stats — werden im _load_stats() befüllt
 var _speed:          float = 6.0
 var _gravity:        float = 12.0
 var _interact_range: float = 4.0
@@ -16,7 +15,7 @@ var _target_zoom:  float = 8.0
 var _target_yaw:   float = 0.0
 var _target_pitch: float = deg_to_rad(-35.0)
 
-# Nodes (alle programmatisch gebaut)
+# Nodes
 var _spring_arm: SpringArm3D
 var _mesh:       MeshInstance3D
 var _touch:      TouchInput
@@ -36,10 +35,12 @@ func _physics_process(delta: float) -> void:
 	if not _touch:
 		return
 
-	if Kernel.states and not Kernel.states.is_free():
-		# Wenn BUSY und Joystick bewegt → Interaktion abbrechen
-		if _touch.js_vec.length() > 0.3 and Kernel.events:
-			Kernel.events.player.emit_movement_interrupted()
+	# NEU: Nutzung des PlayerStateService
+	if not Services.player_states.is_free():
+		# Wenn BUSY (z.B. Hacken) und Joystick wird stark bewegt -> Abbruch
+		if _touch.js_vec.length() > 0.3:
+			EventBus.player.emit_movement_interrupted()
+		
 		velocity.x = 0.0
 		velocity.z = 0.0
 		move_and_slide()
@@ -55,12 +56,13 @@ func _physics_process(delta: float) -> void:
 func try_default_interact() -> void:
 	var target := _sensor.get_closest() if _sensor else null
 	if not target:
-		Logger.log_debug("Kein Interaktionsziel in Reichweite.", LOG_CAT)
+		Logger.log_debug("Kein Ziel in Reichweite.", LOG_CAT)
 		return
+		
 	if target.has_method("start_default_interaction"):
 		target.start_default_interaction()
 	else:
-		Logger.log_warn("Ziel '%s' hat keine start_default_interaction()." % target.name, LOG_CAT)
+		Logger.log_warn("Ziel '%s' ist nicht interagierbar." % target.name, LOG_CAT)
 
 func get_closest_interactable() -> Node3D:
 	return _sensor.get_closest() if _sensor else null
@@ -70,12 +72,14 @@ func get_closest_interactable() -> Node3D:
 # ─────────────────────────────────────────────
 
 func _load_stats() -> void:
-	if not Kernel.data:
-		Logger.log_warn("DataService nicht verfügbar — nutze Standardwerte.", LOG_CAT)
+	# NEU: Sicherer Zugriff auf DataService
+	if not Services.data:
+		Logger.log_warn("DataService fehlt - nutze Defaults.", LOG_CAT)
 		return
-	_speed          = Kernel.data.get_player_stat("speed",          _speed)
-	_gravity        = Kernel.data.get_player_stat("gravity",        _gravity)
-	_interact_range = Kernel.data.get_player_stat("interact_range", _interact_range)
+		
+	_speed          = Services.data.get_player_stat("speed",          _speed)
+	_gravity        = Services.data.get_player_stat("gravity",        _gravity)
+	_interact_range = Services.data.get_player_stat("interact_range", _interact_range)
 
 func _handle_camera(touch: TouchInput, delta: float) -> void:
 	var c_delta := touch.cam_delta
@@ -147,16 +151,17 @@ func _build_camera() -> void:
 	_spring_arm.add_child(cam)
 
 func _build_touch_input() -> void:
+	# Falls du TouchInput.gd als Script hast
 	var touch_script = load("res://scripts/player/TouchInput.gd")
-	assert(touch_script != null, "TouchInput.gd nicht gefunden!")
-	_touch      = Node.new()
+	_touch = Node.new()
 	_touch.name = "TouchInput"
 	_touch.set_script(touch_script)
 	add_child(_touch)
-	# In Gruppe damit PlayerStateService reset_input() aufrufen kann
 	_touch.add_to_group("touch_input")
 
 func _build_sensor() -> void:
 	_sensor = InteractionSensor.new()
 	_sensor.name = "InteractionSensor"
+	# Hier könntest du die Reichweite aus den Stats anwenden:
+	# _sensor.set_range(_interact_range) 
 	add_child(_sensor)
