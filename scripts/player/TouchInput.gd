@@ -52,8 +52,8 @@ func reset_input() -> void:
 # ─────────────────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Im Menü: Bewegungs-Input ignorieren
-	if Kernel.states and Kernel.states.is_in_menu():
+	# FIX: Von Kernel.states auf Services.player_states umgestellt
+	if Services.player_states and Services.player_states.is_in_menu():
 		js_vec    = Vector2.ZERO
 		cam_delta = Vector2.ZERO
 		return
