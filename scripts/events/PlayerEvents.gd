@@ -14,6 +14,12 @@ signal player_died()
 signal player_respawned()
 signal inventory_changed(items: Array)
 
+# res://scripts/events/PlayerEvents.gd (Erweiterung)
+
+signal speed_modifier_changed(id: String, multiplier: float)
+# Damit wir einen Modifikator auch wieder entfernen können (z.B. Schlamm verlassen)
+signal speed_modifier_removed(id: String)
+
 func _init() -> void:
 	super._init("Events/Player")
 
@@ -40,3 +46,11 @@ func emit_player_respawned() -> void:
 func emit_inventory_changed(items: Array) -> void:
 	_log("Inventar aktualisiert (%d Items)" % items.size())
 	inventory_changed.emit(items)
+	
+	func emit_speed_mod(id: String, multiplier: float) -> void:
+	_log("Speed Modifikator: '%s' x%.2f" % [id, multiplier])
+	speed_modifier_changed.emit(id, multiplier)
+
+func emit_speed_removed(id: String) -> void:
+	_log("Speed Modifikator entfernt: '%s'" % id)
+	speed_modifier_removed.emit(id)
