@@ -55,7 +55,7 @@ deps = Array[String](["playerstates"])
 script = ExtResource("2_def")
 service_name = "gamemanager"
 path = "res://scripts/core/GameManager.gd"
-deps = Array[String](["savesystem", "playerstates"])
+deps = Array[String](["savesystem", "playerstates", "scenemanager"])
 
 [sub_resource type="Resource" id="Resource_inventory"]
 script = ExtResource("2_def")
