@@ -1,11 +1,6 @@
 class_name PlayerEvents extends BaseEvents
 
 ## PlayerEvents — Alle spielerbezogenen Signals.
-## Neues Signal? Nur diese Datei anfassen.
-##
-## level_up lebt hier (nicht in SkillSystem) weil es ein Spieler-Event ist —
-## der Spieler steigt auf, nicht der Skill-Service.
-## SkillSystem berechnet wann es passiert und ruft emit_level_up() hier auf.
 
 signal xp_gained(skill: String, amount: int)
 signal level_up(skill: String, new_level: int)
@@ -13,11 +8,7 @@ signal movement_interrupted()
 signal player_died()
 signal player_respawned()
 signal inventory_changed(items: Array)
-
-# res://scripts/events/PlayerEvents.gd (Erweiterung)
-
 signal speed_modifier_changed(id: String, multiplier: float)
-# Damit wir einen Modifikator auch wieder entfernen können (z.B. Schlamm verlassen)
 signal speed_modifier_removed(id: String)
 
 func _init() -> void:
@@ -46,8 +37,9 @@ func emit_player_respawned() -> void:
 func emit_inventory_changed(items: Array) -> void:
 	_log("Inventar aktualisiert (%d Items)" % items.size())
 	inventory_changed.emit(items)
-	
-	func emit_speed_mod(id: String, multiplier: float) -> void:
+
+# FIX: Jetzt korrekt auf Klassenebene eingerückt!
+func emit_speed_mod(id: String, multiplier: float) -> void:
 	_log("Speed Modifikator: '%s' x%.2f" % [id, multiplier])
 	speed_modifier_changed.emit(id, multiplier)
 
