@@ -39,7 +39,3 @@ Wir trennen strikt zwischen:
 1. **Instanziierung:** Objekt wird erstellt.
 2. **Init:** Referenzen werden gesetzt (Wer bin ich? Wer sind die anderen?).
 3. **Ready:** Die Welt ist geladen, jetzt darf kommuniziert werden (Signale verbinden).
-
----
-
-Mit diesen beiden Dokumenten hast du jetzt die volle Kontrolle über die Architektur, auch wenn Godot gerade nicht läuft! Sollen wir als Nächstes die `DataService`-Logik implementieren, damit er deine `QuestDefinition` laden kann?
