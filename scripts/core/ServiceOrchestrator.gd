@@ -71,7 +71,7 @@ func boot() -> void:
     EventBus.system.services_initialized.emit()
 
     var elapsed := Time.get_ticks_msec() - started
-    Logger.log_info("╚══ BOOT FERTIG (%d ms) ══╝" % elapsed, LOG_CAT))
+    Logger.log_info("╚══ BOOT FERTIG (%d ms) ══╝" % elapsed, LOG_CAT)
 
 func _teardown() -> void:
     Logger.log_info("── Teardown gestartet", LOG_CAT)
