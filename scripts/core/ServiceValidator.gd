@@ -31,7 +31,7 @@ func validate() -> Array[ServiceDefinition]:
 
 	var errors := 0
 	for def in defs:
-		errors += _check_definition(def)
+		errors += _check_definition(defs[i], i)
 
 	if errors > 0:
 		Logger.log_error("%d Fehler in BootstrapConfig — Boot abgebrochen." % errors, LOG_CAT)
@@ -58,7 +58,8 @@ func _load_config() -> BootstrapConfig:
 
 func _check_definition(def: ServiceDefinition) -> int:
 	var errors := 0
-
+	var identifier := "'%s'" % def.service_name if not def.service_name.is_empty() else "Index %d" % index
+	
 	if def == null:
 		Logger.log_error("ServiceDefinition in Array ist null!", LOG_CAT)
 		return 1
