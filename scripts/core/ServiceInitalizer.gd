@@ -1,12 +1,18 @@
-# res://scripts/core/services/ServiceInitializer.gd
 class_name ServiceInitializer extends RefCounted
 
-## ServiceInitializer — Phase 4 der Boot-Pipeline.
+## ServiceInitializer — Phase 4 + 5 der Boot-Pipeline.
 ##
-## Ruft init() auf jedem Service in der aufgelösten Dep-Reihenfolge auf.
-## Services ohne init()-Methode werden übersprungen (nur Warnung).
+## Phase 4: run()          → ruft init() auf jedem Service auf
+## Phase 5: run_on_ready() → ruft on_ready() auf jedem Service auf
+##
+## Services ohne die jeweilige Methode werden übersprungen (nur Warnung).
+## Beide Phasen laufen in der aufgelösten Dep-Reihenfolge.
 
 const LOG_CAT := "ServiceInitializer"
+
+# ─────────────────────────────────────────────
+# Phase 4 — init()
+# ─────────────────────────────────────────────
 
 func run(ordered: Array[String], registry: ServiceRegistry) -> void:
 	for service_name in ordered:
@@ -20,3 +26,21 @@ func run(ordered: Array[String], registry: ServiceRegistry) -> void:
 
 		Logger.log_debug("init() → '%s'" % service_name, LOG_CAT)
 		svc.init()
+
+# ─────────────────────────────────────────────
+# Phase 5 — on_ready()
+# FIX: Neue Methode — wird von ServiceOrchestrator in Phase 5 aufgerufen.
+# Ersetzt den fehlenden ServiceActivator.
+# ─────────────────────────────────────────────
+
+func run_on_ready(ordered: Array[String], registry: ServiceRegistry) -> void:
+	for service_name in ordered:
+		var svc := registry.get_service(service_name)
+		if svc == null:
+			continue
+
+		if not svc.has_method("on_ready"):
+			continue  # on_ready ist optional — kein Warn-Log nötig
+
+		Logger.log_debug("on_ready() → '%s'" % service_name, LOG_CAT)
+		svc.on_ready()
