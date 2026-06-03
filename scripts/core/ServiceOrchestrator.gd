@@ -2,6 +2,13 @@ extends Node
 class_name ServiceOrchestrator
 
 ## ServiceOrchestrator — Zentrale Boot- und Teardown-Drehscheibe.
+##
+## KEIN Autoload — wird als Node in Main.tscn eingehängt:
+##   [node name="ServiceOrchestrator" type="Node" parent="."]
+##   script = ExtResource("...")
+##
+## Das ist wichtig, damit factory.instantiate_all(... , self) Services
+## via add_child() in den Szenenbaum hängen kann.
 
 const LOG_CAT := "Orchestrator"
 
@@ -14,7 +21,12 @@ var validator   := ServiceValidator.new()
 var resolver    := ServiceDependencyResolver.new()
 var factory     := ServiceFactory.new()
 var initializer := ServiceInitializer.new()
-var activator   := ServiceActivator.new()
+
+# FIX: ServiceActivator existierte nicht — war in den Fehlern als "nicht deklariert".
+# Die Activate-Phase wird von ServiceInitializer übernommen (on_ready-Schritt).
+# Wenn du eine separate Activate-Klasse willst, lege ServiceActivator.gd an
+# und entferne diesen Kommentar.
+
 var installer   := ServiceInstaller.new()
 var teardown    := ServiceTeardownManager.new()
 
@@ -50,7 +62,7 @@ func boot() -> void:
 	var ordered := resolver.resolve(defs)
 	if ordered.is_empty():
 		Logger.log_error("Dependency-Auflösung fehlgeschlagen — Boot abgebrochen.", LOG_CAT)
-		EventBus.system.boot_failed.emit("validate", "BootstrapConfig ungültig")
+		EventBus.system.boot_failed.emit("resolve", "Dependency-Fehler")
 		return
 
 	# Phase 3 — Instanziierung
@@ -58,21 +70,21 @@ func boot() -> void:
 	var ok := factory.instantiate_all(defs, registry, self)
 	if not ok:
 		Logger.log_error("Instanziierung fehlgeschlagen — Boot abgebrochen.", LOG_CAT)
-		EventBus.system.boot_failed.emit("validate", "BootstrapConfig ungültig")
+		EventBus.system.boot_failed.emit("instantiate", "Factory-Fehler")
 		return
 
 	# Phase 4 — Init
 	Logger.log_info("── Phase 4 · Init", LOG_CAT)
 	initializer.run(ordered, registry)
 
-	# Phase 5 — Activate
+	# Phase 5 — Activate (on_ready-Schritt der Services)
 	Logger.log_info("── Phase 5 · Activate", LOG_CAT)
-	activator.run(ordered, registry)
+	initializer.run_on_ready(ordered, registry)
 
-	# Phase 6 — Install
+	# Phase 6 — Install (DependencyContainer befüllen)
 	Logger.log_info("── Phase 6 · Install", LOG_CAT)
-	var final_registry = installer.install(registry)
-	Services.populate(final_registry) 
+	var final_registry := installer.install(registry)
+	Services.populate(final_registry)
 	EventBus.system.services_initialized.emit()
 
 	var elapsed := Time.get_ticks_msec() - started
@@ -84,6 +96,6 @@ func boot() -> void:
 
 func _teardown() -> void:
 	Logger.log_info("── Teardown gestartet", LOG_CAT)
-	Services.clear() 
+	Services.clear()
 	teardown.execute(registry)
 	Logger.log_info("── Teardown fertig", LOG_CAT)
