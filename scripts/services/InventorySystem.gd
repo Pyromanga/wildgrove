@@ -2,39 +2,36 @@ extends ServiceNode
 class_name InventorySystem
 
 ## InventorySystem — Verwaltet das Spieler-Inventar.
-## Abhängigkeiten (in BootstrapConfig deps): ["savesystem"]
+## Abhängigkeiten (deps): ["data", "savesystem"]
 
 signal inventory_changed(items: Array)
 
-const LOG_CAT   := "Inventory"
+const LOG_CAT    := "Inventory"
 const ITEMS_PATH := "res://data/items/"
 const SAVE_KEY   := "inventory"
 
-var _items:         Dictionary = {}  # item_id → quantity
-var _item_registry: Dictionary = {}  # item_id → ItemDefinition
+var _items:         Dictionary = {}
+var _item_registry: Dictionary = {}
 
 # ─────────────────────────────────────────────
 # Lifecycle
 # ─────────────────────────────────────────────
 
 func init() -> void:
-	# 1. Statische DB laden (muss zuerst passieren!)
 	_load_item_database()
-
-	# 2. Beim SaveSystem registrieren
-	# Da 'savesystem' in den deps steht, ist der Zugriff sicher.
 	Services.save_system.register_save_provider(self)
-	
-	# 3. Daten-Restore (Sofort-Wiederherstellung aus dem RAM-Cache des SaveSystems)
-	var saved := Services.save_system.get_state_for(SAVE_KEY)
+
+	# FIX: War `var saved := ...` — gleicher Typfehler wie WorldService/SkillSystem.
+	var saved: Dictionary = Services.save_system.get_state_for(SAVE_KEY)
 	if not saved.is_empty():
 		_restore_from_save(saved)
 
-	Logger.log_info("Initialisiert. %d Items in DB, %d im Rucksack." % [_item_registry.size(), _items.size()], LOG_CAT)
+	Logger.log_info(
+		"Initialisiert. %d Items in DB, %d im Rucksack." % [_item_registry.size(), _items.size()],
+		LOG_CAT
+	)
 
 func on_ready() -> void:
-	# Hier könnten wir auf den EventBus hören, falls Items 
-	# durch globale Events (z.B. Quest-Belohnung) getriggert werden.
 	pass
 
 # ─────────────────────────────────────────────
@@ -48,7 +45,7 @@ func get_save_data() -> Dictionary:
 	return _items.duplicate()
 
 # ─────────────────────────────────────────────
-# Öffentliche API (Bleibt weitgehend gleich, nutzt aber Logging & Typsicherheit)
+# Öffentliche API
 # ─────────────────────────────────────────────
 
 func add_item(item_id: String, quantity: int = 1) -> void:
@@ -56,16 +53,12 @@ func add_item(item_id: String, quantity: int = 1) -> void:
 	if not def:
 		Logger.log_error("Kann Item nicht hinzufügen: ID '%s' unbekannt." % item_id, LOG_CAT)
 		return
-		
-	var current := _items.get(item_id, 0) as int
+	var current: int = _items.get(item_id, 0)
 	_items[item_id] = min(current + quantity, def.max_stack)
-	
 	inventory_changed.emit(get_all_items())
-	# Optional: Globales Event werfen
-	# EventBus.inventory.item_added.emit(item_id, quantity)
 
 func remove_item(item_id: String, quantity: int = 1) -> bool:
-	var current := _items.get(item_id, 0) as int
+	var current: int = _items.get(item_id, 0)
 	if current < quantity:
 		Logger.log_warn("Zu wenig '%s' (hat: %d, braucht: %d)." % [item_id, current, quantity], LOG_CAT)
 		return false
@@ -81,9 +74,8 @@ func has_item(item_id: String, quantity: int = 1) -> bool:
 func get_quantity(item_id: String) -> int:
 	return _items.get(item_id, 0)
 
-## Gibt alle Items als Array von Dicts zurück (für UI).
 func get_all_items() -> Array:
-	var result := []
+	var result: Array = []
 	for item_id in _items:
 		var def: ItemDefinition = _item_registry.get(item_id)
 		result.append({
@@ -101,11 +93,10 @@ func get_item_info(item_id: String) -> ItemDefinition:
 # ─────────────────────────────────────────────
 
 func _load_item_database() -> void:
-	# Hier nutzen wir DirAccess wie gehabt, um die .tres Dateien zu indexieren.
-	# Profi-Tipp: In Godot 4.x ist 'DirAccess.get_files()' oft sauberer.
 	var dir := DirAccess.open(ITEMS_PATH)
-	if not dir: return
-
+	if not dir:
+		Logger.log_warn("Items-Pfad nicht gefunden: '%s'" % ITEMS_PATH, LOG_CAT)
+		return
 	for file_name in dir.get_files():
 		if file_name.ends_with(".tres"):
 			var item := load(ITEMS_PATH + file_name) as ItemDefinition
