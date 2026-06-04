@@ -1,18 +1,20 @@
 extends RefCounted
 class_name WorldFactory
 
+
 func create_world() -> Node3D:
 	Logger.log_debug("create_world() start", "WorldFactory")
 	var world := Node3D.new()
 	world.name = "World"
-	
+
 	_add_environment(world)
 	_add_ground(world)
 	_add_player(world, Vector3(0, 1, 0))
 	_add_trees(world, [Vector3(5, 0, 5), Vector3(-6, 0, 4)])
-	
+
 	Logger.log_debug("create_world() fertig", "WorldFactory")
 	return world
+
 
 func _add_environment(world: Node3D) -> void:
 	var sun := DirectionalLight3D.new()
@@ -38,6 +40,7 @@ func _add_environment(world: Node3D) -> void:
 	world.add_child(env_node)
 	Logger.log_debug("Environment OK", "WorldFactory")
 
+
 func _add_ground(world: Node3D) -> void:
 	var ground := StaticBody3D.new()
 	ground.name = "Ground"
@@ -61,36 +64,50 @@ func _add_ground(world: Node3D) -> void:
 	world.add_child(ground)
 	Logger.log_debug("Boden OK", "WorldFactory")
 
+
 func _add_player(world: Node3D, pos: Vector3) -> void:
-	var PlayerScript = load("res://scripts/player/Player.gd")
-	if not PlayerScript:
-		Logger.log_error("Player.gd fehlt!", "WorldFactory")
+	# WICHTIG: Nicht CharacterBody3D.new() + set_script() verwenden!
+	# set_script() nach add_child() triggert _ready() ein zweites Mal und
+	# erzeugt undefiniertes Verhalten bei CharacterBody3D (Physik-Engine sieht
+	# den Node zweimal). Stattdessen: Script laden und direkt instanziieren —
+	# so gibt es genau einen _ready()-Aufruf, nach dem vollständigen add_child().
+	var PlayerClass: GDScript = load("res://scripts/player/Player.gd")
+	if not PlayerClass:
+		Logger.log_error("Player.gd nicht ladbar — Pfad korrekt?", "WorldFactory")
 		return
 
-	var player := CharacterBody3D.new()
-	player.set_script(PlayerScript) 
+	var player: CharacterBody3D = PlayerClass.new()
 	player.name = "Player"
-	player.position = pos
-	player.add_to_group("player") 
+
+	# Y = 0.0: Boden liegt bei position.y = -0.1 mit BoxShape height=0.2, also
+	# Oberfläche bei y = 0.0. CollisionShape im Player ist bei y=0.9 zentriert
+	# (CapsuleHeight=1.8), daher steht player.position.y = 0.0 direkt auf dem Boden.
+	player.position = Vector3(pos.x, 0.0, pos.z)
+
 	world.add_child(player)
-	Logger.log_debug("Player OK.", "WorldFactory")
+	Logger.log_debug(
+		"Player instanziiert bei Position %s." % str(player.position), "WorldFactory"
+	)
+
 
 func _add_trees(world: Node3D, positions: Array) -> void:
 	# Wir laden das Skript für die Eiche
 	var OakScript = load("res://scripts/world/objects/OakTree.gd")
-	
+
 	for pos in positions:
 		# Wir erstellen einen einfachen Node3D als Container
 		var tree = Node3D.new()
 		tree.name = "OakTree"
 		tree.position = pos
-		
-		# Wir hängen das OakTree-Skript ran. 
+
+		# Wir hängen das OakTree-Skript ran.
 		# Dieses Skript (das du vorhin gepostet hast) erledigt den Rest:
 		# 1. Es ruft Kernel.factory3d auf für die Grafik.
 		# 2. Es erstellt die InteractableComponent.
 		tree.set_script(OakScript)
-		
+
 		world.add_child(tree)
-	
-	Logger.log_debug(str(positions.size()) + " Bäume via Komponenten-System erstellt.", "WorldFactory")
+
+	Logger.log_debug(
+		str(positions.size()) + " Bäume via Komponenten-System erstellt.", "WorldFactory"
+	)
