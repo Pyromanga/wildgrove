@@ -1,99 +1,171 @@
-# 🏗️ WildGrove Core Architecture - Technical Specification
-
-This document defines the boot sequence, dependency management, and architectural layers for **WildGrove**.
-
-## 1. The Initialization Pipeline (Boot Sequence)
-
-The `ServiceOrchestrator` (attached to `Main.tscn`) manages the startup flow in 6 distinct phases to ensure zero-pointer exceptions and resolved dependencies.
-
-| Phase | Name | Action |
-| --- | --- | --- |
-| **1** | **Validate** | `ServiceValidator` checks `BootstrapConfig.tres` for file existence and integrity. |
-| **2** | **Resolve** | `ServiceDependencyResolver` sorts services based on their `deps` (Topological Sort). |
-| **3** | **Instantiate** | `ServiceFactory` creates instances (`RefCounted` or `Node`) based on definitions. |
-| **4** | **Init** | Calls `init()` on all services. Use this to store references to other services. |
-| **5** | **Activate** | Calls `on_ready()` on all services. Use this to connect to the `EventBus`. |
-| **6** | **Install** | Fills the `Services` Autoload via `populate()` for global type-safe access. |
+# 🏗️ WildGrove Core Architecture — Technical Specification
+*Stand: 2026 — Godot 4.3 Mobile 3D*
 
 ---
 
-## 2. Core Components
+## 1. Autoload-Reihenfolge (Projekt-Start)
 
-### A. Bootstrap Configuration (`.tres`)
+Die Autoloads starten in dieser festen Reihenfolge. Jeder darf nur auf frühere zugreifen.
 
-Every system module is registered as a `ServiceDefinition` resource:
+| Nr. | Autoload | Typ | Abhängigkeiten |
+|-----|----------|-----|---------------|
+| 1 | **Logger** | `Node` | keine |
+| 2 | **EventBus** | `Node` | Logger |
+| 3 | **SimpleTerminal** | `Node` | Logger, EventBus |
+| 4 | **Services** | `Node` | Logger (Platzhalter — wird von Orchestrator befüllt) |
+| 5 | **ServiceOrchestrator** | `Node` | alle obigen |
 
-* **`service_name`**: The unique key for global access (e.g., `"inventory"`).
-* **`path`**: File path to the `.gd` script or `.tscn` scene.
-* **`deps`**: Array of service names required to be ready before this one.
-* **`required_data_files`**: Data resources (`.tres`) validated before the engine boots.
-
-### B. Base Classes
-
-* **`Service` (RefCounted)**: Pure logic, no performance overhead. Best for Data, Calculations, and Save Systems.
-* **`ServiceNode` (Node)**: Services requiring the SceneTree (Timers, Physics, Process-loops).
-
-### C. Lifecycle Interface
-
-Every service must implement or respect these methods:
-
-* `init()`: Cross-referencing other services. No signal connections here.
-* `on_ready()`: The system is live. Connect signals and load initial data here.
-* `on_cleanup()`: Reverse boot order. Cleanup memory and disconnect listeners.
+> ⚠️ `ServiceOrchestrator` ist ein **Autoload**, kein Kind-Node von `Main.tscn`.
+> Er lebt bei `/root/ServiceOrchestrator` und überlebt alle `change_scene_to_file()`-Aufrufe.
 
 ---
 
-## 3. Global Communication Layers
+## 2. Die Boot-Pipeline (ServiceOrchestrator)
 
-### Global Access: The `Services` Container
+| Phase | Name | Klasse | Aktion |
+|-------|------|--------|--------|
+| **1** | **Validate** | `ServiceValidator` | Prüft `BootstrapConfig.tres` auf Existenz und Integrität |
+| **2** | **Resolve** | `ServiceDependencyResolver` | Topologische Sortierung via Kahn's Algorithmus |
+| **3** | **Instantiate** | `ServiceFactory` | Erstellt Instanzen aus GDScript oder PackedScene |
+| **4** | **Configure** | `ServiceInitializer.run()` | Ruft `configure(deps)` auf — DI-Phase |
+| **5** | **Activate** | `ServiceInitializer.run_on_ready()` | Ruft `on_ready()` auf — Signal-Connections |
+| **6** | **Tick Start** | `ServiceTicker` | Startet `on_tick()`/`on_physics_tick()` Loop |
+| **7** | **Install** | `ServiceInstaller` + `Services.populate()` | Befüllt den globalen Container |
+| **8** | **Game Start** | `GameManager.start_game()` | Setzt State auf MAIN_MENU |
 
-This is the **Type-Safe Service Locator**. It provides autocompletion and prevents "silent fails" via Logger integration.
+**Fail-Fast-Garantie:** Boot bricht bei Phase 1/2/3-Fehlern sofort ab und feuert `EventBus.system.boot_failed`.
 
-```gdscript
-# Usage Examples:
-Services.data.get_player_speed()      # Access static config
-Services.inventory.add_item("wood")  # Trigger global logic
-Services.quest.start_quest("intro")  # Update game state
+---
+
+## 3. Service vs. Entity — Die zentrale Trennung
 
 ```
+ServiceOrchestrator      EntityOrchestrator
+│                        │
+├─ Services (Singletons) ├─ Entities (Instanzen)
+│  ├─ SaveSystem         │  ├─ OakTree
+│  ├─ InventorySystem    │  ├─ IronOre
+│  ├─ QuestService       │  ├─ NPC_Blacksmith
+│  └─ WorldService       │  └─ Chest_01
+│                        │
+│  LIFETIME: App         │  LIFETIME: Szene/Chunk
+│  CONFIG: .tres          │  CONFIG: EntityDefinition
+```
 
-### Decoupled Messaging: The `EventBus`
-
-Services never call each other's UI or Entity logic directly. They emit signals through dedicated namespaces:
-
-* **`EventBus.system`**: Boot status, saving/loading, state transitions.
-* **`EventBus.player`**: Stats, inventory, level-ups.
-* **`EventBus.quest`**: Progression, objectives, rewards.
-
----
-
-## 4. Data-Driven Design (Resources)
-
-Data is strictly separated from logic using Godot Resources (`.tres`):
-
-* **`PlayerData`**: Initial stats like speed, jump force, and gravity.
-* **`QuestDefinition`**: Static data including titles, descriptions, and prerequisites.
-* **`QuestObjective`**: Sub-resources defining specific goals (Collect, Kill, Interact).
-* **`QuestReward`**: Description of rewards (XP, Items, Unlocks).
+- **Services** → laufen die gesamte App-Laufzeit, überleben Szenenwechsel
+- **Entities** → werden mit der Welt erzeugt und mit ihr zerstört (oder über Object Pooling recycelt)
+- **EntityOrchestrator** → lebt als Member von WorldService (nicht als Autoload)
 
 ---
 
-## 5. Development Workflow (Standard Operating Procedure)
+## 4. Core-Klassen
 
-To implement a new feature (e.g., "Skill System"):
+### A. Bootstrap-Konfiguration (`BootstrapConfig.tres`)
+Jeder Service wird als `ServiceDefinition`-Resource registriert:
 
-1. **Define Events**: Create `SkillEvents.gd`, add to `EventBus.gd`.
-2. **Logic Container**: Create `SkillService.gd` (inherits from `Service`).
-3. **Registration**: Add a `ServiceDefinition` to `BootstrapConfig.tres`.
-4. **Integration**: Add `var skill: SkillService` to `Services.gd` and map it in `populate()`.
-5. **Data Creation**: Create the necessary `.tres` files for skill-trees or XP-tables.
+| Feld | Beschreibung |
+|------|-------------|
+| `service_name` | Eindeutiger Key (lowercase, z.B. `"inventory"`) |
+| `path` | Pfad zu `.gd` oder `.tscn` |
+| `deps` | Array der benötigten Service-Namen |
+| `required_data_files` | `.tres`-Dateien, die vor dem Boot existieren müssen |
+| `interface_type` | Optional: Interface-Typ für Validierung |
+
+### B. Basis-Klassen
+
+| Klasse | Erbt von | Einsatz |
+|--------|----------|---------|
+| `Service` | `RefCounted` | Pure Logik ohne Node-Overhead (DataService, SaveSystem) |
+| `ServiceNode` | `Node` | Braucht SceneTree (Ticker, Physik, Signale auf Node-Level) |
+
+### C. Lifecycle-Interface
+
+| Methode | Phase | Erlaubt |
+|---------|-------|---------|
+| `configure(deps)` | 4 — Injection | `deps.get("name")` aufrufen, Variablen setzen |
+| `on_ready()` | 5 — Activation | `Services.xyz` lesen, EventBus-Signale connecten |
+| `on_tick(delta)` | Runtime | Update-Logik (via ServiceTicker, kein `_process()` in Services!) |
+| `on_cleanup()` | Teardown | Ressourcen freigeben, Signale trennen |
+
+> ⚠️ **Regel:** `Services.xyz` NIEMALS in `configure()` aufrufen — der Container ist noch nicht befüllt!
 
 ---
 
-## 6. Error Handling & Safety
+## 5. Globale Kommunikation
 
-* **Logger Fix**: The system uses explicit type casting for LogLevels to prevent Parse Errors.
-* **Validator**: The boot process aborts immediately if a file is missing or a circular dependency is detected.
-* **Type Guard**: The `Services` container validates that the loaded instance matches the declared class type.
+### A. `Services` — Typisierter Dependency Container
+```gdscript
+Services.data.get_player_stat("speed")
+Services.inventory.add_item("log_normal", 3)
+Services.world.get_formatted_time()
+Services.game_manager.change_state(GameEnums.State.PLAYING)
+```
+
+### B. `EventBus` — Entkoppeltes Messaging
+
+| Namespace | Signale |
+|-----------|---------|
+| `EventBus.system` | Boot, State-Changes, Save/Load |
+| `EventBus.player` | XP, Level-Up, Bewegung, Inventar |
+| `EventBus.world` | Zeit, Chunks, Interaktionen |
+| `EventBus.quest` | Quest-Start, Objectives, Abschluss |
+| `EventBus.ui` | Layout, Menüs, Overlays |
+
+**Regel:** Services rufen sich für **Daten** gegenseitig an (`Services.xyz`). Sie informieren über **Signale** (`EventBus`).
 
 ---
+
+## 6. State Machine (GameManager)
+
+```
+BOOT → MAIN_MENU → LOADING → PLAYING ←→ PAUSED
+                           ↓             ↓
+                        GAME_OVER   CUTSCENE
+                           ↓
+                        MAIN_MENU
+```
+
+Erlaubte Übergänge stehen in `GameConfig.tres` → `valid_transitions`.
+
+---
+
+## 7. Szenen-Architektur
+
+| Szene | Zweck |
+|-------|-------|
+| `MainMenu.tscn` | Startmenü (main_scene in project.godot) |
+| `World.tscn` | Spielwelt-Container (leer — WorldFactory füllt ihn prozedural) |
+
+Der `ServiceOrchestrator` (Autoload) überlebt `change_scene_to_file()`.
+Das HUD-CanvasLayer wird von `HUDManager.attach_to_scene()` in `world_root` eingehängt.
+
+---
+
+## 8. Erweiterung: Neuen Service hinzufügen
+
+1. `scripts/events/XyzEvents.gd` erstellen (falls eigene Signale nötig)
+2. `EventBus.gd` — Namespace-Variable und Initialisierung eintragen
+3. `scripts/services/XyzService.gd` erstellen (`extends Service` oder `ServiceNode`)
+4. `ServiceDefinition` zu `BootstrapConfig.tres` hinzufügen
+5. `Services.gd` — Variable und `populate()`-Zeile eintragen
+6. `services.md` aktualisieren
+
+---
+
+## 9. Erweiterung: Neuen Entity-Typ hinzufügen
+
+1. Entity-Script erstellen (z.B. `scripts/world/objects/NewObject.gd`)
+2. `EntityOrchestrator.register_definition()` aufrufen mit Pfad und Gruppe
+3. Via `WorldService` oder direkt per `EntityOrchestrator.spawn_entity()` spawnen
+
+---
+
+## 10. Debugging ohne Godot-Editor
+
+Da wir blind coden, ist Logging alles:
+- **SimpleTerminal** in-game öffnen (Toggle-Taste)
+- **`status`** command → alle Services und deren null-Status
+- **`services`** command → alle registrierten Service-Namen
+- **`errors`** command → alle ERROR-Logs aus dem Puffer
+- **`user://wildgrove.log`** → persistente Log-Datei (im Debug-Build automatisch aktiv)
+- **`Logger.log_trace(msg, data, cat)`** → strukturiertes Logging mit Data-Snapshot
