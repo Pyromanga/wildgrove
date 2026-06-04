@@ -13,9 +13,11 @@ extends Node
 
 var _visuals: InteractionButtonVisuals
 
+
 # FIX: Nur 1 Argument — kein Player mehr zur Init-Zeit nötig.
 func setup(visuals: InteractionButtonVisuals) -> void:
 	_visuals = visuals
+
 
 func _process(_delta: float) -> void:
 	# Lazy Player-Lookup — einmal pro Frame, aber nur wenn sichtbar/aktiv.
