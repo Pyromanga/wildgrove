@@ -250,16 +250,18 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      # ── 14. Gesamtes Repo als ZIP hochladen (für schnellen Download) ─────
+# ── 14. Gesamtes Repo als ZIP hochladen (für schnellen Download) ─────
       - name: Upload Repository Source as ZIP
         uses: actions/upload-artifact@v4
         with:
           name: WildGrove-Full-Source
-          # Wir laden alles hoch, exklusive der schweren Godot-Binaries/Templates
           path: |
             ./
+            !.git/
             !godot.zip
             !templates.tpz
+            !debug.keystore
+            !build/
           retention-days: 7
       # ── Optional: Release erstellen bei Tag-Push ─────────────────────────
   release:
