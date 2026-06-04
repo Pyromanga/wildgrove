@@ -113,3 +113,8 @@ func _apply_stats() -> void:
 	_mover.speed = s
 	_mover.gravity = g
 	Logger.log_info("Stats angewandt: Speed=%f, Gravity=%f" % [s, g], LOG_CAT)
+
+	if s <= 0.0:
+		Logger.log_warn("Speed ist 0 oder negativ — Spieler kann sich nicht bewegen!", LOG_CAT)
+	if g <= 0.0:
+		Logger.log_warn("Gravity ist 0 oder negativ — Spieler fällt nicht! Physik prüfen.", LOG_CAT)
