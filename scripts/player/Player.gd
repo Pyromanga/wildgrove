@@ -2,21 +2,34 @@ extends CharacterBody3D
 class_name Player
 
 ## Player.gd — Zentraler Spieler-Controller.
-## Wartet auf services_initialized bevor er aktiv wird.
+##
+## Timing-Problem behoben: services_initialized wurde bereits beim Boot emittiert.
+## Wenn der Player nach dem Boot in die Szene geladen wird (Normalfall), ist das
+## Signal history, und der CONNECT_ONE_SHOT-Listener feuert nie.
+## Lösung: Wenn Services schon laufen, sofort initialisieren.
 
 const LOG_CAT := "Player"
 
-var _mover:  PlayerMover
+var _mover: PlayerMover
 var visuals: PlayerVisuals
-var camera:  PlayerCamera
-var input:   TouchInput
-var sensor:  InteractionSensor
+var camera: PlayerCamera
+var input: TouchInput
+var sensor: InteractionSensor
+
 
 func _ready() -> void:
 	add_to_group("player")
 	set_physics_process(false)
-	EventBus.system.services_initialized.connect(_on_core_ready, CONNECT_ONE_SHOT)
 	EventBus.player.movement_interrupted.connect(_on_action_interrupted)
+
+	# Wenn Services bereits initialisiert sind (Player kommt nach dem Boot in die Szene),
+	# direkt starten — das Signal wurde bereits emittiert und kommt nicht nochmal.
+	if is_instance_valid(Services.game_manager):
+		_on_core_ready()
+	else:
+		# Erster Boot: noch nicht initialisiert, auf Signal warten.
+		EventBus.system.services_initialized.connect(_on_core_ready, CONNECT_ONE_SHOT)
+
 
 func _on_core_ready() -> void:
 	_build_system()
@@ -24,13 +37,17 @@ func _on_core_ready() -> void:
 	set_physics_process(true)
 	Logger.log_info("Player-System online.", LOG_CAT)
 
+
 func _physics_process(delta: float) -> void:
 	match Services.player_states.get_state():
-		PlayerStateService.State.FREE: _loop_free(delta)
-		PlayerStateService.State.BUSY: _loop_busy(delta)
+		PlayerStateService.State.FREE:
+			_loop_free(delta)
+		PlayerStateService.State.BUSY:
+			_loop_busy(delta)
 		_:
 			velocity = Vector3.ZERO
 			move_and_slide()
+
 
 func _loop_free(delta: float) -> void:
 	var move_dir := MathHelper.calculate_move_direction(camera, input.js_vec)
@@ -39,6 +56,7 @@ func _loop_free(delta: float) -> void:
 	visuals.handle_rotation(move_dir, delta)
 	camera.handle_input(input, delta)
 
+
 func _loop_busy(delta: float) -> void:
 	if input.js_vec.length() > 0.5:
 		EventBus.player.emit_movement_interrupted()
@@ -46,46 +64,52 @@ func _loop_busy(delta: float) -> void:
 	move_and_slide()
 	camera.handle_input(input, delta)
 
+
 func _on_action_interrupted() -> void:
 	visuals.play_effect("interrupted")
+
 
 # ─────────────────────────────────────────────
 # Öffentliche API
 # ─────────────────────────────────────────────
 
+
 func get_closest_interactable() -> Node3D:
 	return sensor.get_closest() if is_instance_valid(sensor) else null
+
 
 # ─────────────────────────────────────────────
 # Setup
 # ─────────────────────────────────────────────
 
+
 func _build_system() -> void:
 	_setup_collision()
-	_mover  = PlayerMover.new()
+	_mover = PlayerMover.new()
 	visuals = PlayerVisuals.new()
-	camera  = PlayerCamera.new()
-	input   = TouchInput.new()
-	sensor  = InteractionSensor.new()
+	camera = PlayerCamera.new()
+	input = TouchInput.new()
+	sensor = InteractionSensor.new()
 	add_child(visuals)
 	add_child(camera)
 	add_child(input)
 	input.add_to_group("touch_input")
 	add_child(sensor)
 
+
 func _setup_collision() -> void:
-	var col   := CollisionShape3D.new()
-	var cap   := CapsuleShape3D.new()
+	var col := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
 	cap.radius = 0.45
 	cap.height = 1.8
-	col.shape     = cap
+	col.shape = cap
 	col.position.y = 0.9
 	add_child(col)
+
 
 func _apply_stats() -> void:
 	var s = Services.data.get_player_stat("speed", 6.0)
 	var g = Services.data.get_player_stat("gravity", 12.0)
 	_mover.speed = s
 	_mover.gravity = g
-	# Best Practice: Ein aggregierter Log-Eintrag nach dem Setup
 	Logger.log_info("Stats angewandt: Speed=%f, Gravity=%f" % [s, g], LOG_CAT)
