@@ -15,6 +15,7 @@ signal action_triggered(action: InteractableAction)
 
 var _container: Control
 
+
 # FIX: Parameter-Typ war ContextMenuVisuals (Selbstreferenz) → einfach weggelassen.
 # _init() braucht keinen Typ-Hint auf sich selbst.
 func _init(parent: HUD, actions: Array) -> void:
@@ -38,6 +39,7 @@ func _init(parent: HUD, actions: Array) -> void:
 		vbox.add_child(btn)
 
 	parent.add_child(_container)
+
 
 func destroy() -> void:
 	if is_instance_valid(_container):
