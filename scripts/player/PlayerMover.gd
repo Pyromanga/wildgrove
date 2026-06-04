@@ -38,7 +38,10 @@ func get_current_speed() -> float:
 
 	if not is_equal_approx(current_speed, _last_speed_log):
 		Logger.log_info(
-			"Speed Update: %.2f (Base: %.2f, Mult: %.2f)" % [current_speed, speed, final_multiplier],
+			(
+				"Speed Update: %.2f (Base: %.2f, Mult: %.2f)"
+				% [current_speed, speed, final_multiplier]
+			),
 			LOG_CAT
 		)
 		_last_speed_log = current_speed
