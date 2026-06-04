@@ -15,10 +15,10 @@ var skills: Dictionary = {
 	"farming": {"xp": 0, "level": 1},
 }
 
-
 # ─────────────────────────────────────────────
 # Phase 4: Configure (DI — kein Services.xyz hier!)
 # ─────────────────────────────────────────────
+
 
 func configure(deps: Dictionary) -> void:
 	_save_system = deps.get("savesystem") as SaveSystem
@@ -40,6 +40,7 @@ func configure(deps: Dictionary) -> void:
 # Phase 5: Activate
 # ─────────────────────────────────────────────
 
+
 func on_ready() -> void:
 	EventBus.player.xp_gained.connect(add_xp)
 	Logger.log_info("SkillSystem mit EventBus verbunden.", LOG_CAT)
@@ -48,6 +49,7 @@ func on_ready() -> void:
 # ─────────────────────────────────────────────
 # Save-Interface
 # ─────────────────────────────────────────────
+
 
 func get_save_key() -> String:
 	return SAVE_KEY
@@ -60,6 +62,7 @@ func get_save_data() -> Dictionary:
 # ─────────────────────────────────────────────
 # Öffentliche API
 # ─────────────────────────────────────────────
+
 
 func add_xp(skill_name: String, amount: int) -> void:
 	if not skills.has(skill_name):
@@ -76,6 +79,7 @@ func get_level(skill_name: String) -> int:
 # ─────────────────────────────────────────────
 # Intern
 # ─────────────────────────────────────────────
+
 
 func _check_level_up(skill_name: String) -> void:
 	var entry: Dictionary = skills[skill_name]
