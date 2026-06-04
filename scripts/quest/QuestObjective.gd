@@ -14,15 +14,15 @@ extends Resource
 
 enum Type { COLLECT, SKILL, INTERACT, KILL, TALK, CUSTOM }
 
-@export var id:          String       = ""
-@export var label:       String       = ""
-@export var type:        Type         = Type.COLLECT
+@export var id: String = ""
+@export var label: String = ""
+@export var type: Type = Type.COLLECT
 
 ## Ziel-ID: item_id / skill_name / interactable_id / enemy_id / npc_id / custom_key
-@export var target_id:   String       = ""
+@export var target_id: String = ""
 
 ## Benötigte Menge (collect/kill) oder Ziellevel (skill).
-@export var required:    int          = 1
+@export var required: int = 1
 
 ## Ob dieses Objective optional ist (Quest abschließbar ohne es).
-@export var optional:    bool         = false
+@export var optional: bool = false
