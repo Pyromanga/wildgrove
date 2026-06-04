@@ -1,16 +1,28 @@
-# res://scripts/core/HUDManager.gd
+# res://scripts/ui/HUDManager.gd
 extends ServiceNode
 class_name HUDManager
+
+## HUDManager — Zentrale Steuerung des in-game HUD.
+##
+## Als ServiceNode lebt er für die gesamte Laufzeit in der Service-Pipeline.
+## Das HUD-CanvasLayer-Node selbst wird via attach_to_scene() in die jeweilige
+## Spielwelt-Szene eingehängt, damit es change_scene_to_file()-Wechsel überlebt.
+##
+## Lifecycle:
+##   configure()       → DI: erhält InventorySystem + PlayerStateService
+##   on_ready()        → Wartet auf attach_to_scene()-Aufruf
+##   attach_to_scene() → Von WorldService.on_world_scene_ready() aufgerufen
+##   on_cleanup()      → Gibt HUD frei
 
 const LOG_CAT := "HUD"
 
 var hud: HUD = null
 var controllers: Dictionary = {}
 
-# Abhängigkeiten, die wir via DI bekommen
+## Abhängigkeiten via DI
 var _inventory: InventorySystem
 var _player_states: PlayerStateService
-var _uifactory: UIFactory
+
 
 # ─────────────────────────────────────────────
 # Phase 4: Configure (Enterprise DI)
@@ -18,7 +30,11 @@ var _uifactory: UIFactory
 func configure(deps: Dictionary) -> void:
 	_inventory = deps.get("inventory") as InventorySystem
 	_player_states = deps.get("playerstates") as PlayerStateService
-	_uifactory = deps.get("ui_factory") as UIFactory
+
+	if not is_instance_valid(_inventory):
+		Logger.log_warn("Abhängigkeit 'inventory' fehlt in HUDManager.configure()!", LOG_CAT)
+	if not is_instance_valid(_player_states):
+		Logger.log_warn("Abhängigkeit 'playerstates' fehlt in HUDManager.configure()!", LOG_CAT)
 
 	# HUD-Node im Speicher vorbereiten, aber NOCH NICHT in den Tree einhängen.
 	# Das passiert erst in attach_to_scene(), wenn die Ziel-Szene bereit ist.
@@ -34,13 +50,20 @@ func configure(deps: Dictionary) -> void:
 # Phase 5: on_ready
 # ─────────────────────────────────────────────
 func on_ready() -> void:
-	# HUDManager selbst ist ein ServiceNode (Kind des ServiceOrchestrators in Main.tscn).
-	# Wir fügen das HUD hier NICHT ein — Main.tscn wird beim Wechsel zu World.tscn
-	# zerstört, und alle Kinder sterben mit. Das HUD wird stattdessen über
-	# attach_to_scene() in die jeweilige Spielwelt-Szene eingehängt.
-	Logger.log_info(
-		"HUDManager bereit. HUD-Node wartet auf attach_to_scene()-Aufruf.", LOG_CAT
-	)
+	# HUDManager selbst ist ein Autoload-Service (ServiceOrchestrator hängt ihn ein).
+	# Das HUD wird NICHT hier eingefügt — es wartet auf attach_to_scene().
+	Logger.log_info("HUDManager bereit. HUD-Node wartet auf attach_to_scene()-Aufruf.", LOG_CAT)
+
+
+# ─────────────────────────────────────────────
+# Phase 7: Cleanup
+# ─────────────────────────────────────────────
+func on_cleanup() -> void:
+	if is_instance_valid(hud) and hud.is_inside_tree():
+		hud.queue_free()
+	hud = null
+	controllers.clear()
+	Logger.log_debug("HUDManager bereinigt.", LOG_CAT)
 
 
 # ─────────────────────────────────────────────
@@ -51,28 +74,43 @@ func on_ready() -> void:
 ## Hängt das HUD-Node als CanvasLayer in die übergebene Szene ein und initialisiert
 ## alle Controller. Wird von WorldService.on_world_scene_ready() aufgerufen,
 ## nachdem World.tscn vollständig im SceneTree ist.
-# HUDManager.gd
 func attach_to_scene(scene_root: Node) -> void:
-  # 1. Wir fragen die UIFactory nach dem Container, anstatt selbst zu suchen
-  var canvas = _uifactory.get_main_canvas()
+	if not is_instance_valid(hud):
+		Logger.log_error("attach_to_scene() fehlgeschlagen: HUD-Node ist null!", LOG_CAT)
+		return
 
-  # 2. HUD-Node sauber einhängen
-  if not hud.get_parent():
-    canvas.add_child(hud)
+	if hud.is_inside_tree():
+		var parent_name: String = hud.get_parent().name
+		Logger.log_warn(
+			"attach_to_scene() aufgerufen, HUD bereits im Tree (%s). Übersprungen." % parent_name,
+			LOG_CAT
+		)
+		return
 
-  _setup_controllers()
+	scene_root.add_child(hud)
+	Logger.log_debug("HUD-Node in Szene '%s' eingehängt." % scene_root.name, LOG_CAT)
+
+	_setup_controllers()
 	Logger.log_info("HUD-System aktiv. %d Controller initialisiert." % controllers.size(), LOG_CAT)
+
+
+## Gibt einen registrierten Controller zurück (oder null wenn nicht vorhanden).
+func get_controller(key: String) -> Object:
+	return controllers.get(key)
+
+
+# ─────────────────────────────────────────────
+# Intern
+# ─────────────────────────────────────────────
 
 
 func _setup_controllers() -> void:
 	var context := {"inventory": _inventory, "player_states": _player_states}
 	Logger.log_debug("Baue HUD-Controller mit Kontext...", LOG_CAT)
 	controllers = HUDBuilder.build_all(hud, context)
-	Logger.log_debug(
-		"HUD-Controller gebaut: %d Einheiten." % controllers.size(), LOG_CAT
-	)
+	Logger.log_debug("HUD-Controller gebaut: %d Einheiten." % controllers.size(), LOG_CAT)
 
 
-# Optional: Falls das HUD auf Ticks reagieren muss (z.B. für Animationen oder Timer)
+## Falls das HUD auf Ticks reagieren muss (z.B. für Animationen oder Timer).
 func on_tick(_delta: float) -> void:
 	pass
