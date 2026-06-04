@@ -8,9 +8,10 @@ class_name InteractionButtonComponent extends BaseUIComponent
 ##         Lösung: Controller holt sich den Player selbst via Gruppe "player"
 ##         in _process() — setup() braucht nur noch visuals.
 
+
 func build(hud: HUD) -> InteractionButtonController:
-	var pos     := LayoutManager.get_action_button_position(0)
+	var pos := LayoutManager.get_action_button_position(0)
 	var visuals := InteractionButtonVisuals.new(hud, pos)
-	var ctrl    := InteractionButtonController.new()
+	var ctrl := InteractionButtonController.new()
 	ctrl.setup(visuals)
 	return ctrl
