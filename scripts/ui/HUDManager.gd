@@ -18,6 +18,7 @@ var _player_states: PlayerStateService
 func configure(deps: Dictionary) -> void:
 	_inventory = deps.get("inventory") as InventorySystem
 	_player_states = deps.get("playerstates") as PlayerStateService
+	_uifactory = deps.get("ui_factory") as UIFactory
 
 	# HUD-Node im Speicher vorbereiten, aber NOCH NICHT in den Tree einhängen.
 	# Das passiert erst in attach_to_scene(), wenn die Ziel-Szene bereit ist.
@@ -50,25 +51,16 @@ func on_ready() -> void:
 ## Hängt das HUD-Node als CanvasLayer in die übergebene Szene ein und initialisiert
 ## alle Controller. Wird von WorldService.on_world_scene_ready() aufgerufen,
 ## nachdem World.tscn vollständig im SceneTree ist.
+# HUDManager.gd
 func attach_to_scene(scene_root: Node) -> void:
-	if not is_instance_valid(hud):
-		Logger.log_error("attach_to_scene() fehlgeschlagen: HUD-Node ist null!", LOG_CAT)
-		return
+  # 1. Wir fragen die UIFactory nach dem Container, anstatt selbst zu suchen
+  var canvas = _uifactory.get_main_canvas()
 
-	if hud.is_inside_tree():
-		Logger.log_warn(
-			"attach_to_scene() aufgerufen, aber HUD ist bereits im Tree (%s). Übersprungen."
-			% hud.get_parent().name,
-			LOG_CAT
-		)
-		return
+  # 2. HUD-Node sauber einhängen
+  if not hud.get_parent():
+    canvas.add_child(hud)
 
-	scene_root.add_child(hud)
-	Logger.log_debug(
-		"HUD-Node in Szene '%s' eingehängt." % scene_root.name, LOG_CAT
-	)
-
-	_setup_controllers()
+  _setup_controllers()
 	Logger.log_info("HUD-System aktiv. %d Controller initialisiert." % controllers.size(), LOG_CAT)
 
 
