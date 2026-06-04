@@ -50,6 +50,8 @@ func boot() -> void:
 		return
 
 	# --- Phase 4: Init (Konfiguration) ---
+  for svc_key in ordered:
+    Logger.log_debug("--- [INIT-TRACE] Booting: %s ---" % svc_key, "Orchestrator")
 	initializer.run(ordered, registry)
 
 	# --- Phase 5: Activate (on_ready) ---
