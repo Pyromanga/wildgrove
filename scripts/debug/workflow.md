@@ -1,65 +1,140 @@
-# 📑 System Meta-Process: Workflow, Debugging & Reporting
-
-Dieses Dokument beschreibt das Protokoll für die Zusammenarbeit. Es stellt sicher, dass die KI immer den vollen Kontext hat und Änderungen nicht zu "Code-Fäulnis" (Code Rot) führen.
-
-## 1. Der "Source of Truth" Workflow
-
-Jede Änderung am Code folgt diesem zyklischen Prozess:
-
-1. **Reporting:** Du postest die aktuellen Logs (Terminal-Output) und markierst, welcher Teil der Architektur gerade betroffen ist.
-2. **Context-Request:** Die KI fordert spezifische Dateien an, die laut Log oder Architektur-Plan relevant sind (z.B. "Zeig mir die `Services.gd` und die `BootstrapConfig.tres`").
-3. **Cross-Check:** Die KI prüft die Dateien gegen die **Engineering Principles** (Typisierung, Permissions, SoC).
-4. **Fix & Update:** Die KI liefert den fixierten Code UND aktualisiert bei Bedarf das betroffene Architektur-Markdown (z.B. wenn ein neuer Service hinzukam).
+# 📑 WildGrove — Workflow, Debugging & Session-Protokoll
 
 ---
 
-## 2. Struktur des Fehler-Reportings (Das "Blind-Log" Protokoll)
+## 1. Standard Session-Start
 
-Damit ich dir effektiv helfen kann, sollte ein Report idealerweise so aussehen:
+Vor jeder Coding-Session:
 
-* **Der Error:** Vollständiger Stacktrace aus dem Terminal.
-* **Der Status:** Welches Feature wolltest du gerade testen?
-* **Die Vermutung:** Was hast du zuletzt geändert?
-
-**KI-Aktion:** Ich werde niemals raten. Wenn ein Typ fehlt, frage ich nach dem entsprechenden File. Wenn ein Pfad falsch ist, prüfen wir die `.tres`.
-
----
-
-## 3. Meta-Überprüfung der Markdowns
-
-Die Markdown-Files (Architektur, Services, Principles) sind keine statische Doku, sondern **aktiver Teil des Codes**.
-
-* **Synchronität:** Wenn wir in `Services.gd` eine Variable ändern, muss das Markdown `System Services Overview` sofort angepasst werden.
-* **Audit:** Einmal pro Session machen wir einen "Health Check":
-* Passen die `deps` in der Config noch zur Realität?
-* Sind alle Signale im `EventBus` dokumentiert?
-* Entsprechen die Dateipfade noch der Struktur?
-
-
+1. **ZIP hochladen** — aktueller Stand aller `.gd` und `.md` Dateien
+2. **Log aus letzter Session posten** — Terminal-Output oder `wildgrove.log`
+3. **Status-Check:** Was wolltest du testen? Was ist fehlgeschlagen?
+4. **Aktuelle TODOs aus `review.md` lesen** — Kontext wiederherstellen
 
 ---
 
-## 4. Multiplayer- & Permission-Check (The Gatekeeper)
+## 2. Fehler-Report Protokoll
 
-Da du Multiplayer im Hinterkopf hast, wird jede neue Funktion einer **Meta-Prüfung** unterzogen:
+```
+FEHLER: [Vollständiger Stack-Trace aus Terminal/Log]
+KONTEXT: Was war das Ziel? (z.B. "Spieler sollte Item aufheben")
+LETZTE ÄNDERUNG: Welche Datei wurde zuletzt geändert?
+LOG-SNIPPET: Die 10 Zeilen vor dem Fehler aus wildgrove.log
+```
 
-* **Frage:** Ist das eine `void` Funktion oder ein `Request`?
-* **Prüfung:** Werden Daten lokal geändert (Client-Side Prediction) oder warten wir auf das Server-Signal?
-* **Validierung:** Gibt es im Service einen Check, der verhindert, dass falsche Daten (z.B. negativer Speed) übernommen werden?
-
----
-
-## 5. Das "AI-Memory" Protokoll
-
-Da unsere Session-Historie lang wird, nutzen wir "Zusammenfassungen" als Ankerpunkte:
-
-1. **Checkpointing:** Nach jedem gelösten Bug fassen wir den neuen Status Quo kurz zusammen.
-2. **File-Indexing:** Wir führen im Kopf (und im Markdown) eine Liste aller `class_name` Definitionen, damit wir keine Namenskollisionen bauen.
+**Was die KI dann tut:**
+1. Alle relevanten Dateien anfordern (oder aus ZIP lesen)
+2. Cross-Check gegen diese Principles
+3. Fix liefern + `review.md` aktualisieren
 
 ---
 
-### Dein nächster Schritt (Action Plan):
+## 3. Change-Impact-Analyse
 
-Du hast jetzt das gesamte theoretische und prozessuale Fundament. Um das System "live" zu bringen, empfehle ich folgende Reihenfolge für die nächste Session:
+Bevor eine Datei geändert wird:
 
-dies ist die erste session mach ein ausfuhrliches codereview und erstelle markdown files die das momentane system wiederspiegeln und dss sollsystem wieder spiegeln 
+| Datei | Betrifft |
+|-------|---------|
+| `BootstrapConfig.tres` | Boot-Reihenfolge, alle Services |
+| `Services.gd` | Alle Stellen die `Services.xyz` aufrufen |
+| `EventBus.gd` / `*Events.gd` | Alle Signal-Connections im Projekt |
+| `Logger.gd` | Jede einzelne Log-Zeile im Projekt |
+| `ServiceOrchestrator.gd` | Das komplette Boot-Verhalten |
+| `SaveSystem.gd` | Alle Save-Provider |
+
+---
+
+## 4. Mandatory Log-Checks nach Änderung
+
+Nach jeder Änderung im SimpleTerminal prüfen:
+
+```
+> status          → alle Services grün?
+> errors          → neue Fehler?
+> stats           → ERROR-Count gestiegen?
+```
+
+Im Log-File suchen:
+```
+╔══ BOOT START ══╗    → Boot hat begonnen
+╚══ BOOT FERTIG  ══╝  → Boot erfolgreich (wie lange?)
+[ERROR]               → Kritische Fehler
+boot_failed           → Boot-Abbruch
+```
+
+---
+
+## 5. Datei-Sync Protokoll
+
+Die Markdown-Dateien sind **aktiver Teil des Projekts**, keine statische Doku.
+
+| Event | Welche MD aktualisieren |
+|-------|------------------------|
+| Neuer Service | `services.md` + `architecture.md` |
+| Bug gefunden+gehoben | `review.md` |
+| Neue Architektur-Entscheidung | `architecture.md` |
+| Neue Coding-Regel | `principles.md` |
+| Neues Signal | `services.md` (EventBus-Sektion) |
+| Neuer Terminal-Befehl | `architecture.md` (Debugging-Sektion) |
+
+---
+
+## 6. File-Naming & Pfad-Regeln
+
+```
+scripts/
+  core/          → Boot-Infrastruktur (Orchestratoren, Registry, Factory, ...)
+  debug/         → Developer-Tools (Logger, SimpleTerminal, Docs)
+  events/        → EventBus-Namespaces (*Events.gd)
+  interfaces/    → Interface-Definitionen (I*.gd)
+  logger/        → Logger.gd
+  player/        → Player-spezifische Scripts (Player.gd, PlayerMover.gd, ...)
+  quest/         → Quest-Ressourcen (QuestDefinition.gd, ...)
+  resources/     → Shared-Ressourcen (ItemDefinition.gd, ...)
+  services/      → Service-Implementierungen (InventorySystem, SaveSystem, ...)
+  ui/            → UI-Code (HUDManager, HUDBuilder, components/, controllers/, ...)
+  world/         → Welt-Code (WorldService, WorldFactory, objects/, ...)
+```
+
+**Regel:** Service-Implementierungen die Entities in der Welt *verwalten* (`WorldService`)
+gehören in `world/`, nicht in `services/`. Services die reine Logik sind
+(`InventorySystem`) gehören in `services/`.
+
+---
+
+## 7. Multiplayer-Readiness Check
+
+Bei jeder neuen Funktion fragen:
+
+1. **Wer besitzt diese Daten?** (Client-Vorhersage vs. Server-Authorität)
+2. **Kann ein manipulierter Client diese Funktion missbrauchen?**
+3. **Ist das ein Request (Client→Server) oder eine Mutation (Server→alle)?**
+
+```gdscript
+# ❌ Unsicher — Client kann beliebig Gold setzen
+func set_gold(amount: int) -> void:
+    _gold = amount
+
+# ✅ Request-Pattern — Server validiert
+func request_gold_change(delta: int, source: String) -> void:
+    if not _auth.is_server():
+        EventBus.system.emit_gold_change_requested(delta, source)
+        return
+    # Server-Logik:
+    if _validate_gold_change(delta, source):
+        _gold = clampi(_gold + delta, 0, MAX_GOLD)
+        EventBus.system.emit_gold_changed(_gold)
+```
+
+---
+
+## 8. KI-Session Zusammenfassung Format
+
+Am Ende jeder Session:
+```
+SESSION SUMMARY:
+- Behoben: [Liste der Fixes]
+- Neu: [Liste neuer Features/Files]
+- Offen: [Was noch zu tun ist]
+- Nächste Session: [Empfohlener nächster Schritt]
+```
