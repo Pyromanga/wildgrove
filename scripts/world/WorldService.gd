@@ -2,8 +2,10 @@ extends ServiceNode
 class_name WorldService
 
 ## WorldService — Zentrale Anlaufstelle für Welt-Daten, Generierung und Zeit.
+##
 ## Abhängigkeiten (deps): ["savesystem", "data"]
 ##
+## WICHTIG: Nutzt on_tick() statt _process() — konform mit dem ServiceTicker-Vertrag.
 ## Welt-Initialisierung: World.gd ruft on_world_scene_ready() aus seinem _ready() auf.
 ## Das garantiert, dass der SceneTree-Wechsel vollständig abgeschlossen ist
 ## bevor wir Kinder in die Szene einfügen.
@@ -21,6 +23,9 @@ var day_count: int = 1
 @export var time_speed: float = 0.05
 
 
+# ─────────────────────────────────────────────
+# Phase 4: Configure
+# ─────────────────────────────────────────────
 func configure(deps: Dictionary) -> void:
 	_save_system = deps.get("savesystem") as SaveSystem
 
@@ -40,8 +45,27 @@ func configure(deps: Dictionary) -> void:
 	)
 
 
+# ─────────────────────────────────────────────
+# Phase 5: on_ready
+# ─────────────────────────────────────────────
 func on_ready() -> void:
+	# Ticker registrieren damit on_tick() aufgerufen wird
+	if Services.ticker:
+		Services.ticker.register_service(self)
 	Logger.log_info("WorldService bereit.", LOG_CAT)
+
+
+# ─────────────────────────────────────────────
+# Tick (via ServiceTicker — kein direktes _process())
+# ─────────────────────────────────────────────
+func on_tick(delta: float) -> void:
+	if is_instance_valid(Services.game_manager) and Services.game_manager.is_playing():
+		_update_time(delta)
+
+
+# ─────────────────────────────────────────────
+# Welt-Initialisierung (von World.gd._ready() aufgerufen)
+# ─────────────────────────────────────────────
 
 
 ## Wird von World.gd._ready() aufgerufen.
@@ -60,22 +84,14 @@ func on_world_scene_ready(world_root: Node3D) -> void:
 	Logger.log_info("Welt prozedural in World.tscn eingefügt.", LOG_CAT)
 
 	# HUD in die World-Szene einbinden.
-	# WARUM HIER: HUDManager ist ein ServiceNode (Kind des ServiceOrchestrator in
-	# Main.tscn). change_scene_to_file() ersetzt die gesamte Root-Szene — Main.tscn
-	# verschwindet, und damit alle seine Kinder-Nodes inklusive ServiceOrchestrator
-	# und HUDManager. Das HUD-Node (CanvasLayer) muss deshalb als Kind der
-	# World-Szene leben, nicht als Kind des HUDManagers selbst.
-	# HUDManager bleibt der Controller (Autoload-ähnlich via Services), aber das
-	# eigentliche CanvasLayer-Node wird in world_root eingehängt wo es überlebt.
+	# WARUM HIER: HUDManager ist ein ServiceNode (Kind des ServiceOrchestrator).
+	# change_scene_to_file() ersetzt die Root-Szene — alle ihre Kinder-Nodes inklusive
+	# ServiceOrchestrator ÜBERLEBEN (weil er ein Autoload ist).
+	# Das HUD-CanvasLayer-Node wird als Kind von world_root eingehängt.
 	if is_instance_valid(Services.hud):
 		Services.hud.attach_to_scene(world_root)
 	else:
 		Logger.log_error("HUDManager nicht verfügbar — HUD wird nicht angezeigt.", LOG_CAT)
-
-
-func _process(delta: float) -> void:
-	if is_instance_valid(Services.game_manager) and Services.game_manager.is_playing():
-		_update_time(delta)
 
 
 # ─────────────────────────────────────────────
@@ -93,6 +109,7 @@ func get_save_data() -> Dictionary:
 		"day_count": day_count,
 		"tree_positions": var_to_str(data.tree_positions),
 		"player_pos": var_to_str(data.player_position),
+		"harvested": var_to_str(data.harvested_objects),
 	}
 
 
@@ -101,14 +118,15 @@ func get_save_data() -> Dictionary:
 # ─────────────────────────────────────────────
 
 
-func create_world() -> Node3D:
-	return factory.create_world()
-
-
 func get_formatted_time() -> String:
 	var hours: int = int(day_time)
 	var minutes: int = int((day_time - hours) * 60)
 	return "%02d:%02d" % [hours, minutes]
+
+
+# ─────────────────────────────────────────────
+# Intern
+# ─────────────────────────────────────────────
 
 
 func _update_time(delta: float) -> void:
@@ -125,4 +143,5 @@ func _restore_world(state: Dictionary) -> void:
 	day_count = state.get("day_count", 1)
 	data.tree_positions = str_to_var(state.get("tree_positions", "[]"))
 	data.player_position = str_to_var(state.get("player_pos", "Vector3(0,0,0)"))
+	data.harvested_objects = str_to_var(state.get("harvested", "{}"))
 	Logger.log_debug("Welt-Zustand aus Save wiederhergestellt.", LOG_CAT)
