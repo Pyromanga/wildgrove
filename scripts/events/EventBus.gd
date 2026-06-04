@@ -38,19 +38,22 @@ var quest: QuestEvents
 # Lifecycle
 # ─────────────────────────────────────────────
 
+
 func _ready() -> void:
 	player = PlayerEvents.new()
-	world  = WorldEvents.new()
+	world = WorldEvents.new()
 	system = SystemEvents.new()
-	ui     = UIEvents.new()
+	ui = UIEvents.new()
 	quest = QuestEvents.new()
 	Logger.log_info("EventBus bereit. Namespaces: player, world, system, ui", "EventBus")
+
 
 # ─────────────────────────────────────────────
 # Debug-Hilfe
 # ─────────────────────────────────────────────
 
+
 ## Gibt alle verfügbaren Namespace-Namen zurück.
 ## Nützlich für den SimpleTerminal / Laufzeit-Inspektion.
 func get_namespaces() -> Array[String]:
-	return ["player", "world", "system", "ui"]
+	return ["player", "world", "system", "ui", "quest"]
