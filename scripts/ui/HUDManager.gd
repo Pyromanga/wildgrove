@@ -10,7 +10,7 @@ var controllers: Dictionary = {}
 # Abhängigkeiten, die wir via DI bekommen
 var _inventory: InventorySystem
 var _player_states: PlayerStateService
-
+var _uifactory: UIFactory
 
 # ─────────────────────────────────────────────
 # Phase 4: Configure (Enterprise DI)
