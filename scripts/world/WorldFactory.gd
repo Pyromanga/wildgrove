@@ -85,9 +85,7 @@ func _add_player(world: Node3D, pos: Vector3) -> void:
 	player.position = Vector3(pos.x, 0.0, pos.z)
 
 	world.add_child(player)
-	Logger.log_debug(
-		"Player instanziiert bei Position %s." % str(player.position), "WorldFactory"
-	)
+	Logger.log_debug("Player instanziiert bei Position %s." % str(player.position), "WorldFactory")
 
 
 func _add_trees(world: Node3D, positions: Array) -> void:
