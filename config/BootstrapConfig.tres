@@ -85,7 +85,7 @@ deps = Array[String](["savesystem", "data"])
 script = ExtResource("2_def")
 service_name = "hud"
 path = "res://scripts/ui/HUDManager.gd"
-deps = Array[String](["inventory", "playerstates", "uifactory"])
+deps = Array[String](["inventory", "playerstates", "ui_factory"])
 
 [sub_resource type="Resource" id="Resource_questservice"]
 script = ExtResource("2_def")
