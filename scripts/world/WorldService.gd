@@ -59,6 +59,19 @@ func on_world_scene_ready(world_root: Node3D) -> void:
 
 	Logger.log_info("Welt prozedural in World.tscn eingefügt.", LOG_CAT)
 
+	# HUD in die World-Szene einbinden.
+	# WARUM HIER: HUDManager ist ein ServiceNode (Kind des ServiceOrchestrator in
+	# Main.tscn). change_scene_to_file() ersetzt die gesamte Root-Szene — Main.tscn
+	# verschwindet, und damit alle seine Kinder-Nodes inklusive ServiceOrchestrator
+	# und HUDManager. Das HUD-Node (CanvasLayer) muss deshalb als Kind der
+	# World-Szene leben, nicht als Kind des HUDManagers selbst.
+	# HUDManager bleibt der Controller (Autoload-ähnlich via Services), aber das
+	# eigentliche CanvasLayer-Node wird in world_root eingehängt wo es überlebt.
+	if is_instance_valid(Services.hud):
+		Services.hud.attach_to_scene(world_root)
+	else:
+		Logger.log_error("HUDManager nicht verfügbar — HUD wird nicht angezeigt.", LOG_CAT)
+
 
 func _process(delta: float) -> void:
 	if is_instance_valid(Services.game_manager) and Services.game_manager.is_playing():
