@@ -29,15 +29,12 @@ func on_ready() -> void:
 # ─────────────────────────────────────────────
 
 ## Erstellt eine HUD-Instanz und hängt sie in den MainCanvas.
-func create_hud() -> HUD:
-	if not _ui_root:
-		_ui_root = _find_or_create_canvas()
-		
-	var hud := HUD.new()
-	hud.name = "GameHUD"
-	_ui_root.add_child(hud)
-	Logger.log_debug("HUD erstellt und an Canvas gebunden.", LOG_CAT)
-	return hud
+# UIFactory.gd
+# Ändere create_hud zu einem reinen Getter
+func get_main_canvas() -> CanvasLayer:
+    if not _ui_root:
+        _ui_root = _find_or_create_canvas()
+    return _ui_root
 
 ## Einfacher Popup-Helper (Enterprise-Erweiterung: Rückgabe des Popups für Callbacks)
 func show_popup(text: String) -> void:
