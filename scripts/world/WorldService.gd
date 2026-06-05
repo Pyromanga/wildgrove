@@ -83,15 +83,10 @@ func on_world_scene_ready(world_root: Node3D) -> void:
 
 	Logger.log_info("Welt prozedural in World.tscn eingefügt.", LOG_CAT)
 
-	# HUD in die World-Szene einbinden.
-	# WARUM HIER: HUDManager ist ein ServiceNode (Kind des ServiceOrchestrator).
-	# change_scene_to_file() ersetzt die Root-Szene — alle ihre Kinder-Nodes inklusive
-	# ServiceOrchestrator ÜBERLEBEN (weil er ein Autoload ist).
-	# Das HUD-CanvasLayer-Node wird als Kind von world_root eingehängt.
-	if is_instance_valid(Services.hud):
-		Services.hud.attach_to_scene(world_root)
-	else:
-		Logger.log_error("HUDManager nicht verfügbar — HUD wird nicht angezeigt.", LOG_CAT)
+	# Welt ist bereit — Signal emittieren statt HUDManager direkt aufzurufen.
+	# HUDManager lauscht auf EventBus.world.world_scene_ready in on_ready() und
+	# hängt das HUD selbst ein. WorldService kennt damit kein UI mehr.
+	EventBus.world.emit_world_scene_ready(world_root)
 
 
 # ─────────────────────────────────────────────
