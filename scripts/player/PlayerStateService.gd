@@ -2,33 +2,30 @@ extends ServiceNode
 class_name PlayerStateService
 
 ## PlayerStateService — Verwaltet den Mikro-State des Spielers (Input-Control).
-## Abhängigkeiten (deps): ["savesystem"]
+##
+## Kein SaveSystem mehr: Der Micro-State (FREE/BUSY/MENU) ist immer flüchtig.
+## Beim Laden wird er stets auf FREE zurückgesetzt — Speichern ist sinnlos.
+## Früher war "playerstates" als Dep von sich selbst auf SaveSystem eingetragen;
+## das ist jetzt entfernt (auch in BootstrapConfig.tres).
 
 const LOG_CAT := "PlayerStates"
 
 enum State { FREE, BUSY, MENU }
 
 var _current: State = State.FREE
-var _save_system: SaveSystem
 
 
 # ─────────────────────────────────────────────
 # Phase 4: Configure
 # ─────────────────────────────────────────────
-func configure(deps: Dictionary) -> void:
-	_save_system = deps.get("savesystem") as SaveSystem
-
-	if _save_system:
-		_save_system.register_save_provider(self)
-
-	Logger.log_debug("Konfiguriert.", LOG_CAT)
+func configure(_deps: Dictionary) -> void:
+	Logger.log_debug("Konfiguriert (kein Savesystem-Provider mehr).", LOG_CAT)
 
 
 # ─────────────────────────────────────────────
 # Phase 5: Activate
 # ─────────────────────────────────────────────
 func on_ready() -> void:
-	# Infrastruktur-Zugriff ist hier okay
 	EventBus.system.state_changed.connect(_on_game_state_changed)
 	Logger.log_info("PlayerStateService bereit.", LOG_CAT)
 
@@ -45,7 +42,6 @@ func set_state(new_state: State) -> void:
 	Logger.log_debug("Wechsel: %s → %s" % [_state_name(_current), _state_name(new_state)], LOG_CAT)
 	_current = new_state
 
-	# Nur Input-Reset triggern, wenn wir wieder Kontrolle übergeben
 	if new_state == State.FREE:
 		_reset_inputs()
 
@@ -67,21 +63,6 @@ func is_in_menu() -> bool:
 
 
 # ─────────────────────────────────────────────
-# Save-Interface (Optional, falls nötig)
-# ─────────────────────────────────────────────
-
-
-func get_save_key() -> String:
-	return "player_state"
-
-
-func get_save_data() -> Dictionary:
-	# Meistens wollen wir beim Laden FREE sein,
-	# aber wir könnten hier 'busy' speichern, falls Quests das brauchen.
-	return {"current_micro_state": _current}
-
-
-# ─────────────────────────────────────────────
 # Intern
 # ─────────────────────────────────────────────
 
@@ -92,7 +73,6 @@ func _reset_inputs() -> void:
 
 
 func _on_game_state_changed(game_state: int) -> void:
-	# Synchronisation mit der globalen State Machine
 	if game_state != GameEnums.State.PLAYING:
 		set_state(State.MENU)
 	else:
