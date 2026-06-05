@@ -12,6 +12,7 @@ const LOG_CAT := "DependencyResolver"
 # Öffentliche API
 # ─────────────────────────────────────────────
 
+
 func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 	if defs.is_empty():
 		return []
@@ -23,12 +24,12 @@ func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 
 	# Adjazenzliste und In-Degree aufbauen
 	var in_degree: Dictionary = {}
-	var adj: Dictionary       = {}
+	var adj: Dictionary = {}
 
 	for d in defs:
 		var key := d.service_name.to_lower()
 		in_degree[key] = 0
-		adj[key]       = []
+		adj[key] = []
 
 	for d in defs:
 		var key := d.service_name.to_lower()
@@ -36,7 +37,10 @@ func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 			var dep := (dep_raw as String).to_lower()
 			if not known.has(dep):
 				Logger.log_error(
-					"Unbekannte Abhängigkeit '%s' in '%s'! Prüfe bootstrap_config.tres." % [dep, d.service_name],
+					(
+						"Unbekannte Abhängigkeit '%s' in '%s'! Prüfe bootstrap_config.tres."
+						% [dep, d.service_name]
+					),
 					LOG_CAT
 				)
 				return []
@@ -70,13 +74,9 @@ func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 				cycle_members.append(d.service_name)
 
 		Logger.log_error(
-			"Zyklische Abhängigkeit erkannt! Beteiligte Services: %s" % str(cycle_members),
-			LOG_CAT
+			"Zyklische Abhängigkeit erkannt! Beteiligte Services: %s" % str(cycle_members), LOG_CAT
 		)
 		return []
 
-	Logger.log_info(
-		"Reihenfolge aufgelöst: [%s]" % ", ".join(result),
-		LOG_CAT
-	)
+	Logger.log_info("Reihenfolge aufgelöst: [%s]" % ", ".join(result), LOG_CAT)
 	return result
