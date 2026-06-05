@@ -11,5 +11,5 @@ func setup(visuals: ContextButtonVisuals, event_bus: Object) -> void:
 
 
 func _on_pressed() -> void:
-	# Nur noch ein Event feuern!
-	_event_bus.request_context_menu.emit()
+	# Nutzt die typisierte emit-Methode statt rohem Signal-Aufruf
+	_event_bus.emit_request_context_menu()
