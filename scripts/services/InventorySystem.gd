@@ -50,8 +50,12 @@ func configure(deps: Dictionary) -> void:
 
 
 func on_ready() -> void:
-	# Falls das Inventar beim Start Signale feuern muss, hier tun:
+	# Initialen Zustand publizieren
 	inventory_changed.emit(get_all_items())
+	# Loot-Events von InteractableComponent abhören — statt direkter Service-Kopplung.
+	# InteractableComponent ruft kein Services.inventory.add_item() mehr auf,
+	# sondern emittiert EventBus.world.loot_collected. Wir horchen hier darauf.
+	EventBus.world.loot_collected.connect(add_item)
 
 
 # ─────────────────────────────────────────────
