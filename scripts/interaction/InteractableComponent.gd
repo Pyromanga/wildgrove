@@ -2,6 +2,20 @@ extends Node3D
 class_name InteractableComponent
 
 ## InteractableComponent — Koppelt ein World-Objekt an das Interaktions-System.
+##
+## Kernregel: Diese Klasse emittiert NUR Events via EventBus — sie ruft keine
+## Services direkt auf. Früher stand hier Services.inventory.add_item() und
+## EventBus.ui.emit_overlay_changed() direkt im Completion-Handler. Das bedeutete,
+## dass jedes interagierbare Objekt in der Welt implizit das Inventar und das HUD
+## kennen musste.
+##
+## Jetzt:
+##   Drops    → EventBus.world.emit_loot_collected(item_id, qty)
+##              InventorySystem lauscht darauf und fügt die Items hinzu.
+##   Texte    → EventBus.world.emit_interaction_reward_text(text)
+##              NotificationController lauscht und zeigt den Text.
+##   3D-Bar   → verbindet sich mit EventBus.world (statt Services.interaction_executor)
+##              — gleiche Signale, aber über den globalen Bus abgerufen.
 
 @export var data: InteractableData
 @export var detection_radius: float = 3.0
@@ -22,7 +36,7 @@ func _ready() -> void:
 
 	_setup_visuals()
 	_setup_detection()
-	_connect_builder_signals()
+	_connect_world_events()
 
 
 # ─────────────────────────────────────────────
@@ -38,7 +52,6 @@ func _setup_visuals() -> void:
 	_label.visible = false
 	add_child(_label)
 
-	# NEU: Sicherer Zugriff über Services
 	if Services.factory3d:
 		_bar_3d = Services.factory3d.create_3d_bar(self)
 	else:
@@ -66,15 +79,12 @@ func _setup_detection() -> void:
 	)
 
 
-func _connect_builder_signals() -> void:
-	# NEU: Der InteractionBuilder ist jetzt ein Service
-	if not Services.builder:
-		Logger.log_warn("InteractionBuilder Service nicht verfügbar.", LOG_CAT)
-		return
-
-	Services.builder.interaction_started.connect(_on_started)
-	Services.builder.interaction_completed.connect(_on_ended)
-	Services.builder.interaction_cancelled.connect(_on_ended)
+func _connect_world_events() -> void:
+	# Verbindet sich mit EventBus.world — nicht mehr mit Services.interaction_executor.
+	# Beide emittieren dieselben Signale, aber der Bus ist die einzige Source of Truth.
+	EventBus.world.interaction_started.connect(_on_started)
+	EventBus.world.interaction_finished.connect(_on_ended)
+	EventBus.world.interaction_cancelled.connect(_on_ended)
 
 
 # ─────────────────────────────────────────────
@@ -83,38 +93,37 @@ func _connect_builder_signals() -> void:
 
 
 func start_default_interaction() -> void:
-	if not Services.builder:
-		Logger.log_error("InteractionBuilder Service fehlt!", LOG_CAT)
+	if not Services.interaction_executor:
+		Logger.log_error("InteractionExecutor Service fehlt!", LOG_CAT)
 		return
 
 	var action := InteractableAction.new(data.id, data.label)
 	action.duration = data.duration
 	action.on_complete = _handle_completion
 
-	Services.builder.execute_action(action)
+	Services.interaction_executor.execute_action(action)
 
 
 func _handle_completion() -> void:
-	# 1. XP vergeben über EventBus
+	# Drops — via EventBus, nicht direkt ins Inventar
+	for item_id in data.drops:
+		EventBus.world.emit_loot_collected(item_id, data.drops[item_id])
+
+	# XP — unverändert, da PlayerEvents der korrekte Kanal ist
 	if data.xp_type != "none":
 		EventBus.player.emit_xp(data.xp_type, data.xp_amount)
 
-	# 2. Loot ins Inventar
-	if Services.inventory:
-		for item_id in data.drops:
-			Services.inventory.add_item(item_id, data.drops[item_id])
-
-	# 3. UI-Benachrichtigung über EventBus
+	# Belohnungstext — via WorldEvent statt direktem UI-Aufruf
 	if not data.inspect_text.is_empty():
-		EventBus.ui.emit_overlay_changed("notification:" + data.inspect_text, true)
+		EventBus.world.emit_interaction_reward_text(data.inspect_text)
 
-	# 4. Rückmeldung an das Parent-Objekt (OakTree/IronOre)
+	# Rückmeldung an das Parent-Objekt (OakTree/IronOre)
 	if get_parent().has_method("_on_interacted"):
 		get_parent()._on_interacted(data.id)
 
 
 # ─────────────────────────────────────────────
-# Builder-Signal-Handler
+# World-Event-Handler (für 3D-Bar)
 # ─────────────────────────────────────────────
 
 
@@ -124,7 +133,6 @@ func _on_started(label: String, duration: float) -> void:
 
 	_bar_3d.visible = true
 	var t := create_tween()
-	# Update der Bar über die Factory3D Hilfsklasse
 	t.tween_method(func(v: float): _bar_3d.update(v), 0.0, 1.0, duration)
 
 
