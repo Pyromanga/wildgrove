@@ -78,6 +78,27 @@ func get_closest_interactable() -> Node3D:
 	return sensor.get_closest() if is_instance_valid(sensor) else null
 
 
+## Gibt die verfügbaren Aktionen des nächsten Interagierbaren als Array zurück.
+## Wird von ContextMenuController aufgerufen wenn der Spieler den Kontext-Button drückt.
+##
+## [STUB] Aktuell: gibt statische Dummy-Aktion zurück bis InteractableComponent
+## eine get_actions()-API bekommt. Zukünftig:
+##   var target := get_closest_interactable()
+##   if target and target.has_method("get_actions"):
+##       return target.get_actions()
+func get_context_actions() -> Array:
+	var target := get_closest_interactable()
+	if not is_instance_valid(target):
+		return []
+	## [STUB] InteractableComponent hat noch keine get_actions()-Methode.
+	## Wenn sie hinzugefügt wird: return target.get_actions()
+	## Für jetzt: eine Standard-Interaktion anbieten wenn ein Ziel da ist.
+	var fallback := InteractableAction.new("interact", "Interagieren")
+	fallback.duration = 1.5
+	fallback.on_complete = func(): target.start_default_interaction()
+	return [fallback]
+
+
 # ─────────────────────────────────────────────
 # Setup
 # ─────────────────────────────────────────────
