@@ -19,11 +19,14 @@ class_name ServiceNode extends Node
 # Lifecycle-Interface (von Pipeline aufgerufen)
 # ─────────────────────────────────────────────
 
+
 func init() -> void:
 	pass
 
+
 func on_ready() -> void:
 	pass
+
 
 func on_cleanup() -> void:
 	pass
