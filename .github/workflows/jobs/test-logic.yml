@@ -1,0 +1,56 @@
+name: Job Test Logic
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download Source
+        uses: actions/download-artifact@v4
+        with:
+          name: source-code
+      - name: Run Tests
+        run: |
+          mkdir -p addons
+          wget -q https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.zip -O gut.zip
+          unzip -q gut.zip
+          mv Gut-9.3.0/addons/gut addons/
+          rm -rf gut.zip Gut-9.3.0
+
+      - name: Download Godot
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+
+      - name: Setup GDFormat
+        run: |
+          pip install gdtoolkit
+        shell: bash
+
+      - name: Run GDFormat
+        run: |
+          # Liste alle .gd Dateien auf, filtere 'addons/' aus, 
+          # und pipe die Liste an xargs, um sie einzeln an gdformat zu übergeben
+          find . -name "*.gd" | grep -v "addons/" | xargs gdformat
+        shell: bash
+
+      - name: Force Import
+        run: |
+          # Öffnet Godot kurz im Headless-Modus, um alle Assets zu scannen
+          godot --headless --editor --quit
+          
+      - name: Run Tests
+        run: |
+          # Wir nutzen das GUT-Argument ohne das Gleichheitszeichen, 
+          # falls das die Ursache für den Parsing-Fehler ist.
+          godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
+
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: always() # Läuft auch, wenn Tests fehlschlagen
+        with:
+          report_paths: 'results.xml'
