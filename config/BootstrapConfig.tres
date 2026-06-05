@@ -31,7 +31,7 @@ deps = Array[String]([])
 script = ExtResource("2_def")
 service_name = "playerstates"
 path = "res://scripts/player/PlayerStateService.gd"
-deps = Array[String](["savesystem"])
+deps = Array[String]([])
 
 [sub_resource type="Resource" id="Resource_skill_system"]
 script = ExtResource("2_def")
@@ -45,10 +45,10 @@ service_name = "factory3d"
 path = "res://scripts/services/Factory3D.gd"
 deps = Array[String](["data"])
 
-[sub_resource type="Resource" id="Resource_builder"]
+[sub_resource type="Resource" id="Resource_interaction_executor"]
 script = ExtResource("2_def")
-service_name = "builder"
-path = "res://scripts/interaction/InteractionBuilder.gd"
+service_name = "interaction_executor"
+path = "res://scripts/interaction/InteractionExecutor.gd"
 deps = Array[String](["playerstates"])
 
 [sub_resource type="Resource" id="Resource_gamesave"]
@@ -69,11 +69,11 @@ service_name = "inventory"
 path = "res://scripts/services/InventorySystem.gd"
 deps = Array[String](["data", "savesystem"])
 
-[sub_resource type="Resource" id="Resource_ui_factory"]
+[sub_resource type="Resource" id="Resource_ui_canvas"]
 script = ExtResource("2_def")
-service_name = "ui_factory"
-path = "res://scripts/services/UIFactory.gd"
-deps = Array[String](["inventory"])
+service_name = "ui_canvas"
+path = "res://scripts/services/UICanvasService.gd"
+deps = Array[String]([])
 
 [sub_resource type="Resource" id="Resource_worldservice"]
 script = ExtResource("2_def")
@@ -95,4 +95,4 @@ deps = Array[String](["data", "savesystem"])
 
 [resource]
 script = ExtResource("1_config")
-services = Array[Resource]([SubResource("Resource_scenemanager"), SubResource("Resource_ticker"), SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_builder"), SubResource("Resource_gamesave"), SubResource("Resource_gamemanager"), SubResource("Resource_worldservice"), SubResource("Resource_inventory"), SubResource("Resource_ui_factory"), SubResource("Resource_hudmanager"), SubResource("Resource_questservice")])
+services = Array[Resource]([SubResource("Resource_scenemanager"), SubResource("Resource_ticker"), SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_factory3d"), SubResource("Resource_interaction_executor"), SubResource("Resource_gamesave"), SubResource("Resource_gamemanager"), SubResource("Resource_inventory"), SubResource("Resource_ui_canvas"), SubResource("Resource_worldservice"), SubResource("Resource_hudmanager"), SubResource("Resource_questservice")])
