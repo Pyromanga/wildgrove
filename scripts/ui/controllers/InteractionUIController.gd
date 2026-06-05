@@ -1,5 +1,12 @@
 class_name InteractionUIController
 
+## InteractionUIController — treibt den HUD-Fortschrittsbalken für Interaktionen.
+##
+## Empfängt EventBus.world-Signale (werden via world_events-Parameter übergeben).
+## Früher verband sich InteractableComponent direkt mit Services.builder-Signalen.
+## Jetzt ist EventBus.world die einzige Signal-Quelle — InteractionExecutor emittiert
+## dort hin, dieser Controller lauscht dort. Kein doppelter Signalkanal mehr.
+
 var _visuals: InteractionVisuals
 
 
