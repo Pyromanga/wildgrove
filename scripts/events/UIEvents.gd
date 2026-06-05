@@ -2,7 +2,10 @@ class_name UIEvents extends BaseEvents
 
 ## UIEvents.gd
 ## UI-spezifische Signale.
-## Zentraler Hub für Layout-Änderungen und UI-Zustände.
+##
+## request_context_menu — neu; wird von ContextButtonController gefeuert und
+## von ContextMenuController empfangen. Vorher fehlte die Deklaration hier,
+## was zur Laufzeit zu einem "Signal not found"-Fehler geführt hätte.
 
 signal layout_requested(state: String)
 signal menu_toggled(menu_name: String, is_visible: bool)
@@ -10,6 +13,10 @@ signal overlay_changed(overlay_type: String, active: bool)
 
 signal joystick_moved(origin: Vector2, offset: Vector2)
 signal joystick_toggled(is_active: bool, origin: Vector2)
+
+## Wird von ContextButtonController gesendet, wenn der Spieler den Kontext-Button drückt.
+## ContextMenuController empfängt es und öffnet das Menü mit den verfügbaren Aktionen.
+signal request_context_menu
 
 
 func _init() -> void:
@@ -41,3 +48,8 @@ func emit_joystick_toggled(is_active: bool, origin: Vector2 = Vector2.ZERO) -> v
 
 func emit_joystick_moved(origin: Vector2, offset: Vector2) -> void:
 	joystick_moved.emit(origin, offset)
+
+
+func emit_request_context_menu() -> void:
+	_log("Kontext-Menü angefordert.")
+	request_context_menu.emit()
