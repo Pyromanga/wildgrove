@@ -194,7 +194,7 @@ func _register_default_commands() -> void:
 				Logger.log_warn("GameManager nicht verfügbar.", "Terminal")
 				return
 			var state_int := Services.game_manager.get_state()
-			var state_name := GameEnums.State.keys()[state_int]
+			var state_name: String = GameEnums.State.keys()[state_int]
 			Logger.log_info("GameState: %s (%d)" % [state_name, state_int], "Terminal")
 	}
 
