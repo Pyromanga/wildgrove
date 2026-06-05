@@ -2,11 +2,10 @@ class_name InteractionButtonComponent extends BaseUIComponent
 
 ## InteractionButtonComponent — baut den InteractionButtonController.
 ##
-## FIX 1: Kein Override-Konflikt mehr (BaseUIComponent hat kein build()).
-## FIX 2: InteractionButtonController.setup() brauchte 2 Args (visuals, player),
-##         aber hier haben wir keinen Player-Zugriff zur Build-Zeit.
-##         Lösung: Controller holt sich den Player selbst via Gruppe "player"
-##         in _process() — setup() braucht nur noch visuals.
+## Bugfix: Der Controller extends Node und braucht _ready()/_process().
+## Deshalb muss er explizit via hud.add_child(ctrl) in den Tree eingefügt werden.
+## Vorher wurde er nur erstellt und in einem Dictionary gehalten — niemals im Tree,
+## also feuerte _process() nie → Button war immer stumm.
 
 
 func build(hud: HUD) -> InteractionButtonController:
@@ -14,4 +13,5 @@ func build(hud: HUD) -> InteractionButtonController:
 	var visuals := InteractionButtonVisuals.new(hud, pos)
 	var ctrl := InteractionButtonController.new()
 	ctrl.setup(visuals)
+	hud.add_child(ctrl)  # ← Pflicht: sonst _ready()/_process() feuern nie
 	return ctrl
