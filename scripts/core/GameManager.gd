@@ -31,7 +31,10 @@ func change_state(new_state: GameEnums.State) -> void:
 		return
 
 	Logger.log_info(
-		"State: %s → %s" % [GameEnums.State.keys()[_current_state], GameEnums.State.keys()[new_state]],
+		(
+			"State: %s → %s"
+			% [GameEnums.State.keys()[_current_state], GameEnums.State.keys()[new_state]]
+		),
 		LOG_CAT
 	)
 	_current_state = new_state
