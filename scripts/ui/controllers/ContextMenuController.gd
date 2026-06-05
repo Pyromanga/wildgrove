@@ -20,7 +20,7 @@ func setup(hud: HUD, event_bus: Object) -> void:
 
 
 func _on_open_requested() -> void:
-	var players := Engine.get_main_loop().root.get_nodes_in_group("player")
+	var players: Array = Engine.get_main_loop().root.get_nodes_in_group("player")
 	if players.is_empty():
 		return
 
