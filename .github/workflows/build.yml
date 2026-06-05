@@ -1,0 +1,329 @@
+name: Build Android APK
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Trigger: Nur bei Push/PR wenn die Commit-Message das Wort "App" enthält.
+# workflow_dispatch erlaubt manuellen Start über die GitHub-UI (kein Commit nötig).
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.3"
+  EXPORT_NAME: "WildGrove"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Globale Bedingung: "App" im Commit-Message ODER manueller Trigger.
+# Bei pull_request gibt es keinen head_commit → Fallback auf PR-Titel.
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ─── Gemeinsame Vorarbeit: Projektquelle auflösen ───────────────────────────
+  # Wenn zip/game.zip im Repo existiert und im letzten Commit geändert wurde
+  # (oder beim manuellen Trigger vorhanden ist), wird es entpackt und als
+  # Projektverzeichnis genutzt. Sonst: normales Repo-Root.
+  # Ergebnis wird als Output weitergegeben damit test- und build-Job
+  # dasselbe PROJECT_PATH nutzen.
+  resolve-source:
+    name: Resolve Project Source
+    runs-on: ubuntu-22.04
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, 'App') ||
+      contains(github.event.pull_request.title, 'App')
+    outputs:
+      project_path: ${{ steps.detect.outputs.project_path }}
+      used_zip: ${{ steps.detect.outputs.used_zip }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Detect source (zip vs. repo)
+        id: detect
+        run: |
+          ZIP="zip/game.zip"
+
+          if [ -f "$ZIP" ]; then
+            echo "📦 zip/game.zip gefunden — entpacke als Projektquelle."
+            mkdir -p _project_from_zip
+            unzip -q "$ZIP" -d _project_from_zip
+
+            # Godot-Projekt suchen: Verzeichnis das project.godot enthält
+            PROJECT_GODOT=$(find _project_from_zip -name "project.godot" -maxdepth 4 | head -1)
+            if [ -z "$PROJECT_GODOT" ]; then
+              echo "❌ Kein project.godot in game.zip gefunden!"
+              exit 1
+            fi
+            PROJECT_DIR=$(dirname "$PROJECT_GODOT")
+            echo "✅ Projekt in ZIP gefunden: $PROJECT_DIR"
+            echo "project_path=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
+            echo "used_zip=true"             >> "$GITHUB_OUTPUT"
+          else
+            echo "📁 Kein zip/game.zip — nutze Repo-Root als Projektquelle."
+            echo "project_path=."  >> "$GITHUB_OUTPUT"
+            echo "used_zip=false"  >> "$GITHUB_OUTPUT"
+          fi
+
+      # Den aufgelösten Projektstand als Artefakt zwischenspeichern damit
+      # test- und build-Job nicht beide das ZIP entpacken müssen.
+      - name: Upload resolved project
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-project
+          path: |
+            ${{ steps.detect.outputs.project_path == '.' && '.' || steps.detect.outputs.project_path }}
+            !.git/
+            !zip/
+          retention-days: 1
+
+  # ─── Unit Tests ─────────────────────────────────────────────────────────────
+  test-logic:
+    name: Run Unit Tests
+    runs-on: ubuntu-22.04
+    needs: resolve-source
+
+    steps:
+      - name: Download resolved project
+        uses: actions/download-artifact@v4
+        with:
+          name: resolved-project
+          path: project
+
+      - name: Install GUT Addon
+        run: |
+          mkdir -p project/addons
+          wget -q https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.zip -O gut.zip
+          unzip -q gut.zip
+          mv Gut-9.3.0/addons/gut project/addons/
+          rm -rf gut.zip Gut-9.3.0
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+
+      - name: Format check (gdformat)
+        run: |
+          pip install --quiet gdtoolkit
+          find project -name "*.gd" | grep -v "addons/" | xargs gdformat --check || true
+
+      - name: Force asset import
+        run: |
+          cd project
+          godot --headless --editor --quit 2>&1 || true
+          sleep 3
+
+      - name: Run GUT tests
+        run: |
+          cd project
+          godot --headless -s res://addons/gut/gut_cmdln.gd \
+            -gdir=res://tests \
+            -gexit \
+            2>&1 || true
+
+      - name: Publish test report
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: 'project/results.xml'
+
+  # ─── Android Build ───────────────────────────────────────────────────────────
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-22.04
+    needs: resolve-source
+    timeout-minutes: 30
+
+    steps:
+      # Aufgelöste Projektquelle (Repo-Root oder entpacktes ZIP) herunterladen
+      - name: Download resolved project
+        uses: actions/download-artifact@v4
+        with:
+          name: resolved-project
+          path: project
+
+      - name: Show source info
+        run: |
+          echo "Projektquelle: ${{ needs.resolve-source.outputs.project_path }}"
+          echo "ZIP genutzt:   ${{ needs.resolve-source.outputs.used_zip }}"
+          echo "project.godot: $(find project -name 'project.godot' | head -1)"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools & NDK
+        run: |
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;23.2.8568313"
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        run: |
+          URL="https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable"
+          wget -q "${URL}/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          godot --version
+
+      - name: Download Android export templates
+        run: |
+          URL="https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable"
+          TPL="Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz"
+          wget -q "${URL}/${TPL}" -O templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          unzip -q templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Generate debug keystore
+        run: |
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Debug, O=Android, C=US"
+
+      - name: Ensure export_presets.cfg exists
+        run: |
+          PRESETS="project/export_presets.cfg"
+          if [ ! -f "$PRESETS" ]; then
+            echo "Kein export_presets.cfg — erstelle Debug-Preset."
+            cat > "$PRESETS" << 'EOF'
+          [preset.0]
+          name="Android"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/android/WildGrove-debug.apk"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.0.options]
+          gradle_build/use_gradle_build=false
+          architectures/armeabi-v7a=false
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug="../../debug.keystore"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
+          package/unique_name="com.yourname.wildgrove"
+          package/name="WildGrove"
+          package/signed=true
+          package/classify_as_game=true
+          screen/immersive_mode=true
+          screen/orientation=6
+          screen/support_small=false
+          screen/support_normal=true
+          screen/support_large=true
+          screen/support_xlarge=true
+          EOF
+          fi
+
+      - name: Set version code from git commit count
+        run: |
+          # Checkout nur für git-History (project selbst kommt aus Artifact)
+          git init /tmp/gitref
+          cd /tmp/gitref
+          git remote add origin "${{ github.server_url }}/${{ github.repository }}"
+          git fetch --depth=1 origin "${{ github.sha }}" 2>/dev/null || true
+          COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+          echo "VERSION_CODE=$COUNT" >> $GITHUB_ENV
+          echo "Version code: $COUNT"
+          sed -i "s/config\/version=.*/config\/version=\"0.1.${COUNT}\"/" \
+            "$(find /home/runner/work -name project.godot | head -1)" 2>/dev/null || true
+
+      - name: Create output directory
+        run: mkdir -p project/build/android
+
+      - name: Import project assets
+        run: |
+          cd project
+          godot --headless --editor --quit 2>&1 || true
+          sleep 5
+
+      - name: Export APK
+        run: |
+          cd project
+          godot --headless \
+            --export-debug "Android" \
+            "build/android/${{ env.EXPORT_NAME }}-debug.apk" \
+            2>&1
+
+      - name: Verify APK
+        run: |
+          APK="project/build/android/${{ env.EXPORT_NAME }}-debug.apk"
+          if [ -f "$APK" ]; then
+            SIZE=$(du -sh "$APK" | cut -f1)
+            echo "✅ APK erstellt: $APK ($SIZE)"
+          else
+            echo "❌ APK nicht gefunden!"
+            exit 1
+          fi
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildGrove-debug-APK
+          path: project/build/android/*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload full source as ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildGrove-Full-Source
+          path: |
+            project/
+            !project/.git/
+            !project/build/
+          retention-days: 7
+
+  # ─── GitHub Release (nur bei Tag-Push) ──────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: build-android
+    runs-on: ubuntu-22.04
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: WildGrove-debug-APK
+          path: ./release
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./release/*.apk
+          generate_release_notes: true
+          name: "WildGrove ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
