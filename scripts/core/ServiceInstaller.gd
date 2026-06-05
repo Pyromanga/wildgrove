@@ -15,9 +15,10 @@ const LOG_CAT := "ServiceInstaller"
 # Öffentliche API
 # ─────────────────────────────────────────────
 
+
 func install(registry: ServiceRegistry) -> ServiceRegistry:
-    # Optional: Prüfe hier, ob kritische Services da sind
-    if not registry.has_service("world"):
-        Logger.log_warn("WorldService fehlt beim Installieren!", "Installer")
-    
-    return registry
+	# Optional: Prüfe hier, ob kritische Services da sind
+	if not registry.has_service("world"):
+		Logger.log_warn("WorldService fehlt beim Installieren!", "Installer")
+
+	return registry
