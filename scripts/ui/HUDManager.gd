@@ -50,9 +50,10 @@ func configure(deps: Dictionary) -> void:
 # Phase 5: on_ready
 # ─────────────────────────────────────────────
 func on_ready() -> void:
-	# HUDManager selbst ist ein Autoload-Service (ServiceOrchestrator hängt ihn ein).
-	# Das HUD wird NICHT hier eingefügt — es wartet auf attach_to_scene().
-	Logger.log_info("HUDManager bereit. HUD-Node wartet auf attach_to_scene()-Aufruf.", LOG_CAT)
+	# Lauscht auf world_scene_ready statt direkt von WorldService.on_world_scene_ready()
+	# aufgerufen zu werden. WorldService kennt damit kein UI mehr — sauber getrennt.
+	EventBus.world.world_scene_ready.connect(attach_to_scene)
+	Logger.log_info("HUDManager bereit. Wartet auf EventBus.world.world_scene_ready.", LOG_CAT)
 
 
 # ─────────────────────────────────────────────
@@ -91,6 +92,12 @@ func attach_to_scene(scene_root: Node) -> void:
 	Logger.log_debug("HUD-Node in Szene '%s' eingehängt." % scene_root.name, LOG_CAT)
 
 	_setup_controllers()
+
+	# Benachrichtigungs-Controller an World-Events koppeln (nach dem Build).
+	var notif := controllers.get("notification") as NotificationController
+	if notif:
+		EventBus.world.interaction_reward_text.connect(notif.show)
+
 	Logger.log_info("HUD-System aktiv. %d Controller initialisiert." % controllers.size(), LOG_CAT)
 
 
