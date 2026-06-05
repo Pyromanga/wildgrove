@@ -37,10 +37,13 @@ func configure(deps: Dictionary) -> void:
 
 
 func on_ready() -> void:
-	# Fix: EventBus.inventory existiert nicht — InventorySystem hat ein eigenes Signal
-	# Wir connecten uns auf das InventorySystem-Signal über den Service-Container
-	if is_instance_valid(Services.inventory):
-		Services.inventory.inventory_changed.connect(_on_inventory_changed)
+	# Früher: Services.inventory.inventory_changed.connect(...)
+	# Das ist ein Anti-Pattern in on_ready() — Services.inventory könnte null sein,
+	# und QuestService koppelt sich direkt an einen anderen Service statt an den Bus.
+	# Jetzt: auf EventBus.world.loot_collected lauschen — gleiche Information,
+	# aber entkoppelt. Quests können so auf Item-Picks reagieren ohne InventorySystem zu kennen.
+	EventBus.world.loot_collected.connect(_on_loot_collected)
+	EventBus.player.xp_gained.connect(_on_xp_gained)
 	Logger.log_info("QuestService aktiv.", LOG_CAT)
 
 
@@ -84,10 +87,18 @@ func complete_quest(quest_id: String) -> void:
 # ─────────────────────────────────────────────
 
 
-func _on_inventory_changed(items: Array) -> void:
-	Logger.log_trace("Inventar geändert — prüfe Quest-Ziele (%d Items)" % items.size(), {}, LOG_CAT)
+func _on_loot_collected(item_id: String, quantity: int) -> void:
+	Logger.log_trace("Loot aufgenommen: %dx '%s' — prüfe Quest-Ziele" % [quantity, item_id], {}, LOG_CAT)
+	## [STUB] Quest-Ziel-Fortschritt für Item-Sammlung hier implementieren.
+	## Beispiel: _check_collection_objectives(item_id, quantity)
 
 
-func _restore_from_save(data: Dictionary) -> void:
-	active_quests = data.get("active", {})
-	completed_quests = data.get("completed", [])
+func _on_xp_gained(skill_name: String, _amount: int) -> void:
+	Logger.log_trace("XP gewonnen: '%s' — prüfe Quest-Ziele" % skill_name, {}, LOG_CAT)
+	## [STUB] Quest-Ziel-Fortschritt für Skill-Nutzung hier implementieren.
+	## Beispiel: _check_skill_objectives(skill_name)
+
+
+func _restore_from_save(saved_data: Dictionary) -> void:
+	active_quests = saved_data.get("active", {})
+	completed_quests = saved_data.get("completed", [])
