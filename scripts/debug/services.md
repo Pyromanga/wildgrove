@@ -1,5 +1,5 @@
 # 🛠️ WildGrove — Service Registry & Responsibilities
-*Stand: 2026 — Immer synchron halten mit BootstrapConfig.tres und Services.gd*
+*Stand: 2026-06 — Immer synchron halten mit BootstrapConfig.tres und Services.gd*
 
 ---
 
@@ -14,12 +14,12 @@
 | **PlayerStateService** | `playerstates` | `ServiceNode` | Mikro-State des Spielers (FREE/BUSY/MENU) | `savesystem` |
 | **SkillSystem** | `skill_system` | `ServiceNode` | XP-Kurven, Level-Ups, Skill-Tracking | `data`, `savesystem` |
 | **Factory3D** | `factory3d` | `ServiceNode` | Programmatische 3D-Objekte (Bäume, Bars) | `data` |
-| **InteractionBuilder** | `builder` | `ServiceNode` | Timed-Interaction-Ablauf, Tween-Management | `playerstates` |
+| **InteractionExecutor** | `interaction_executor` | `ServiceNode` | Timed-Interaction-Ablauf, Tween-Management | `playerstates` |
 | **GameSaveService** | `gamesave` | `ServiceNode` | Koordinator für vollständige Speichervorgänge | `savesystem` |
 | **GameManager** | `gamemanager` | `ServiceNode` | State Machine (BOOT→MENU→PLAYING…) | `savesystem`, `playerstates`, `scenemanager` |
-| **WorldService** | `world` | `ServiceNode` | Welt-Daten, Zeit-Zyklus, HUD-Attachment | `savesystem`, `data` |
+| **WorldService** | `world` | `ServiceNode` | Welt-Daten, Zeit-Zyklus, prozeduale Generierung | `savesystem`, `data` |
 | **InventorySystem** | `inventory` | `ServiceNode` | Item-Add/Remove, Item-DB, Save-Provider | `data`, `savesystem` |
-| **UIFactory** | `ui_factory` | `ServiceNode` | Programmatische UI-Canvas-Erstellung | `inventory` |
+| **UICanvasService** | `ui_canvas` | `ServiceNode` | Root-CanvasLayer bereitstellen | keine |
 | **HUDManager** | `hud` | `ServiceNode` | HUD-Controller-Setup, attach_to_scene | `inventory`, `playerstates` |
 | **QuestService** | `quest` | `ServiceNode` | Quest-Tracking, Objectives, Rewards | `data`, `savesystem` |
 
@@ -28,16 +28,16 @@
 ## Entity-System (nicht über BootstrapConfig registriert)
 
 | Klasse | Ort | Zuständigkeit |
-|--------|-----|--------------|
+|--------|-----|--------------| 
 | **EntityOrchestrator** | `scripts/core/EntityOrchestrator.gd` | Spawn/Despawn/Pool von World-Entities |
 | **OakTree** | `scripts/world/objects/OakTree.gd` | Fällbarer Baum (InteractableComponent) |
 | **IronOre** | `scripts/world/objects/IronOre.gd` | Abbaubares Erz (InteractableComponent) |
+| **InteractionSensor** | `scripts/interaction/InteractionSensor.gd` | Area3D-Child des Players; erkennt Interagierbare |
+| **InteractableComponent** | `scripts/interaction/InteractableComponent.gd` | Node3D-Child von Entities; koppelt an Interaktions-System |
 
 ---
 
 ## Save-Provider
-
-Services, die am Save-System teilnehmen (implementieren `get_save_key()` + `get_save_data()`):
 
 | Service | Save-Key | Gespeicherte Daten |
 |---------|----------|-------------------|
@@ -45,7 +45,6 @@ Services, die am Save-System teilnehmen (implementieren `get_save_key()` + `get_
 | InventorySystem | `inventory` | `{ "item_id": quantity }` |
 | SkillSystem | `skills` | `{ "skill_name": { xp, level } }` |
 | QuestService | `quest_progress` | `{ active: {}, completed: [] }` |
-| PlayerStateService | `player_state` | `{ current_micro_state: int }` |
 | WorldService | `world_state` | `{ day_time, day_count, tree_positions, player_pos }` |
 
 ---
@@ -68,13 +67,31 @@ Services, die am Save-System teilnehmen (implementieren `get_save_key()` + `get_
 | `level_up` | `skill, new_level` | SkillSystem |
 | `movement_interrupted` | — | Player |
 | `inventory_changed` | `items: Array` | InventorySystem |
+| `speed_modifier_changed` | `id, multiplier` | extern |
+| `speed_modifier_removed` | `id` | extern |
 
 ### `EventBus.world`
 | Signal | Parameter | Wer feuert |
 |--------|-----------|-----------|
-| `interaction_started` | `label, duration` | InteractionBuilder |
-| `interaction_finished` | `label` | InteractionBuilder |
+| `interaction_started` | `label, duration` | InteractionExecutor |
+| `interaction_finished` | `label` | InteractionExecutor |
+| `interaction_cancelled` | `label` | InteractionExecutor |
+| `world_scene_ready` | `world_root: Node` | WorldService |
+| `loot_collected` | `item_id, quantity` | InteractableComponent |
+| `interaction_reward_text` | `text` | InteractableComponent |
+| `proximity_changed` | `target: Node3D, in_range: bool` | InteractionSensor |
 | `time_of_day_changed` | `hour` | WorldService |
+| `chunk_loaded` / `chunk_unloaded` | `chunk_id: Vector2i` | WorldService (future) |
+
+### `EventBus.ui`
+| Signal | Parameter | Wer feuert |
+|--------|-----------|-----------|
+| `joystick_toggled` | `is_active: bool, origin: Vector2` | TouchInput (bridged) |
+| `joystick_moved` | `origin: Vector2, offset: Vector2` | TouchInput (bridged) |
+| `request_context_menu` | — | ContextButtonController |
+| `layout_requested` | `state: String` | extern |
+| `menu_toggled` | `menu_name, is_visible` | extern |
+| `overlay_changed` | `overlay_type, active` | extern |
 
 ### `EventBus.quest`
 | Signal | Parameter | Wer feuert |
@@ -87,12 +104,28 @@ Services, die am Save-System teilnehmen (implementieren `get_save_key()` + `get_
 
 ## Boot-Reihenfolge (nach Dependency-Auflösung)
 
-Kahn's Algorithmus berechnet die Reihenfolge zur Laufzeit. Typische Reihenfolge:
 ```
 ticker → scenemanager → savesystem → data
   → playerstates → skill_system → factory3d
-  → builder → gamesave → gamemanager → inventory
-  → ui_factory → world → hud → quest
+  → interaction_executor → gamesave → gamemanager → inventory
+  → ui_canvas → world → hud → quest
+```
+
+---
+
+## UI-Komponenten Architektur
+
+HUD-Komponenten folgen dem **Component/Controller/Visuals**-Muster:
+
+```
+HUDBuilder.build_all()
+  └── XyzComponent.build(hud, deps)
+        ├── XyzVisuals.new(hud)      ← Erstellt Godot-Nodes, hängt sie in HUD ein
+        ├── XyzController.new()      ← Enthält Logik, lauscht auf Events
+        └── ctrl.setup(visuals, ...) ← Koppelt Logik an Visuals
+
+Regel: Controller die _ready()/_process() brauchen → extends Node → hud.add_child(ctrl)
+Derzeit betrifft das: InteractionButtonController, ContextButtonController
 ```
 
 ---

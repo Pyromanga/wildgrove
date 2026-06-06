@@ -5,7 +5,12 @@ class_name SystemEvents extends BaseEvents
 
 signal state_changed(state: int)
 signal setting_changed(key: String, value: Variant)
+## Internes Notify: von SaveSystem.save_game() emittiert wenn Vorgang beginnt.
+## NUR für UI-Feedback/Logging nutzen — NICHT um save_all() zu triggern!
 signal save_started
+## Externer Auslöser: von UI/Buttons emittiert um einen Speichervorgang anzufordern.
+## GameSaveService lauscht hierauf und ruft save_all() auf.
+signal save_requested
 signal save_completed(success: bool)
 signal load_started
 signal load_completed(success: bool)
@@ -30,6 +35,11 @@ func emit_setting_changed(key: String, value: Variant) -> void:
 func emit_save_started() -> void:
 	_log_info("Speichervorgang gestartet...")
 	save_started.emit()
+
+
+func emit_save_requested() -> void:
+	_log_info("Speichervorgang angefordert (extern).")
+	save_requested.emit()
 
 
 func emit_save_completed(success: bool) -> void:

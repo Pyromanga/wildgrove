@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/SkillDefinition.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+id = "woodcutting"
+display_name = "Holzfällen"
+description = "Die Kunst, Bäume zu fällen und Holz zu verarbeiten."
+xp_to_level_up = Array[int]([100, 250, 500, 900, 1400, 2000, 2800, 3800, 5000, 6500])
+xp_scaling_factor = 1.5
+max_level = 99

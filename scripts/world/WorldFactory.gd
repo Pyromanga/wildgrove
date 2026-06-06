@@ -1,22 +1,52 @@
 extends RefCounted
 class_name WorldFactory
 
+## WorldFactory — Erzeugt die STATISCHE Spielwelt (Geometrie + Licht + Player).
+##
+## WICHTIG — Was gehört NICHT hierher:
+##   Entities (OakTree, IronOre, NPCs) → EntityOrchestrator (via WorldService)
+##   Services, UI → jeweilige Manager
+##
+## Anti-Pattern VERHINDERT:
+##   VERBOTEN: Node3D.new() + node.set_script(script)
+##   GRUND: set_script() nach Node-Erstellung triggert _ready() ein zweites Mal
+##          (Godot's Engine ruft _ready() beim Tree-Eintritt auf, und nochmal wenn
+##          das Script gesetzt wird). Bei CharacterBody3D: undefiniertes Physik-Verhalten.
+##   KORREKT: script.new() → direkte Instanz MIT Script von Anfang an.
+##            Damit gibt es exakt einen _ready()-Aufruf nach add_child().
 
+const LOG_CAT := "WorldFactory"
+
+
+## Erzeugt die statische Welt-Geometrie ohne Entities.
+## Gibt einen temporären Container-Node zurück — WorldService verschiebt dessen Kinder
+## in world_root (die echte World.tscn).
+##
+## Enthält: Beleuchtung, Himmel, Boden, Player.
+## NICHT enthalten: OakTree, IronOre, NPCs → werden von WorldService+EntityOrchestrator gespawnt.
 func create_world() -> Node3D:
-	Logger.log_debug("create_world() start", "WorldFactory")
+	var t := Logger.log_begin("create_world()", LOG_CAT)
 	var world := Node3D.new()
-	world.name = "World"
+	world.name = "WorldContainer"
 
 	_add_environment(world)
 	_add_ground(world)
-	_add_player(world, Vector3(0, 1, 0))
-	_add_trees(world, [Vector3(5, 0, 5), Vector3(-6, 0, 4)])
+	_add_player(world, Vector3(0, 0, 0))
 
-	Logger.log_debug("create_world() fertig", "WorldFactory")
+	Logger.log_end("create_world()", t, LOG_CAT)
+	Logger.log_info(
+		"Statische Welt erstellt. Nodes: %d." % world.get_child_count(), LOG_CAT
+	)
 	return world
 
 
+# ─────────────────────────────────────────────
+# Umgebung
+# ─────────────────────────────────────────────
+
+
 func _add_environment(world: Node3D) -> void:
+	# Sonne
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
 	sun.rotation_degrees = Vector3(-45, 30, 0)
@@ -24,6 +54,7 @@ func _add_environment(world: Node3D) -> void:
 	sun.shadow_enabled = true
 	world.add_child(sun)
 
+	# Prozeduraler Himmel
 	var env_node := WorldEnvironment.new()
 	env_node.name = "WorldEnvironment"
 	var env := Environment.new()
@@ -38,19 +69,27 @@ func _add_environment(world: Node3D) -> void:
 	env.ambient_light_energy = 0.5
 	env_node.environment = env
 	world.add_child(env_node)
-	Logger.log_debug("Environment OK", "WorldFactory")
+
+	Logger.log_debug("Umgebung (Sonne + Himmel) erstellt.", LOG_CAT)
+
+
+# ─────────────────────────────────────────────
+# Boden
+# ─────────────────────────────────────────────
 
 
 func _add_ground(world: Node3D) -> void:
 	var ground := StaticBody3D.new()
 	ground.name = "Ground"
 
+	# Kollisionsform
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(100, 0.2, 100)
 	col.shape = shape
 	ground.add_child(col)
 
+	# Visuell
 	var mesh_inst := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(100, 0.2, 100)
@@ -60,52 +99,44 @@ func _add_ground(world: Node3D) -> void:
 	mesh_inst.material_override = mat
 	ground.add_child(mesh_inst)
 
+	# Y = -0.1 damit Oberfläche bei Y = 0 liegt (BoxShape height=0.2 → -0.1 bis +0.1)
 	ground.position.y = -0.1
 	world.add_child(ground)
-	Logger.log_debug("Boden OK", "WorldFactory")
+
+	Logger.log_debug("Boden erstellt (100x100, y=-0.1).", LOG_CAT)
+
+
+# ─────────────────────────────────────────────
+# Player
+# ─────────────────────────────────────────────
 
 
 func _add_player(world: Node3D, pos: Vector3) -> void:
-	# WICHTIG: Nicht CharacterBody3D.new() + set_script() verwenden!
-	# set_script() nach add_child() triggert _ready() ein zweites Mal und
-	# erzeugt undefiniertes Verhalten bei CharacterBody3D (Physik-Engine sieht
-	# den Node zweimal). Stattdessen: Script laden und direkt instanziieren —
-	# so gibt es genau einen _ready()-Aufruf, nach dem vollständigen add_child().
-	var PlayerClass: GDScript = load("res://scripts/player/Player.gd")
-	if not PlayerClass:
-		Logger.log_error("Player.gd nicht ladbar — Pfad korrekt?", "WorldFactory")
+	## KORREKTE Instanziierung — KEIN set_script() nach new()!
+	##
+	## Falsch (Anti-Pattern):
+	##   var p = CharacterBody3D.new()
+	##   p.set_script(load("res://scripts/player/Player.gd"))  ← doppeltes _ready()!
+	##
+	## Richtig:
+	##   var PlayerClass := load("res://scripts/player/Player.gd")
+	##   var p: CharacterBody3D = PlayerClass.new()
+	##   → _ready() feuert genau EINMAL nach add_child()
+
+	var player_script: GDScript = load("res://scripts/player/Player.gd")
+	if not player_script:
+		Logger.log_error("Player.gd nicht ladbar — Pfad korrekt?", LOG_CAT)
 		return
 
-	var player: CharacterBody3D = PlayerClass.new()
+	var player: CharacterBody3D = player_script.new()
 	player.name = "Player"
 
-	# Y = 0.0: Boden liegt bei position.y = -0.1 mit BoxShape height=0.2, also
-	# Oberfläche bei y = 0.0. CollisionShape im Player ist bei y=0.9 zentriert
-	# (CapsuleHeight=1.8), daher steht player.position.y = 0.0 direkt auf dem Boden.
+	## Y-Position: Boden-Oberfläche liegt bei y=0.
+	## CollisionShape (Capsule height=1.8) hat Zentrum bei y=0.9.
+	## Player auf y=0 gesetzt → steht direkt auf dem Boden.
 	player.position = Vector3(pos.x, 0.0, pos.z)
 
 	world.add_child(player)
-	Logger.log_debug("Player instanziiert bei Position %s." % str(player.position), "WorldFactory")
-
-
-func _add_trees(world: Node3D, positions: Array) -> void:
-	# Wir laden das Skript für die Eiche
-	var OakScript = load("res://scripts/world/objects/OakTree.gd")
-
-	for pos in positions:
-		# Wir erstellen einen einfachen Node3D als Container
-		var tree = Node3D.new()
-		tree.name = "OakTree"
-		tree.position = pos
-
-		# Wir hängen das OakTree-Skript ran.
-		# Dieses Skript (das du vorhin gepostet hast) erledigt den Rest:
-		# 1. Es ruft Kernel.factory3d auf für die Grafik.
-		# 2. Es erstellt die InteractableComponent.
-		tree.set_script(OakScript)
-
-		world.add_child(tree)
-
-	Logger.log_debug(
-		str(positions.size()) + " Bäume via Komponenten-System erstellt.", "WorldFactory"
+	Logger.log_info(
+		"Player instanziiert. Position: %s." % str(player.position), LOG_CAT
 	)

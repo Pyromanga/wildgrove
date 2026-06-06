@@ -80,7 +80,9 @@ func boot() -> void:
 		ticker.start_ticking()
 		Logger.log_info("Ticker-Service gestartet.", LOG_CAT)
 	else:
-		Logger.log_warn("Kein Ticker-Service in Registry — on_tick() wird nicht aufgerufen.", LOG_CAT)
+		Logger.log_warn(
+			"Kein Ticker-Service in Registry — on_tick() wird nicht aufgerufen.", LOG_CAT
+		)
 
 	# --- Phase 7: Installation & Globaler Zugriff ---
 	var final_registry := installer.install(registry)

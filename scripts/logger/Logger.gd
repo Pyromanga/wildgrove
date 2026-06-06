@@ -182,7 +182,9 @@ func _print_log(msg: String, cat: String, level: int, data: Dictionary = {}) -> 
 
 	var time: String = Time.get_datetime_string_from_system(false, true)
 	var level_keys: Array = LogLevel.keys()
-	var lvl_str: String = level_keys[level] if level >= 0 and level < level_keys.size() else "UNKNOWN"
+	var lvl_str: String = (
+		level_keys[level] if level >= 0 and level < level_keys.size() else "UNKNOWN"
+	)
 
 	# Automatischer Stacktrace bei ERROR
 	var final_msg := msg

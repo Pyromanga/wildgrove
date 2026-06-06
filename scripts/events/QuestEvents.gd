@@ -17,6 +17,8 @@ signal quest_objective_updated(quest_id: String, objective_id: String, current: 
 signal quest_completed(quest_id: String, reward: QuestReward)
 signal quest_failed(quest_id: String)
 signal quest_unlocked(quest_id: String)
+## Für custom_signals in QuestReward — beliebige Quest-Ereignisse ohne eigenes Signal.
+signal reward_custom_signal(signal_key: String)
 
 
 func _init() -> void:
@@ -48,3 +50,8 @@ func emit_quest_failed(quest_id: String) -> void:
 func emit_quest_unlocked(quest_id: String) -> void:
 	_log_info("Quest freigeschalten: '%s'" % quest_id)
 	quest_unlocked.emit(quest_id)
+
+
+func emit_reward_signal(signal_key: String) -> void:
+	_log("Custom-Reward-Signal: '%s'" % signal_key)
+	reward_custom_signal.emit(signal_key)

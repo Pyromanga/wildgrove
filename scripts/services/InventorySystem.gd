@@ -3,41 +3,48 @@ class_name InventorySystem
 
 ## InventorySystem — Verwaltet das Spieler-Inventar.
 ## Abhängigkeiten (deps): ["data", "savesystem"]
+##
+## REFACTOR (Session 4):
+##   _load_item_database() entfernt — InventorySystem öffnet kein DirAccess mehr.
+##   Item-Registry kommt jetzt von DataService.get_all_items() (zentrales Repository).
 
 signal inventory_changed(items: Array)
 
 const LOG_CAT := "Inventory"
-const ITEMS_PATH := "res://data/items/"
 const SAVE_KEY := "inventory"
 
-var _items: Dictionary = {}  # { "item_id": quantity }
-var _item_registry: Dictionary = {}  # { "item_id": ItemDefinition }
+var _items: Dictionary = {}           # { "item_id": quantity }
+var _item_registry: Dictionary = {}   # { "item_id": ItemDefinition } — von DataService
 
-# Lokale Referenz für Typsicherheit und DI
 var _save_system: SaveSystem
 
+
 # ─────────────────────────────────────────────
-# Phase 4: Configure (Enterprise DI)
+# Phase 4: Configure (DI)
 # ─────────────────────────────────────────────
 
 
 func configure(deps: Dictionary) -> void:
-	# 1. Statische Item-DB laden
-	_load_item_database()
+	var t := Logger.log_begin("InventorySystem.configure()", LOG_CAT)
 
-	# 2. Dependency Injection
+	# Item-Registry aus DataService — kein eigenes DirAccess mehr
+	var data_service := deps.get("data") as DataService
+	if is_instance_valid(data_service):
+		_item_registry = data_service.get_all_items()
+		Logger.log_debug("Item-Registry von DataService: %d Items." % _item_registry.size(), LOG_CAT)
+	else:
+		Logger.log_error("DataService fehlt — Item-Registry leer!" , LOG_CAT)
+
 	_save_system = deps.get("savesystem") as SaveSystem
-
 	if _save_system:
 		_save_system.register_save_provider(self)
-
-		# Initialen State sicher aus dem SaveSystem-Cache holen
-		var saved = _save_system.get_state_for(SAVE_KEY)
-		if saved is Dictionary and not saved.is_empty():
+		var saved: Variant = _save_system.get_state_for(SAVE_KEY)
+		if saved is Dictionary and not (saved as Dictionary).is_empty():
 			_restore_from_save(saved)
 	else:
 		Logger.log_error("Abhängigkeit 'savesystem' fehlt!", LOG_CAT)
 
+	Logger.log_end("InventorySystem.configure()", t, LOG_CAT)
 	Logger.log_info(
 		"Initialisiert. %d Items in DB, %d im Rucksack." % [_item_registry.size(), _items.size()],
 		LOG_CAT
@@ -128,23 +135,6 @@ func get_item_info(item_id: String) -> ItemDefinition:
 # ─────────────────────────────────────────────
 # Intern
 # ─────────────────────────────────────────────
-
-
-func _load_item_database() -> void:
-	if not DirAccess.dir_exists_absolute(ITEMS_PATH):
-		Logger.log_warn("Items-Pfad fehlt: '%s'" % ITEMS_PATH, LOG_CAT)
-		return
-
-	var dir := DirAccess.open(ITEMS_PATH)
-	dir.list_dir_begin()
-	var file_name = dir.get_next()
-
-	while file_name != "":
-		if file_name.ends_with(".tres") or file_name.ends_with(".res"):
-			var item = load(ITEMS_PATH + file_name) as ItemDefinition
-			if item and not item.id.is_empty():
-				_item_registry[item.id] = item
-		file_name = dir.get_next()
 
 
 func _restore_from_save(saved: Dictionary) -> void:

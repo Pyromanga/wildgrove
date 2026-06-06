@@ -17,7 +17,7 @@ func setup(visuals: InteractionVisuals, world_events: Object) -> void:
 	world_events.interaction_cancelled.connect(_on_cancelled)
 
 
-func _on_started(_label: String, duration: float) -> void:
+func _on_started(_action_id: String, _label: String, duration: float) -> void:
 	_visuals.set_value(0)
 	_visuals.set_visible(true)
 
@@ -25,9 +25,9 @@ func _on_started(_label: String, duration: float) -> void:
 	tween.tween_property(_visuals.bar, "value", 100.0, duration)
 
 
-func _on_finished(_label: String) -> void:
+func _on_finished(_action_id: String, _label: String) -> void:
 	_visuals.set_visible(false)
 
 
-func _on_cancelled(_label: String) -> void:
+func _on_cancelled(_action_id: String, _label: String) -> void:
 	_visuals.set_visible(false)

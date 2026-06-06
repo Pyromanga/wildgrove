@@ -49,13 +49,12 @@ func execute_action(action: InteractableAction) -> void:
 	if _active_action != null:
 		return
 
-	Logger.log_info("Starte: '%s' (%.1fs)" % [action.label, action.duration], LOG_CAT)
+	Logger.log_info("Starte: '%s' / id='%s' (%.1fs)" % [action.label, action.id, action.duration], LOG_CAT)
 	_active_action = action
 
 	_player_states.set_state(PlayerStateService.State.BUSY)
 
-	# Einzige Signalquelle: EventBus.world (kein dupliziertes eigenes Signal mehr)
-	EventBus.world.emit_interaction_started(action.label, action.duration)
+	EventBus.world.emit_interaction_started(action.id, action.label, action.duration)
 
 	_active_tween = create_tween()
 	_active_tween.tween_interval(action.duration)
@@ -66,11 +65,12 @@ func cancel_interaction() -> void:
 	if _active_action == null:
 		return
 
-	var label := _active_action.label
+	var action_id := _active_action.id
+	var label     := _active_action.label
 	_cleanup()
 
-	Logger.log_info("Abgebrochen: '%s'" % label, LOG_CAT)
-	EventBus.world.emit_interaction_cancelled(label)
+	Logger.log_info("Abgebrochen: '%s' / id='%s'" % [label, action_id], LOG_CAT)
+	EventBus.world.emit_interaction_cancelled(action_id, label)
 
 	if _player_states:
 		_player_states.set_state(PlayerStateService.State.FREE)
@@ -92,8 +92,8 @@ func _on_tween_finished() -> void:
 	var completed := _active_action
 	_cleanup()
 
-	Logger.log_info("Erfolgreich: '%s'" % completed.label, LOG_CAT)
-	EventBus.world.emit_interaction_finished(completed.label)
+	Logger.log_info("Erfolgreich: '%s' / id='%s'" % [completed.label, completed.id], LOG_CAT)
+	EventBus.world.emit_interaction_finished(completed.id, completed.label)
 
 	if completed.on_complete.is_valid():
 		completed.on_complete.call()

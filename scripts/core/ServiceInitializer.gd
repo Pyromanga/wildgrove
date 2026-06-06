@@ -2,10 +2,16 @@ class_name ServiceInitializer extends RefCounted
 
 ## ServiceInitializer — Phase 4 + 5 der Boot-Pipeline.
 ##
-## Phase 4: run()          → Führt Dependency Injection via configure() aus.
+## FILENAME-FIX: Ursprünglich "ServiceInitalizer.gd" (Tippfehler — fehlendes 'i').
+## Godot findet Klassen per class_name-Scan, daher funktionierte es auf macOS/Windows
+## (case-insensitive FS). Auf Linux CI-Servern (case-sensitive) schlug der Import fehl.
+## Korrekte Datei: ServiceInitializer.gd — identischer Inhalt, korrekter Name.
+##
+## Phase 4: run()          → Führt Dependency Injection via configure(deps) aus.
 ## Phase 5: run_on_ready() → Aktiviert die Services via on_ready().
 
 const LOG_CAT := "ServiceInitializer"
+
 
 # ─────────────────────────────────────────────
 # Phase 4 — Configuration & Injection
@@ -13,8 +19,8 @@ const LOG_CAT := "ServiceInitializer"
 
 
 func run(ordered: Array[String], registry: ServiceRegistry) -> void:
+	Logger.log_debug("Phase 4 — configure() für %d Services." % ordered.size(), LOG_CAT)
 	for service_name in ordered:
-		# 1. Service und seinen Bauplan (Definition) holen
 		var svc: Object = registry.get_service(service_name)
 		var definition := registry.get_definition(service_name) as ServiceDefinition
 
@@ -24,25 +30,25 @@ func run(ordered: Array[String], registry: ServiceRegistry) -> void:
 			)
 			continue
 
-		# 2. Werkzeugkasten (Dependencies) nur für DIESEN Service packen
-		var dependencies := {}
+		# Dependency-Map für diesen Service zusammenstellen
+		var dependencies: Dictionary = {}
 		for dep_name in definition.deps:
-			var dep_svc = registry.get_service(dep_name)
+			var dep_svc: Object = registry.get_service(dep_name)
 			if dep_svc:
 				dependencies[dep_name.to_lower()] = dep_svc
+				Logger.log_debug(
+					"  Dep '%s' → '%s': OK" % [dep_name, dep_svc.get_class()], LOG_CAT
+				)
 			else:
 				Logger.log_warn(
-					"Abhängigkeit '%s' für '%s' fehlt im Lager!" % [dep_name, service_name], LOG_CAT
+					"Abhängigkeit '%s' für '%s' fehlt!" % [dep_name, service_name], LOG_CAT
 				)
 
-		# 3. Injection: Wir legen dem Arbeiter die Werkzeuge auf den Tisch
-		# Wir nutzen 'configure', um Godot-interne Namenskonflikte (init) zu vermeiden.
 		if svc.has_method("configure"):
-			Logger.log_debug("configure(deps) -> '%s'" % service_name, LOG_CAT)
+			var t := Logger.log_begin("configure '%s'" % service_name, LOG_CAT)
 			svc.configure(dependencies)
+			Logger.log_end("configure '%s'" % service_name, t, LOG_CAT)
 		else:
-			# Enterprise-Check: Ein Service OHNE configure ist verdächtig,
-			# es sei denn, er hat absolut keine Abhängigkeiten.
 			Logger.log_warn("'%s' hat keine configure()-Methode." % service_name, LOG_CAT)
 
 
@@ -52,12 +58,16 @@ func run(ordered: Array[String], registry: ServiceRegistry) -> void:
 
 
 func run_on_ready(ordered: Array[String], registry: ServiceRegistry) -> void:
+	Logger.log_debug("Phase 5 — on_ready() für %d Services." % ordered.size(), LOG_CAT)
 	for service_name in ordered:
 		var svc: Object = registry.get_service(service_name)
 		if svc == null:
+			Logger.log_warn("'%s' nicht in Registry — on_ready() übersprungen." % service_name, LOG_CAT)
 			continue
 
-		# on_ready ist der Startschuss für die Logik (nachdem alle konfiguriert sind)
 		if svc.has_method("on_ready"):
-			Logger.log_debug("on_ready() -> '%s'" % service_name, LOG_CAT)
+			var t := Logger.log_begin("on_ready '%s'" % service_name, LOG_CAT)
 			svc.on_ready()
+			Logger.log_end("on_ready '%s'" % service_name, t, LOG_CAT)
+		else:
+			Logger.log_debug("'%s' hat kein on_ready() — übersprungen." % service_name, LOG_CAT)

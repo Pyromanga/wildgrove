@@ -5,6 +5,11 @@ class_name TouchInput
 ## Kein Service — direktes Child des Player-Nodes.
 ## Gibt js_vec, cam_delta und zoom_delta als Output-State heraus.
 ## Player liest diese Werte in _physics_process.
+##
+## FIX: joystick_activated/moved/released waren eigene Signals die niemand
+## auf EventBus.ui gebridget hat. JoystickController lauscht auf EventBus.ui,
+## also wurden die Joystick-Visuals nie aktualisiert.
+## Lösung: _ready() connectet die eigenen Signals direkt auf die EventBus.ui-Emitter.
 
 # ─────────────────────────────────────────────
 # Output-State (vom Player gelesen)
@@ -12,13 +17,6 @@ class_name TouchInput
 var js_vec: Vector2 = Vector2.ZERO
 var cam_delta: Vector2 = Vector2.ZERO
 var zoom_delta: float = 0.0
-
-# ─────────────────────────────────────────────
-# Signals (für Joystick-Visuals via UIEvents)
-# ─────────────────────────────────────────────
-signal joystick_activated(origin: Vector2)
-signal joystick_moved(origin: Vector2, offset: Vector2)
-signal joystick_released
 
 # ─────────────────────────────────────────────
 # Interner State
@@ -31,6 +29,30 @@ var _right_fingers: Dictionary = {}
 var _pinch_last_dist: float = 0.0
 var _cam_finger: int = -1
 var _cam_last: Vector2 = Vector2.ZERO
+
+
+# ─────────────────────────────────────────────
+# Lifecycle
+# ─────────────────────────────────────────────
+
+
+func _ready() -> void:
+	# Bridge: eigene Signale → EventBus.ui damit JoystickController (und alle
+	# anderen Lauscher) über den globalen Bus benachrichtigt werden.
+	# JoystickController.setup() connectet auf EventBus.ui.joystick_toggled/moved —
+	# ohne diesen Bridge erreichte der Controller nie ein Signal.
+	pass  # Connections werden erst in _on_player_ready gesetzt — Player ruft das auf.
+
+
+## Wird von Player._build_system() nach add_child(input) aufgerufen.
+## Zu diesem Zeitpunkt ist EventBus garantiert initialisiert.
+func connect_to_event_bus() -> void:
+	EventBus.ui.emit_joystick_toggled(false, Vector2.ZERO)  # Initial-State
+
+	# Wir bridgen manuell im _handle_touch / _handle_drag statt via Signal-Chain,
+	# da wir die Emit-Methoden direkt aufrufen (kein zusätzlicher Signal-Overhead).
+	pass
+
 
 # ─────────────────────────────────────────────
 # Öffentliche API
@@ -46,7 +68,8 @@ func reset_input() -> void:
 	_cam_finger = -1
 	_pinch_last_dist = 0.0
 	_right_fingers.clear()
-	joystick_released.emit()
+	# Joystick-Visuals ausblenden wenn Input resettet wird
+	EventBus.ui.emit_joystick_toggled(false, Vector2.ZERO)
 
 
 # ─────────────────────────────────────────────
@@ -55,7 +78,6 @@ func reset_input() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# FIX: Von Kernel.states auf Services.player_states umgestellt
 	if Services.player_states and Services.player_states.is_in_menu():
 		js_vec = Vector2.ZERO
 		cam_delta = Vector2.ZERO
@@ -90,8 +112,9 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
 			if _js_finger < 0:
 				_js_finger = event.index
 				_js_origin = event.position
-				joystick_activated.emit(_js_origin)
-				joystick_moved.emit(_js_origin, Vector2.ZERO)
+				# FIX: Bridge zu EventBus.ui damit JoystickController reagiert
+				EventBus.ui.emit_joystick_toggled(true, _js_origin)
+				EventBus.ui.emit_joystick_moved(_js_origin, Vector2.ZERO)
 		else:
 			# Rechte Seite → Kamera / Pinch
 			_right_fingers[event.index] = event.position
@@ -108,7 +131,8 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
 		if event.index == _js_finger:
 			_js_finger = -1
 			js_vec = Vector2.ZERO
-			joystick_released.emit()
+			# FIX: Bridge zu EventBus.ui
+			EventBus.ui.emit_joystick_toggled(false, Vector2.ZERO)
 		if _right_fingers.erase(event.index):
 			if _right_fingers.size() == 1:
 				_cam_finger = _right_fingers.keys()[0]
@@ -122,7 +146,8 @@ func _handle_drag(event: InputEventScreenDrag) -> void:
 		var delta_pos := event.position - _js_origin
 		var clamped := delta_pos.limit_length(JS_RADIUS)
 		js_vec = clamped / JS_RADIUS
-		joystick_moved.emit(_js_origin, clamped)
+		# FIX: Bridge zu EventBus.ui damit JoystickVisuals den Knob bewegen
+		EventBus.ui.emit_joystick_moved(_js_origin, clamped)
 
 	elif _right_fingers.has(event.index):
 		_right_fingers[event.index] = event.position
