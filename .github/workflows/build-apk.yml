@@ -301,6 +301,20 @@ jobs:
       - name: Create output directory
         run: mkdir -p project/build/android
 
+      # Tests und GUT-Addon aus dem Projektverzeichnis entfernen bevor Godot
+      # die Assets importiert. Godot parst beim Export ALLE .gd-Dateien im
+      # Projektordner — auch wenn sie per exclude_filter aus dem PCK
+      # ausgeschlossen würden. Da GUT im Build-Job nicht installiert ist,
+      # schlägt das Parsen von test_*.gd (extends GutTest) fehl und bricht
+      # den Export ab. Lösung: Dateien vorher physisch entfernen.
+      - name: Strip test files and GUT addon
+        run: |
+          echo "🧹 Entferne Test-Skripte und GUT-Addon für den Produktions-Export..."
+          rm -rf project/tests/
+          rm -rf project/addons/gut/
+          echo "✅ Fertig. Verbleibende Addons:"
+          ls project/addons/ 2>/dev/null || echo "  (keine weiteren Addons)"
+
       - name: Import project assets
         run: |
           cd project
@@ -366,3 +380,4 @@ jobs:
           name: "WildGrove ${{ github.ref_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
