@@ -101,13 +101,20 @@ jobs:
           name: resolved-project
           path: project
 
+      # v9.3.0 hatte einen globalen "Logger"-Klassennamen, der ab Godot 4.5
+      # mit der neuen nativen Engine-Klasse "Logger" kollidiert
+      # (SCRIPT ERROR: "The member 'Logger' shadows a native class.").
+      # Dadurch schlug addons/gut/utils.gd beim Parsen fehl und GUT lief in
+      # einer Dauerschleife/Endlosschleife fest, statt sauber zu terminieren.
+      # Fix: bitwes/Gut#715 (behoben ab v9.4.0). v9.6.0 ist die für
+      # Godot 4.6 freigegebene Version (unser GODOT_VERSION oben).
       - name: Install GUT Addon
         run: |
           mkdir -p project/addons
-          wget -q https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.zip -O gut.zip
+          wget -q https://github.com/bitwes/Gut/archive/refs/tags/v9.6.0.zip -O gut.zip
           unzip -q gut.zip
-          mv Gut-9.3.0/addons/gut project/addons/
-          rm -rf gut.zip Gut-9.3.0
+          mv Gut-9.6.0/addons/gut project/addons/
+          rm -rf gut.zip Gut-9.6.0
 
       - name: Download Godot ${{ env.GODOT_VERSION }}
         run: |
