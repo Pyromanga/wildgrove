@@ -153,11 +153,37 @@ jobs:
             -gexit \
             2>&1 | tee gut-output.log
 
+      # Zwei-Peer-Integrationstest (ADR-025/026, Connection-Ebene: IT-01/IT-02).
+      # Eigener Schritt statt in -gdir=res://tests/unit mitlaufen zu lassen, weil:
+      #   - tests/integration/ ist bewusst von tests/unit/ getrennt (andere
+      #     Testklasse: echte ENetMultiplayerPeer/Sockets statt reiner Unit-Mocks)
+      #   - ein Fehlschlag hier soll separat sichtbar sein, nicht im selben
+      #     Report mit den Unit-Tests vermischt werden
+      # Läuft rein auf 127.0.0.1-Loopback innerhalb des Runners (zwei
+      # MultiplayerAPI-Instanzen im selben Prozess, siehe Datei-Kopfkommentar) —
+      # braucht keine zwei Prozesse, keine zwei Runner, keine echten Geräte.
+      # IT-03 ist bewusst `pending()` (kein vollständiger Gameplay-Round-Trip,
+      # siehe Datei-Kopfkommentar) — GUT zählt pending nicht als Failure. Ein
+      # echter Failure (z.B. IT-01/IT-02 bricht) soll den Job aber rot machen,
+      # deshalb kein `|| true`, sondern der echte GUT-Exit-Code via PIPESTATUS.
+      - name: Run GUT integration tests (two-peer, ADR-025/026)
+        run: |
+          cd project
+          set +e
+          godot --headless -s res://addons/gut/gut_cmdln.gd \
+            -gdir=res://tests/integration \
+            -gjunit_xml_file=res://results-integration.xml \
+            -gexit \
+            2>&1 | tee gut-integration-output.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "GUT integration exit code: $EXIT_CODE"
+          exit $EXIT_CODE
+
       - name: Publish test report
         uses: mikepenz/action-junit-report@v4
         if: always()
         with:
-          report_paths: 'project/results.xml'
+          report_paths: 'project/results.xml,project/results-integration.xml'
 
       # Plain-Text-Log direkt in der Run-Summary anzeigen — kein Download nötig,
       # einfach den Actions-Run öffnen, "Summary" aufklappen, Block kopieren.
@@ -165,9 +191,13 @@ jobs:
         if: always()
         run: |
           {
-            echo "## GUT Testergebnisse"
+            echo "## GUT Testergebnisse (Unit)"
             echo '```'
             cat project/gut-output.log
+            echo '```'
+            echo "## GUT Testergebnisse (Integration — Two-Peer, ADR-025/026)"
+            echo '```'
+            cat project/gut-integration-output.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -177,7 +207,158 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gut-test-log
-          path: project/gut-output.log
+          path: |
+            project/gut-output.log
+            project/gut-integration-output.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  # ─── IT-03: echter Zwei-Prozess-Movement-Round-Trip ─────────────────────────
+  # Kein GUT, kein In-Process-Loopback (das deckt nur IT-01/IT-02 ab, siehe
+  # test-logic-Job oben). Zwei GENUINE `godot --headless`-Prozesse auf demselben
+  # Runner: ein Host (Server + Spieler 1) und ein Client, die sich über einen
+  # echten Port auf 127.0.0.1 verbinden — derselbe App-Boot wie im echten Spiel
+  # (ServiceOrchestrator, EventBus, WorldService, NetworkBridge, Player — keine
+  # Mocks). scripts/testing/IT03Harness.gd ersetzt nur die menschlichen
+  # UI-Klicks (Host starten / Beitreten), NICHT die Gameplay-Logik selbst — der
+  # eigentliche Movement-Input kommt organisch aus Player._loop_free_predicted(),
+  # exakt wie bei einem echten Spieler. Siehe Kopfkommentar der Datei für Details.
+  integration-two-process:
+    name: IT-03 — Two-Process Movement Round Trip
+    runs-on: ubuntu-22.04
+    needs: resolve-source
+    timeout-minutes: 10
+
+    steps:
+      - name: Download resolved project
+        uses: actions/download-artifact@v4
+        with:
+          name: resolved-project
+          path: project
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        run: |
+          wget -q "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          godot --version
+
+      # Einmalig, sequenziell, VOR dem Start beider Prozesse — sonst würden
+      # Host und Client gleichzeitig in denselben .godot/-Import-Cache schreiben
+      # (Race Condition), siehe identisches Muster im test-logic-Job.
+      - name: Force asset import
+        run: |
+          cd project
+          godot --headless --editor --quit 2>&1 || true
+          sleep 3
+
+      # Host zuerst, im Hintergrund — braucht einen Moment Vorlauf um den
+      # ENet-Server zu binden, bevor der Client sich verbindet.
+      - name: Start host process (background)
+        run: |
+          cd project
+          nohup godot --headless -- --it03-server --it03-port=38214 \
+            > ../host.log 2>&1 &
+          echo $! > ../host.pid
+          sleep 5
+          echo "Host-PID: $(cat ../host.pid)"
+
+      # Client läuft im Vordergrund — sein Exit-Code IST das Testergebnis
+      # (0 = PASS, 1 = FAIL/Timeout, siehe IT03Harness._fail()/quit(0)).
+      # `timeout` als zusätzliches Sicherheitsnetz falls der Prozess aus
+      # irgendeinem Grund trotz interner Timeouts hängen bleibt.
+      - name: Run client process (foreground, result = exit code)
+        id: client
+        run: |
+          cd project
+          set +e
+          timeout 180 godot --headless -- --it03-client --it03-connect=127.0.0.1:38214 \
+            > ../client.log 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Stop host process
+        if: always()
+        run: |
+          if [ -f host.pid ]; then
+            kill "$(cat host.pid)" 2>/dev/null || true
+          fi
+
+      - name: Add logs to job summary
+        if: always()
+        run: |
+          {
+            echo "## IT-03 Host-Log"
+            echo '```'
+            cat host.log 2>/dev/null || echo "(kein Host-Log)"
+            echo '```'
+            echo "## IT-03 Client-Log"
+            echo '```'
+            cat client.log 2>/dev/null || echo "(kein Client-Log)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload IT-03 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: it03-logs
+          path: |
+            host.log
+            client.log
+          retention-days: 14
+          if-no-files-found: warn
+
+      # Client-Exit-Code entscheidet über den Job — IT03Harness gibt 0 für PASS,
+      # 1 für FAIL/Timeout zurück (`timeout` selbst gibt 124 bei eigenem
+      # Ablauf zurück, was ebenfalls korrekt als Fehlschlag durchfällt).
+      - name: Evaluate result
+        run: |
+          CODE="${{ steps.client.outputs.exit_code }}"
+          echo "Client-Exit-Code: $CODE"
+          if [ "$CODE" != "0" ]; then
+            echo "❌ IT-03 fehlgeschlagen (Exit-Code $CODE) — siehe Job-Summary/Logs."
+            exit 1
+          fi
+          echo "✅ IT-03 bestanden."
+
+  # ─── DI-Überblick + Testabdeckung ──────────────────────────────────────────
+  # Reines Python/stdlib, statische Analyse über *.gd / BootstrapConfig.tres —
+  # braucht keinen Godot-Import und läuft daher unabhängig von test-logic.
+  # Reporting-only: dieser Job gated nichts (kein exit 1 bei Lücken), siehe
+  # Kopfkommentar in scripts/ci/di_test_overview.py. Falls das mal zum Gate
+  # werden soll: erst mit dem Projekt-Owner klären (docs/ci-pipeline.md).
+  di-test-overview:
+    name: DI-Überblick & Testabdeckung
+    runs-on: ubuntu-22.04
+    needs: resolve-source
+
+    steps:
+      - name: Download resolved project
+        uses: actions/download-artifact@v4
+        with:
+          name: resolved-project
+          path: project
+
+      # JSON (--out) ist der primäre Output — für Agenten/Tooling gedacht
+      # (siehe scripts/ci/di_query.py zum Navigieren). --markdown-out liefert
+      # in demselben Lauf zusätzlich die Menschen-lesbare Fassung (u. a. für
+      # die Job-Summary, die das Skript selbst über $GITHUB_STEP_SUMMARY befüllt).
+      - name: Run DI/coverage overview
+        run: |
+          python3 project/scripts/ci/di_test_overview.py \
+            --project project \
+            --out di-overview.json \
+            --markdown-out di-overview.md
+
+      - name: Upload DI overview artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: di-test-overview
+          path: |
+            di-overview.json
+            di-overview.md
           retention-days: 14
           if-no-files-found: warn
 
@@ -250,10 +431,16 @@ jobs:
         run: |
           PRESETS="project/export_presets.cfg"
           if [ ! -f "$PRESETS" ]; then
-            echo "Kein export_presets.cfg — erstelle Debug-Preset."
+            echo "Kein export_presets.cfg — erstelle Host+Guest-Debug-Presets."
+            # ZWEI Presets mit unterschiedlichem package/unique_name (= Android
+            # applicationId) und package/name (= angezeigter App-Name). Android
+            # erkennt zwei Apps als "dieselbe App" ausschließlich über die
+            # applicationId — Signatur/Dateiname spielen dafür keine Rolle.
+            # Mit identischem unique_name würde die zweite Installation die
+            # erste einfach überschreiben (Update statt Nebeneinander-Install).
             cat > "$PRESETS" << 'EOF'
           [preset.0]
-          name="Android"
+          name="Android-Host"
           platform="Android"
           runnable=true
           dedicated_server=false
@@ -261,7 +448,7 @@ jobs:
           export_filter="all_resources"
           include_filter=""
           exclude_filter=""
-          export_path="build/android/WildGrove-debug.apk"
+          export_path="build/android/WildGrove-Host-debug.apk"
           encryption_include_filters=""
           encryption_exclude_filters=""
           encrypt_pck=false
@@ -279,8 +466,46 @@ jobs:
           keystore/release=""
           keystore/release_user=""
           keystore/release_password=""
-          package/unique_name="com.yourname.wildgrove"
-          package/name="WildGrove"
+          package/unique_name="com.yourname.wildgrove.host"
+          package/name="WildGrove Host"
+          package/signed=true
+          package/classify_as_game=true
+          screen/immersive_mode=true
+          screen/orientation=6
+          screen/support_small=false
+          screen/support_normal=true
+          screen/support_large=true
+          screen/support_xlarge=true
+
+          [preset.1]
+          name="Android-Guest"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/android/WildGrove-Guest-debug.apk"
+          encryption_include_filters=""
+          encryption_exclude_filters=""
+          encrypt_pck=false
+          encrypt_directory=false
+
+          [preset.1.options]
+          gradle_build/use_gradle_build=false
+          architectures/armeabi-v7a=false
+          architectures/arm64-v8a=true
+          architectures/x86=false
+          architectures/x86_64=false
+          keystore/debug="../../debug.keystore"
+          keystore/debug_user="androiddebugkey"
+          keystore/debug_password="android"
+          keystore/release=""
+          keystore/release_user=""
+          keystore/release_password=""
+          package/unique_name="com.yourname.wildgrove.guest"
+          package/name="WildGrove Guest"
           package/signed=true
           package/classify_as_game=true
           screen/immersive_mode=true
@@ -290,6 +515,10 @@ jobs:
           screen/support_large=true
           screen/support_xlarge=true
           EOF
+          else
+            echo "export_presets.cfg existiert bereits (kommt aus dem Repo) — wird unverändert genutzt."
+            echo "Für Host+Guest brauchst du dort zwei Presets mit unterschiedlichem"
+            echo "package/unique_name — siehe Kommentar in diesem Workflow-Schritt."
           fi
 
       - name: Set version code from git commit count
@@ -314,11 +543,20 @@ jobs:
       # ausgeschlossen würden. Da GUT im Build-Job nicht installiert ist,
       # schlägt das Parsen von test_*.gd (extends GutTest) fehl und bricht
       # den Export ab. Lösung: Dateien vorher physisch entfernen.
+      #
+      # scripts/testing/ (IT03Harness) ist kein Testskript im GUT-Sinn (parst
+      # ohne GUT-Addon einwandfrei), soll aber trotzdem nicht in der Produktions-
+      # APK landen — es ist ein CI-only Zwei-Prozess-Treiber für IT-03, siehe
+      # scripts/testing/IT03Harness.gd Kopfkommentar. Autoload-Zeile in
+      # project.godot muss mitentfernt werden, sonst referenziert der Export
+      # ein fehlendes Autoload-Skript.
       - name: Strip test files and GUT addon
         run: |
           echo "🧹 Entferne Test-Skripte und GUT-Addon für den Produktions-Export..."
           rm -rf project/tests/
           rm -rf project/addons/gut/
+          rm -rf project/scripts/testing/
+          sed -i '/^IT03Harness=/d' project/project.godot
           echo "✅ Fertig. Verbleibende Addons:"
           ls project/addons/ 2>/dev/null || echo "  (keine weiteren Addons)"
 
@@ -328,30 +566,48 @@ jobs:
           godot --headless --editor --quit 2>&1 || true
           sleep 5
 
-      - name: Export APK
+      - name: Export APK (Host)
         run: |
           cd project
           godot --headless \
-            --export-debug "Android" \
-            "build/android/${{ env.EXPORT_NAME }}-debug.apk" \
+            --export-debug "Android-Host" \
+            "build/android/${{ env.EXPORT_NAME }}-Host-debug.apk" \
             2>&1
 
-      - name: Verify APK
+      - name: Export APK (Guest)
         run: |
-          APK="project/build/android/${{ env.EXPORT_NAME }}-debug.apk"
-          if [ -f "$APK" ]; then
-            SIZE=$(du -sh "$APK" | cut -f1)
-            echo "✅ APK erstellt: $APK ($SIZE)"
-          else
-            echo "❌ APK nicht gefunden!"
-            exit 1
-          fi
+          cd project
+          godot --headless \
+            --export-debug "Android-Guest" \
+            "build/android/${{ env.EXPORT_NAME }}-Guest-debug.apk" \
+            2>&1
 
-      - name: Upload APK artifact
+      - name: Verify APKs
+        run: |
+          for VARIANT in Host Guest; do
+            APK="project/build/android/${{ env.EXPORT_NAME }}-${VARIANT}-debug.apk"
+            if [ -f "$APK" ]; then
+              SIZE=$(du -sh "$APK" | cut -f1)
+              echo "✅ APK erstellt: $APK ($SIZE)"
+            else
+              echo "❌ APK nicht gefunden: $APK"
+              exit 1
+            fi
+          done
+
+      - name: Upload Host APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WildGrove-debug-APK
-          path: project/build/android/*.apk
+          name: WildGrove-Host-debug-APK
+          path: project/build/android/${{ env.EXPORT_NAME }}-Host-debug.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload Guest APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildGrove-Guest-debug-APK
+          path: project/build/android/${{ env.EXPORT_NAME }}-Guest-debug.apk
           retention-days: 14
           if-no-files-found: error
 
@@ -373,10 +629,16 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
-      - name: Download APK
+      - name: Download Host APK
         uses: actions/download-artifact@v4
         with:
-          name: WildGrove-debug-APK
+          name: WildGrove-Host-debug-APK
+          path: ./release
+
+      - name: Download Guest APK
+        uses: actions/download-artifact@v4
+        with:
+          name: WildGrove-Guest-debug-APK
           path: ./release
 
       - name: Create Release
