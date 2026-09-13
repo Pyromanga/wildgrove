@@ -187,17 +187,27 @@ jobs:
 
       # Plain-Text-Log direkt in der Run-Summary anzeigen — kein Download nötig,
       # einfach den Actions-Run öffnen, "Summary" aufklappen, Block kopieren.
+      # FIX: GitHub begrenzt $GITHUB_STEP_SUMMARY auf 1024k (kumulativ über
+      # den ganzen Job) — ein rohes `cat` der vollen Logs hat das schon bei
+      # 1660k gerissen ("upload aborted"), wodurch die GESAMTE Summary für
+      # den Job verloren ging (nicht nur dieser Abschnitt). Jetzt: nur die
+      # letzten 200k pro Log (die Failure-Zusammenfassung von GUT steht am
+      # Ende), mit Hinweis auf das volle Log im "gut-test-log"-Artifact
+      # weiter unten für den Fall, dass mehr Kontext gebraucht wird.
       - name: Add test log to job summary
         if: always()
         run: |
+          TAIL_BYTES=200000
           {
             echo "## GUT Testergebnisse (Unit)"
+            echo "_(zeigt max. die letzten ${TAIL_BYTES} Bytes — komplettes Log im Artifact 'gut-test-log')_"
             echo '```'
-            cat project/gut-output.log
+            tail -c "$TAIL_BYTES" project/gut-output.log
             echo '```'
             echo "## GUT Testergebnisse (Integration — Two-Peer, ADR-025/026)"
+            echo "_(zeigt max. die letzten ${TAIL_BYTES} Bytes — komplettes Log im Artifact 'gut-test-log')_"
             echo '```'
-            cat project/gut-integration-output.log
+            tail -c "$TAIL_BYTES" project/gut-integration-output.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -284,17 +294,23 @@ jobs:
             kill "$(cat host.pid)" 2>/dev/null || true
           fi
 
+      # Gleicher Guard wie beim "Add test log to job summary"-Schritt oben
+      # (test-logic-Job) — $GITHUB_STEP_SUMMARY ist auf 1024k begrenzt,
+      # kumulativ über den Job. Host-/Client-Log sind hier normalerweise
+      # klein, aber ohne Cap kann ein hängender/verbose Godot-Prozess das
+      # Limit trotzdem sprengen und die komplette Summary killen.
       - name: Add logs to job summary
         if: always()
         run: |
+          TAIL_BYTES=200000
           {
             echo "## IT-03 Host-Log"
             echo '```'
-            cat host.log 2>/dev/null || echo "(kein Host-Log)"
+            { [ -f host.log ] && tail -c "$TAIL_BYTES" host.log; } || echo "(kein Host-Log)"
             echo '```'
             echo "## IT-03 Client-Log"
             echo '```'
-            cat client.log 2>/dev/null || echo "(kein Client-Log)"
+            { [ -f client.log ] && tail -c "$TAIL_BYTES" client.log; } || echo "(kein Client-Log)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -400,6 +416,30 @@ jobs:
             "build-tools;34.0.0" \
             "ndk;23.2.8568313"
 
+      # KRITISCH: android-actions/setup-android@v3 installiert das SDK und
+      # setzt ANDROID_HOME/ANDROID_SDK_ROOT als Env-Var — Godot 4.x liest
+      # das aber NICHT automatisch für den Android-Export. Ohne den Pfad
+      # explizit in den EditorSettings zu hinterlegen, findet Godot beim
+      # --export-debug weder apksigner/zipalign noch den Debug-Keystore-
+      # Pfad und bricht mit "Project export for preset ... failed" ab (ohne
+      # spezifischeren Grund in der Standardausgabe). Der Dateiname ist für
+      # die gesamte Godot-4.x-Reihe "editor_settings-4.tres", unabhängig von
+      # der genauen Minor-Version (hier 4.6).
+      - name: Configure Godot Android SDK path
+        run: |
+          mkdir -p ~/.config/godot
+          {
+            echo '[gd_resource type="EditorSettings" format=3]'
+            echo ''
+            echo '[resource]'
+            echo "export/android/android_sdk_path = \"${ANDROID_HOME}\""
+            echo "export/android/debug_keystore = \"${GITHUB_WORKSPACE}/debug.keystore\""
+            echo 'export/android/debug_keystore_user = "androiddebugkey"'
+            echo 'export/android/debug_keystore_pass = "android"'
+          } > ~/.config/godot/editor_settings-4.tres
+          echo "ANDROID_HOME=${ANDROID_HOME}"
+          cat ~/.config/godot/editor_settings-4.tres
+
       - name: Download Godot ${{ env.GODOT_VERSION }}
         run: |
           URL="https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable"
@@ -460,7 +500,7 @@ jobs:
           architectures/arm64-v8a=true
           architectures/x86=false
           architectures/x86_64=false
-          keystore/debug="../../debug.keystore"
+          keystore/debug="../debug.keystore"
           keystore/debug_user="androiddebugkey"
           keystore/debug_password="android"
           keystore/release=""
@@ -498,7 +538,7 @@ jobs:
           architectures/arm64-v8a=true
           architectures/x86=false
           architectures/x86_64=false
-          keystore/debug="../../debug.keystore"
+          keystore/debug="../debug.keystore"
           keystore/debug_user="androiddebugkey"
           keystore/debug_password="android"
           keystore/release=""
