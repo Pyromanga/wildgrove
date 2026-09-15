@@ -405,8 +405,21 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # BUGFIX (2026-09-15): android-actions/setup-android@v3 installiert per
+      # Default die Paketliste "tools platform-tools" NOCH VOR dem eigenen
+      # "Install Android build tools & NDK"-Schritt unten. Google hat das
+      # veraltete "tools"-Paket (Legacy Android SDK Tools) am 2026-09-14 aus
+      # dem SDK-Repository-Manifest entfernt — sdkmanager bricht seitdem
+      # branchenweit schon in diesem Action-eigenen Schritt ab:
+      #   "Warning: Failed to find package 'tools'" → exit code 1
+      # (siehe android-actions/setup-android#537). packages: "" überspringt
+      # nur diese kaputte Default-Installation — ANDROID_HOME wird weiterhin
+      # gesetzt und die SDK-Lizenzen weiterhin akzeptiert. Alle tatsächlich
+      # benötigten Pakete installiert ohnehin schon der nächste Schritt explizit.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: ""
 
       - name: Install Android build tools & NDK
         run: |
