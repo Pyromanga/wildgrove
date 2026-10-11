@@ -1,0 +1,55 @@
+name: Sync repo to zip
+
+# Gegenstück zum Claude-Chat-ZIP-Workflow: packt den Repo-Stand in
+# zip/game.zip, damit der parallele Workflow (Claude Chat arbeitet mit
+# der ZIP) immer vom aktuellen Repo-Stand weiterarbeitet.
+#
+# Trigger: Push auf main, NUR wenn die Commit-Message "[sync-zip]"
+# enthält (Marker). Der Sync-Commit selbst enthält den Marker nicht —
+# keine Endlosschleife. Commit-Messages hier bewusst OHNE "App", damit
+# nicht versehentlich der APK-Build getriggert wird.
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Pack repo into zip/game.zip
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pack repo into zip/game.zip (only on [sync-zip] marker)
+        run: |
+          set -euo pipefail
+
+          if ! git log -1 --pretty=%B | grep -q '\[sync-zip\]'; then
+            echo "Kein [sync-zip]-Marker im Commit — überspringe Sync."
+            exit 0
+          fi
+
+          echo "Packe Repo-Stand in zip/game.zip ..."
+          rm -f zip/game.zip
+          mkdir -p zip
+          zip -q -r zip/game.zip . \
+            -x '.git/*' \
+            -x '.github/*' \
+            -x 'zip/*' \
+            -x '.godot/*'
+
+          git config user.name  "wildgrove-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add zip/game.zip
+          if git diff --cached --quiet; then
+            echo "zip/game.zip unverändert — kein Commit."
+            exit 0
+          fi
+          git commit -m "sync: zip/game.zip aus Repo-Stand generiert (Claude-Chat-Workflow)"
+          git push
+          echo "zip/game.zip aktualisiert und gepusht."

@@ -192,8 +192,8 @@ func get_session_duration_sec() -> float:
 ## OBJECT_ORPHAN_NODE_COUNT/OBJECT_RESOURCE_COUNT, OS.get_static_memory_usage()/
 ## get_static_memory_peak_usage()) — keine GPU-/Render-Monitore, die je nach
 ## Godot-Minor-Version umbenannt wurden.
-## FPS/Frame-Time (TIME_FPS/TIME_PROCESS) sind同样 stabil und seit Issue #1
-## Teil jedes Snapshots.
+## FPS/Frame-Time (TIME_FPS/TIME_PROCESS) sind genauso stabil und seit
+## Issue #1 Teil jedes Snapshots.
 ##
 ## OBJECT_ORPHAN_NODE_COUNT ist der mit Abstand wichtigste Einzelwert für
 ## GENAU die Bug-Klasse von heute: ein Node, der aus dem Baum entfernt aber
@@ -325,8 +325,7 @@ func get_all_text() -> String:
 					int(snapshot.get("resource_count", 0)), int(delta.get("resource_count", 0)),
 				]
 			)
-	return "
-".join(lines)
+	return "\n".join(lines)
 
 ## Schreibt get_all_text() als eigene Datei nach user:// — siehe SimpleTerminal.
 ## export_all_text_to_file()-Kommentar: umgeht OS-seitige Clipboard-Größenlimits (v.a. auf

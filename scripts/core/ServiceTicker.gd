@@ -22,7 +22,7 @@ const LOG_CAT := "ServiceTicker"
 var _tick_list: Array[Object] = []
 var _intervals: Array[float] = []       # parallell zu _tick_list; 0.0 = jeden Frame
 var _accumulators: Array[float] = []    # parallell zu _tick_list; aufsummiertes Delta
-var _tick_stats: Array[Dictionary] = []  # parallell zu _tick_list; {"class","calls","total_us","last_us","interval"}
+var _tick_stats: Array[Dictionary] = [] # parallell zu _tick_list; {"class","calls","total_us","last_us","interval"}
 var _physics_tick_list: Array[Object] = []
 var _running: bool = false
 
@@ -42,7 +42,6 @@ func _get_interval_for(svc: Object) -> float:
 
 
 func register_service(svc: Object) -> void:
-	var registered := false
 	if svc.has_method("on_tick") and not svc in _tick_list:
 		var interval := _get_interval_for(svc)
 		_tick_list.append(svc)
@@ -55,7 +54,6 @@ func register_service(svc: Object) -> void:
 			"last_us": 0,
 			"interval": interval,
 		})
-		registered = true
 		Logger.log_debug(
 			"Service '%s' registriert (Tick-Intervall: %s)."
 			% [svc.get_class(), ("%.2f s" % interval) if interval > 0.0 else "jeden Frame"],
@@ -64,10 +62,7 @@ func register_service(svc: Object) -> void:
 
 	if svc.has_method("on_physics_tick") and not svc in _physics_tick_list:
 		_physics_tick_list.append(svc)
-		registered = true
-
-	if registered and not svc.has_method("on_tick") and not svc.has_method("on_physics_tick"):
-		Logger.log_debug("Service '%s' registriert." % svc.get_class(), LOG_CAT)
+		Logger.log_debug("Service '%s' registriert (Physics-Tick)." % svc.get_class(), LOG_CAT)
 
 
 ## Statistik aller Frame-Tick-Services (Kopie) — für Telemetrie-Snapshots.
