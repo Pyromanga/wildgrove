@@ -276,6 +276,18 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+      - name: Evaluate result
+        run: |
+          CODE="${{ steps.client.outputs.exit_code }}"
+          echo "Client-Exit-Code: $CODE"
+          if [ "$CODE" != "0" ]; then
+            echo "❌ IT-03 fehlgeschlagen (Exit-Code $CODE) — siehe Job-Summary/Logs."
+            exit 1
+          fi
+          echo "✅ IT-03 bestanden."
+
+      # WICHTIG: Muss NACH 'Evaluate result' stehen — if: failure() greift erst,
+      # wenn ein vorheriger Schritt des Jobs rot ist (Fix: feuerte davor nie).
       - name: Post failure logs to Issue #5
         if: failure()
         env:
@@ -298,16 +310,6 @@ jobs:
           gh api repos/${{ github.repository }}/issues/5/comments \
             -f body=@/tmp/it03-comment.md \
             && echo "✅ Logs als Kommentar in Issue #5 gepostet."
-
-      - name: Evaluate result
-        run: |
-          CODE="${{ steps.client.outputs.exit_code }}"
-          echo "Client-Exit-Code: $CODE"
-          if [ "$CODE" != "0" ]; then
-            echo "❌ IT-03 fehlgeschlagen (Exit-Code $CODE) — siehe Job-Summary/Logs."
-            exit 1
-          fi
-          echo "✅ IT-03 bestanden."
 
   # ─── DI-Überblick + Testabdeckung ──────────────────────────────────────────
   di-test-overview:
