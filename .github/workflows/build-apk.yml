@@ -273,6 +273,12 @@ jobs:
     runs-on: ubuntu-22.04
     needs: resolve-source
     timeout-minutes: 10
+    # FIX (2026-10-11): issues:write, damit der Debug-Log-Export-Schritt unten
+    # bei einem IT-03-Failure die Logs als Issue-Kommentar posten kann.
+    # Job-Logs sind via API nur mit Admin-Rechten abrufbar und Artifacts nur
+    # mit Auth — Issue-Kommentare dagegen öffentlich lesbar (auch für Agenten).
+    permissions:
+      issues: write
 
     steps:
       - name: Download resolved project
@@ -372,6 +378,48 @@ jobs:
             exit 1
           fi
           echo "✅ IT-03 bestanden."
+
+      # FIX (2026-10-11): Bei einem IT-03-Failure werden die Host-/Client-Logs
+      # (letzte 25k Zeichen je Log) als Kommentar in ein dediziertes
+      # Debug-Issue gepostet. Issue-Kommentare sind öffentlich lesbar —
+      # Job-Logs brauchen Repo-Admin, Artifacts brauchen Auth. So kann die
+      # Failure-Diagnose auch automatisiert (Agent/Bot) erfolgen.
+      - name: Publish IT-03 failure logs to debug issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CODE="${{ steps.client.outputs.exit_code }}"
+          if [ "$CODE" = "0" ] || [ -z "$CODE" ]; then
+            echo "IT-03 grün — kein Log-Export nötig."
+            exit 0
+          fi
+          {
+            echo "## IT-03 fehlgeschlagen (Client-Exit-Code ${CODE})"
+            echo ""
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "Commit: ${{ github.sha }}"
+            echo ""
+            echo "### Client-Log (letzte 25000 Zeichen)"
+            echo ""
+            echo "```"
+            { [ -f client.log ] && tail -c 25000 client.log; } || echo "(kein Client-Log)"
+            echo "```"
+            echo ""
+            echo "### Host-Log (letzte 25000 Zeichen)"
+            echo ""
+            echo "```"
+            { [ -f host.log ] && tail -c 25000 host.log; } || echo "(kein Host-Log)"
+            echo "```"
+          } > it03-failure-comment.md
+          ISSUE_NUMBER=$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title=="IT-03 Debug-Logs (automatisch)") | .number' | head -1)
+          if [ -n "$ISSUE_NUMBER" ]; then
+            echo "Kommentiere in bestehendes Debug-Issue #$ISSUE_NUMBER."
+            gh issue comment "$ISSUE_NUMBER" --body-file it03-failure-comment.md
+          else
+            echo "Kein offenes Debug-Issue — erstelle eins."
+            gh issue create --title "IT-03 Debug-Logs (automatisch)" --body-file it03-failure-comment.md
+          fi
 
   # ─── DI-Überblick + Testabdeckung ──────────────────────────────────────────
   # Reines Python/stdlib, statische Analyse über *.gd / BootstrapConfig.tres —
