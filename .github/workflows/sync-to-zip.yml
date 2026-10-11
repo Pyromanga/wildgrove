@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "\"${{ github.event_name }}\" = "push" ] && ! git log -1 --pretty=%B | grep -q '\[sync-zip\]'; then
+          if [ "${{ github.event_name }}" = "push" ] && ! git log -1 --pretty=%B | grep -q '\[sync-zip]'; then
             echo "Kein [sync-zip]-Marker im Commit — überspringe Sync."
             exit 0
           fi
