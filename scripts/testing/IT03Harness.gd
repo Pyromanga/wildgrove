@@ -16,19 +16,34 @@ extends Node
 ##                                     die CI-Pipeline killt den Prozess normalerweise
 ##                                     früher, sobald der Client fertig ist).
 ##   --it03-client                    Rolle: Client. Verbindet via SessionManager.join_server()
-##                                     zu --it03-connect (Default 127.0.0.1:38214), wartet auf
-##                                     das eigene, automatisch gebootete Player-Node und
-##                                     pollt get_last_processed_input_seq() bis er einen
-##                                     Schwellwert überschreitet (echte Bestätigung, dass ein
-##                                     vom Client gesendeter Input die Autorität erreicht,
-##                                     dort verarbeitet und zurückrepliziert wurde). Beendet
-##                                     sich selbst mit Exit-Code 0 (PASS) oder 1 (FAIL/Timeout)
-##                                     — das ist der Signal-Kanal an die CI-Pipeline.
+##                                     zu --it03-connect (Default 127.0.0.1:38214), durchläuft
+##                                     danach den ECHTEN ADR-029-Phase-1-Client-Flow (kein
+##                                     Auto-Boot mehr!): Charakter-Identität laden/erzeugen →
+##                                     send_join_handshake() → bei join_handshake_result
+##                                     (accepted) → emit_session_requested() → erst dann
+##                                     bootet der Client seinen CharacterScope mit eigenem
+##                                     Player-Node. Danach pollt get_last_processed_input_seq()
+##                                     bis ein Schwellwert überschritten wird (echte
+##                                     Bestätigung, dass ein vom Client gesendeter Input die
+##                                     Autorität erreicht, dort verarbeitet und zurückrepliziert
+##                                     wurde). Beendet sich selbst mit Exit-Code 0 (PASS) oder
+##                                     1 (FAIL/Timeout) — das ist der Signal-Kanal an die CI.
 ##   --it03-port=<int>                Nur Server-Rolle.
 ##   --it03-connect=<host:port>       Nur Client-Rolle.
 ##
 ## Ohne eines dieser Argumente: _ready() kehrt sofort zurück, kein Verhalten geändert.
 ## Kosten in Produktion: ein Array-Scan über die (leeren) Cmdline-User-Args.
+##
+## FIX (2026-10-11, "IT-03 war nie grün"): der Client wartete bisher nach
+## joined_as_client direkt auf sein Player-Node — seit ADR-029 Phase 1 (Round 62)
+## bootet der Client nach dem rohen ENet-Connect aber NICHT mehr automatisch.
+## MainMenuController._on_joined_as_client() zeigt nur die Charakter-Auswahl;
+## gebootet wird erst nach send_join_handshake() + akzeptiertem
+## join_handshake_result + emit_session_requested(). Das alte Harness übersprang
+## diese komplette Kette → kein CharacterScope, kein WorldService, kein
+## Player-Node → Timeout nach 60s → Exit 1. Jetzt durchläuft das Harness exakt
+## dieselbe Sequenz wie MainMenuController._start_join_handshake() /
+## _on_join_handshake_result() (siehe dort), nur ohne UI.
 ##
 ## EINSCHRÄNKUNG (Round 113 Nachtrag): dieser Harness emittiert
 ## session_requested DIREKT über den EventBus — nicht über den echten
@@ -55,9 +70,20 @@ const LOG_CAT := "IT03Harness"
 const SEQ_THRESHOLD := 5
 const DEFAULT_PORT := 38214
 const CONNECT_TIMEOUT_SEC := 30.0
+## FIX (2026-10-11): Timeout für den Join-Handshake (Client-Rolle). Der Server
+## antwortet synchron in _handle_join_handshake() — wenn binnen 15s kein
+## join_handshake_result ankommt, ist die Kette woanders hängen geblieben und
+## ein längeres Warten verbraucht nur Runner-Zeit.
+const HANDSHAKE_TIMEOUT_SEC := 15.0
 const PLAYER_SPAWN_TIMEOUT_SEC := 60.0
 const SEQ_TIMEOUT_SEC := 20.0
 const IT03_MAX_LIFETIME_SEC := 120.0  # Server-Fallback-Selbstabschaltung.
+
+## Client-seitige Charakter-ID für den Join-Flow. Muss KEIN existierender Save
+## sein — SaveSystem.begin_session() erzeugt bei Erstkontakt eine neue Identität
+## (player_uuid/player_secret), exakt wie bei einem neuen Charakter im
+## Hauptmenü (MainMenuController._on_new_game_pressed() → _start_join_handshake()).
+const CLIENT_PLAYER_ID := "it03-client"
 
 var _role: String = ""  # "server" | "client" | ""
 var _port: int = DEFAULT_PORT
@@ -132,13 +158,59 @@ func _run_client() -> void:
 	if not connected:
 		_fail("Verbindung zum Server nicht innerhalb von %.0fs zustande gekommen." % CONNECT_TIMEOUT_SEC)
 		return
-	AppLogger.log_info("IT03: verbunden. Warte auf eigenes Player-Node.", LOG_CAT)
 
 	var orch := get_node("/root/ServiceOrchestrator")
 	var session_mgr := orch.get_service(ServiceKeys.SESSION_MANAGER) as SessionManager
 	if session_mgr == null:
 		_fail("SessionManager nicht verfügbar nach Verbindung.")
 		return
+
+	# FIX (2026-10-11): ECHTEN ADR-029-Join-Flow durchlaufen. Seit Round 62
+	# bootet der Client nach joined_as_client nicht mehr automatisch — die
+	# komplette Handshake-Kette (MainMenuController._start_join_handshake()
+	# + _on_join_handshake_result()) muss hier ohne UI nachgebaut werden,
+	# sonst existieren auf dem Client nie CharacterScope/WorldService/
+	# Player-Node und die alte _wait_for_player_node()-Schleife lief immer
+	# in ihren 60s-Timeout (das war der IT-03-Fail-Modus).
+	AppLogger.log_info("IT03: verbunden — führe Join-Handshake aus (ADR-029 Phase 1).", LOG_CAT)
+	var save_system := orch.get_service(ServiceKeys.SAVE_SYSTEM) as SaveSystem
+	if save_system == null:
+		_fail("SaveSystem nicht verfügbar nach Verbindung.")
+		return
+
+	save_system.begin_session(CLIENT_PLAYER_ID)
+	var uuid := save_system.get_active_player_uuid()
+	var secret := save_system.get_active_player_secret()
+	if uuid.is_empty() or secret.is_empty():
+		_fail("player_uuid/player_secret für '%s' konnten nicht geladen/erzeugt werden." % CLIENT_PLAYER_ID)
+		return
+
+	# Dictionary statt erfasster Lokaler (GDScript-Lambdas kopieren äußere
+	# Locals als Wert) — siehe _wait_for_signal() für denselben Grund.
+	var hs := {"done": false, "accepted": false}
+	var on_result := func(accepted: bool, _reason: String, _world_seed: int) -> void:
+		hs["done"] = true
+		hs["accepted"] = accepted
+	EventBus.networking.join_handshake_result.connect(on_result, CONNECT_ONE_SHOT)
+	session_mgr.send_join_handshake(uuid, secret)
+
+	var hs_elapsed := 0.0
+	while not hs["done"] and hs_elapsed < HANDSHAKE_TIMEOUT_SEC:
+		await get_tree().create_timer(0.1).timeout
+		hs_elapsed += 0.1
+	if EventBus.networking.join_handshake_result.is_connected(on_result):
+		EventBus.networking.join_handshake_result.disconnect(on_result)
+	if not hs["done"] or not hs["accepted"]:
+		_fail("Join-Handshake nicht innerhalb von %.0fs akzeptiert." % HANDSHAKE_TIMEOUT_SEC)
+		return
+	AppLogger.log_info(
+		"IT03: Handshake akzeptiert — fordere Session für '%s' an." % CLIENT_PLAYER_ID, LOG_CAT
+	)
+
+	# Erst NACH akzeptiertem Handshake session_requested emittieren — exakt wie
+	# MainMenuController._on_join_handshake_result() im echten Spiel.
+	EventBus.session.emit_session_requested(CLIENT_PLAYER_ID)
+
 	var local_peer_id: int = session_mgr.get_local_peer_id()
 
 	var player_node := await _wait_for_player_node(orch, local_peer_id, PLAYER_SPAWN_TIMEOUT_SEC)
