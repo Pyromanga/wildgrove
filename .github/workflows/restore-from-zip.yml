@@ -1,9 +1,8 @@
 name: Restore project from zip
 
-# Überträgt den Projektstand aus zip/game.zip ins Repo-Root (einmalig).
-# Läuft bei Push auf main; wenn zip/game.zip nicht (mehr) existiert oder
-# keine Änderungen entstehen, beendet sich der Job sauber ohne Commit
-# (keine Endlosschleife).
+# Überträgt den Projektstand aus zip/game.zip ins Repo-Root.
+# VORSICHTIG: nur ergänzen/überschreiben – es wird NICHTS gelöscht.
+# zip/ bleibt erhalten bis der Stand manuell geprüft wurde.
 on:
   push:
     branches: [ main ]
@@ -14,57 +13,45 @@ permissions:
 
 jobs:
   restore:
-    name: Sync repo from zip/game.zip
+    name: Merge zip contents into repo root
     runs-on: ubuntu-22.04
     timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Sync zip contents into repo root
+      - name: Merge zip contents into repo root
         run: |
           set -euo pipefail
 
           if [ ! -f "zip/game.zip" ]; then
-            echo "ℹ️ Kein zip/game.zip — nichts zu tun."
+            echo "zip/game.zip fehlt — nichts zu tun."
             exit 0
           fi
 
-          echo "📦 Entpacke zip/game.zip ..."
+          echo "Entpacke zip/game.zip ..."
           rm -rf _src && mkdir _src
           unzip -q zip/game.zip -d _src
 
-          GODOT_FILE=$(find _src -name project.godot -maxdepth 4 | head -1)
+          GODOT_FILE=$(find _src -maxdepth 4 -name project.godot | head -1 || true)
           if [ -z "$GODOT_FILE" ]; then
-            echo "❌ Kein project.godot im ZIP gefunden — breche ab."
+            echo "Kein project.godot im ZIP gefunden — breche ab, nichts veraendert."
             exit 1
           fi
           SRC=$(dirname "$GODOT_FILE")
-          echo "✅ Godot-Projekt im ZIP: $SRC"
+          echo "Godot-Projekt im ZIP: $SRC"
 
-          # Projektstand über Repo-Root syncen.
-          # --delete: Repo-Struktur 1:1 an ZIP anpassen (Original-Wunsch:
-          # "Struktur aus dem Zip ins Repo übertragen").
-          # Ausgeschlossen: .git/.github (CI bleibt), zip/ (wird danach
-          # gelöscht), .godot (Editor-Cache), build/ (Export-Artefakte).
-          rsync -a --delete \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude 'zip' \
-            --exclude '.godot' \
-            --exclude 'build' \
-            "$SRC"/ ./
+          # NUR ERGAENZEN/UEBERSCHREIBEN — kein --delete, nichts wird entfernt.
+          cp -a "$SRC"/. ./
 
-          # ZIP ist nach dem Restore redundant — CI baut ab jetzt vom Repo.
-          rm -rf zip
+          # Godot-Editor-Cache nie committen
+          rm -rf .godot
           rm -rf _src
 
-          echo "--- Änderungen (git status) ---"
+          echo "--- git status ---"
           git status --porcelain | head -100 || true
-          echo "------------------------------"
+          echo "------------------"
 
       - name: Commit and push
         run: |
@@ -73,9 +60,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "ℹ️ Keine Änderungen nach Sync — kein Commit."
+            echo "Keine Aenderungen nach Merge — kein Commit."
             exit 0
           fi
-          git commit -m "restore: Projektstruktur aus zip/game.zip ins Repo übertragen, zip/ entfernt (App build trigger)"
+          git commit -m "restore: Projektstand aus zip/game.zip ins Repo gemerged (nur ergaenzt, nichts geloescht)"
           git push
-          echo "✅ Restore-Commit gepusht."
+          echo "Restore-Commit gepusht."
