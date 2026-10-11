@@ -63,6 +63,26 @@ assuming a passing local run means the relevant system actually works end to end
 
 ---
 
+## APK auf Handy testen
+
+```bash
+# Via ADB (USB-Debugging aktiviert)
+adb install WildGrove-debug.apk
+
+# Oder: APK-Datei direkt auf das Handy übertragen und öffnen
+# (Einstellungen → Unbekannte Quellen erlauben)
+```
+
+Die CI-Pipeline (`App` in der Commit-Message) baut automatisch eine Debug-APK —
+herunterladbar unter **Actions → Workflow-Run → Artifacts**.
+
+### Release-APK (signiert)
+
+`git tag v0.1.0 && git push --tags` — der Release-Job erstellt automatisch ein
+GitHub Release mit der signierten APK.
+
+---
+
 ## Project structure
 
 This reflects the structure as it actually exists, not an aspirational target.
@@ -75,25 +95,25 @@ wildgrove/
 ├── scenes/                    Main.tscn, World.tscn, MainMenu.tscn
 ├── scripts/
 │   ├── core/                  Boot pipeline, service registry/factory/orchestrator
-│   ├── services/               Gameplay services (inventory, skills, quests, combat, save…)
-│   ├── world/                  Entities: terrain, chunks, animals, NPCs, combat, water
-│   ├── player/                  Player movement, camera, input, visuals
-│   ├── interaction/             Interactable objects and the interaction pipeline
-│   ├── quest/                   Quest data definitions
-│   ├── ui/                      HUD, controllers, components, visuals
-│   ├── events/                  EventBus and its typed namespaces
-│   ├── interfaces/core/         Narrow context interfaces (IEntityContext, IUIContext, …)
-│   ├── resources/               Typed Resource data classes (items, stats, skills, …)
-│   ├── logger/                  Logging
-│   └── debug/                   In-game debug terminal (production-shipped tooling)
-├── data/                       .tres data assets (items, skills, combat profiles, quests)
-├── tests/unit/                  GUT unit tests
-├── addons/gut/                  GUT test framework
+│   ├── services/              Gameplay services (inventory, skills, quests, combat, save…)
+│   ├── world/                 Entities: terrain, chunks, animals, NPCs, combat, water
+│   ├── player/                Player movement, camera, input, visuals
+│   ├── interaction/           Interactable objects and the interaction pipeline
+│   ├── quest/                 Quest data definitions
+│   ├── ui/                    HUD, controllers, components, visuals
+│   ├── events/                EventBus and its typed namespaces
+│   ├── interfaces/core/       Narrow context interfaces (IEntityContext, IUIContext, …)
+│   ├── resources/             Typed Resource data classes (items, stats, skills, …)
+│   ├── logger/                Logging
+│   └── debug/                 In-game debug terminal (production-shipped tooling)
+├── data/                      .tres data assets (items, skills, combat profiles, quests)
+├── tests/unit/                GUT unit tests
+├── addons/gut/                GUT test framework
 └── docs/
-    ├── adr/                      Architecture Decision Records
-    ├── audit/                    Independent architecture/code audits (this round + future)
-    ├── architecture.md            Layer model and boot pipeline reference
-    ├── ci-pipeline.md             Documented CI/CD workflow (see below)
+    ├── adr/                   Architecture Decision Records
+    ├── audit/                 Independent architecture/code audits (this round + future)
+    ├── architecture.md        Layer model and boot pipeline reference
+    ├── ci-pipeline.md         Documented CI/CD workflow (see below)
     └── (principles.md, services.md, history.md, MIGRATION*.md)
 ```
 
