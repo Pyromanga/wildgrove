@@ -16,10 +16,6 @@ Regeln (siehe auch Workflow-Kommentar "FIX 2026-10-11"):
   3. Fallback: ZIP existiert, Repo-Root hat kein project.godot → ZIP.
   4. Sonst: Fehler.
 
-Wiederverwendbarkeit: Die eigentliche ZIP-Entpack-Logik (find project.godot)
-teilt sich diese Datei mit dem restore-Workflow-Konzept — beide suchen ein
-Godot-Projekt in einem entpackten Zustand.
-
 Output: GITHUB_OUTPUT-kompatibel (key=value Zeilen) plus menschenlesbarer
 Zusammenfassung auf stdout. Exit-Code 1 bei Fehler.
 """
@@ -56,22 +52,12 @@ def zip_changed_in_head_commit() -> bool:
     return bool(changed)
 
 
-def find_project_root(base: Path) -> Path | None:
-    """Sucht project.godot unterhalb von base (max. 4 Ebenen) — das Godot-Projekt."""
-    for candidate in sorted(base.rglob("project.godot")):
-        if len(candidate.relative_to(base).parts) <= 4:
-            return candidate.parent
-    return None
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--event", default=os.environ.get("GITHUB_EVENT_NAME", "push"),
-                        help="GitHub-Event (push/workflow_dispatch/pull_request); default aus GITHUB_EVENT_NAME")
+                        help="GitHub-Event (push/workflow_dispatch/pull_request); default: GITHUB_EVENT_NAME bzw. push")
     parser.add_argument("--output", default=os.environ.get("GITHUB_OUTPUT", ""),
                         help="GITHUB_OUTPUT-Datei für key=value Paare (optional)")
-    parser.add_argument("--unpack", action="store_true",
-                        help="ZIP bei Auswahl tatsächlich entpacken (nach _project_from_zip/)")
     args = parser.parse_args()
 
     is_push = args.event == "push"
@@ -82,27 +68,9 @@ def main() -> int:
     if zip_exists and (not is_push or zip_changed_in_head_commit()):
         reason = ("ZIP im Trigger-Commit geändert" if is_push
                   else f"manueller Trigger ({args.event})")
-        if args.unpack:
-            print(f"📦 Entpacke {ZIP_PATH} nach _project_from_zip/ ...")
-            import zipfile
-            out_dir = Path("_project_from_zip")
-            out_dir.mkdir(exist_ok=True)
-            with zipfile.ZipFile(ZIP_PATH) as zf:
-                zf.extractall(out_dir)
-            project = find_project_root(out_dir)
-        else:
-            project = None  # nur Auflösung, kein Entpacken
-
-        if not args.unpack:
-            print(f"✅ Quelle: zip/game.zip ({reason}).")
-            print(f"   → Projekt im ZIP entpackt nach: _project_from_zip/")
-            result = {"project_path": "_project_from_zip", "used_zip": "true"}
-        else:
-            if project is None:
-                print("❌ Kein project.godot in game.zip gefunden!", file=sys.stderr)
-                return 1
-            print(f"✅ Quelle: zip/game.zip ({reason}). Projekt: {project}")
-            result = {"project_path": str(project), "used_zip": "true"}
+        print(f"📦 Quelle: zip/game.zip ({reason}).")
+        print("   → Der resolve-source-Job entpackt das ZIP nach _project_from_zip/.")
+        result = {"project_path": "_project_from_zip", "used_zip": "true"}
 
     # Regel 2: Repo-Root ist selbst das Projekt (häufigster Fall)
     elif repo_root_is_project:
@@ -126,7 +94,7 @@ def main() -> int:
             for key, value in result.items():
                 f.write(f"{key}={value}\n")
 
-    # GITHUB_ENV-kompatibel für lokale Nutzung ohne --output
+    # Lesbare Ausgabe für Logs und lokale Nutzung
     for key, value in result.items():
         print(f"  {key}={value}")
 

@@ -1,15 +1,6 @@
 name: Sync repo to zip
 
-# Gegenstück zum Claude-Chat-ZIP-Workflow: packt den Repo-Stand in
-# zip/game.zip, damit der parallele Workflow (Claude Chat arbeitet mit
-# der ZIP) immer vom aktuellen Repo-Stand weiterarbeitet.
-#
-# Trigger:
-# - Push auf main mit "[sync-zip]" in der Commit-Message (Marker).
-#   Der Sync-Commit selbst enthält den Marker nicht — keine Endlosschleife.
-# - Manuell via workflow_dispatch (z.B. über scripts/ci/wildgrove-ci.sh sync).
-# Commit-Messages hier bewusst OHNE "App", damit nicht versehentlich
-# der APK-Build getriggert wird.
+# Gegenstück zum Claude-Chat-ZIP-Workflow (Details: scripts/ci/README.md).
 on:
   push:
     branches: [ main ]
@@ -32,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ "${{ github.event_name }}" = "push" ] && ! git log -1 --pretty=%B | grep -q '\[sync-zip]'; then
+          if [ "${{ github.event_name }}" = "push" ] && ! git log -1 --pretty=%B | grep -q '\[sync-zip\]'; then
             echo "Kein [sync-zip]-Marker im Commit — überspringe Sync."
             exit 0
           fi
