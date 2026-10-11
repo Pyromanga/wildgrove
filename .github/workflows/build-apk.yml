@@ -3,6 +3,11 @@ name: Build Android APK
 # ─────────────────────────────────────────────────────────────────────────────
 # Trigger: Nur bei Push/PR wenn die Commit-Message das Wort "App" enthält.
 # workflow_dispatch erlaubt manuellen Start über die GitHub-UI (kein Commit nötig).
+#
+# GATING (Issue #3, 2026-10-11, harte Variante): build-android wartet jetzt auf
+# test-logic UND integration-two-process — rote Tests = keine APK. Ein grünes
+# APK-Artifact ist damit tatsächlich eine getestete APK. (Vorher liefen alle
+# Jobs parallel und die Pipeline publizierte APKs unabhängig vom Testergebnis.)
 # ─────────────────────────────────────────────────────────────────────────────
 on:
   push:
@@ -15,23 +20,15 @@ env:
   GODOT_VERSION: "4.6.3"
   EXPORT_NAME: "WildGrove"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Globale Bedingung: "App" im Commit-Message ODER manueller Trigger.
-# Bei pull_request gibt es keinen head_commit → Fallback auf PR-Titel.
-# ─────────────────────────────────────────────────────────────────────────────
 jobs:
 
   # ─── Gemeinsame Vorarbeit: Projektquelle auflösen ───────────────────────────
-  # Wenn zip/game.zip im Repo existiert UND im auslösenden Commit geändert wurde
-  # (oder beim manuellen Trigger vorhanden ist), wird es entpackt und als
-  # Projektverzeichnis genutzt. Sonst: normales Repo-Root.
-  # FIX (2026-10-11): Vorher prüfte der Code nur auf Existenz des ZIP —
-  # dadurch testeten Repo-Commits (z.B. nach restore) immer gegen einen
-  # potentiell VERALTETEN ZIP-Stand, statt gegen den Repo-Stand. Jetzt:
-  # ZIP ist nur Quelle, wenn es im Trigger-Commit tatsächlich geändert wurde
-  # (der Claude-Chat-Workflow pusht nur das ZIP) oder bei workflow_dispatch.
-  # Ergebnis wird als Output weitergegeben damit test- und build-Job
-  # dasselbe PROJECT_PATH nutzen.
+  # Logik lebt in scripts/ci/resolve_source.py (lokal testbar, siehe
+  # scripts/ci/README.md): ZIP ist nur Quelle, wenn es im Trigger-Commit
+  # geändert wurde (Claude-Chat-Workflow) oder bei manueller Auslösung;
+  # sonst Repo-Root. FIX 2026-10-11: vorher wurde das ZIP bei bloßer
+  # Existenz immer benutzt — Commits wurden dann gegen einen veralteten
+  # ZIP-Stand getestet statt gegen das Repo.
   resolve-source:
     name: Resolve Project Source
     runs-on: ubuntu-22.04
@@ -49,29 +46,22 @@ jobs:
         with:
           lfs: true
           # Volle History nötig für den "im Trigger-Commit geändert?"-Check
-          # (git diff HEAD^ HEAD) im detect-Schritt. Default wäre depth=1,
-          # dort existiert HEAD^ nicht.
+          # (git diff HEAD^ HEAD) im detect-Schritt.
           fetch-depth: 0
 
       - name: Detect source (zip vs. repo)
         id: detect
         run: |
-          ZIP="zip/game.zip"
+          set -euo pipefail
+          python3 scripts/ci/resolve_source.py \
+            --event "${{ github.event_name }}" \
+            --output "$GITHUB_OUTPUT"
 
-          # Hat der auslösende Commit das ZIP geändert? (Nur bei push
-          # sinnvoll abfragbar; bei workflow_dispatch/PR leer.)
-          ZIP_CHANGED=""
-          if [ "${{ github.event_name }}" = "push" ]; then
-            ZIP_CHANGED=$(git diff --name-only HEAD^ HEAD -- "$ZIP" 2>/dev/null || true)
-            echo "ZIP im Trigger-Commit geändert: '${ZIP_CHANGED:-nein}'"
-          fi
-
-          if [ -f "$ZIP" ] && { [ "${{ github.event_name }}" != "push" ] || [ -n "$ZIP_CHANGED" ]; }; then
-            echo "📦 zip/game.zip (im Trigger-Commit geändert oder manueller Trigger) — entpacke als Projektquelle."
-            mkdir -p _project_from_zip
-            unzip -q "$ZIP" -d _project_from_zip
-
-            # Godot-Projekt suchen: Verzeichnis das project.godot enthält
+          USED_ZIP=$(grep '^used_zip=' "$GITHUB_OUTPUT" | cut -d= -f2)
+          if [ "$USED_ZIP" = "true" ]; then
+            echo "📦 Entpacke zip/game.zip als Projektquelle ..."
+            rm -rf _project_from_zip && mkdir -p _project_from_zip
+            unzip -q zip/game.zip -d _project_from_zip
             PROJECT_GODOT=$(find _project_from_zip -name project.godot -maxdepth 4 | head -1)
             if [ -z "$PROJECT_GODOT" ]; then
               echo "❌ Kein project.godot in game.zip gefunden!"
@@ -80,29 +70,12 @@ jobs:
             PROJECT_DIR=$(dirname "$PROJECT_GODOT")
             echo "✅ Projekt in ZIP gefunden: $PROJECT_DIR"
             echo "project_path=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
-            echo "used_zip=true"             >> "$GITHUB_OUTPUT"
-          elif [ -f project.godot ]; then
-            echo "📁 ZIP im Trigger-Commit unverändert — nutze Repo-Root als Projektquelle."
-            echo "project_path=." >> "$GITHUB_OUTPUT"
-            echo "used_zip=false" >> "$GITHUB_OUTPUT"
-          elif [ -f "$ZIP" ]; then
-            # Sollte nicht vorkommen (ZIP ohne project.godot im Root), aber
-            # sicherheitshalber: ZIP ist dann die einzige bekannte Quelle.
-            echo "📦 Repo-Root hat kein project.godot, aber zip/game.zip existiert — nutze ZIP."
-            mkdir -p _project_from_zip
-            unzip -q "$ZIP" -d _project_from_zip
-            PROJECT_GODOT=$(find _project_from_zip -name project.godot -maxdepth 4 | head -1)
-            if [ -z "$PROJECT_GODOT" ]; then
-              echo "❌ Weder Repo-Root noch ZIP enthalten ein project.godot!"
+          else
+            if [ ! -f project.godot ]; then
+              echo "❌ Weder ZIP-Projekt noch Repo-Root-project.godot gefunden!"
               exit 1
             fi
-            PROJECT_DIR=$(dirname "$PROJECT_GODOT")
-            echo "✅ Projekt in ZIP gefunden: $PROJECT_DIR"
-            echo "project_path=$PROJECT_DIR" >> "$GITHUB_OUTPUT"
-            echo "used_zip=true"             >> "$GITHUB_OUTPUT"
-          else
-            echo "❌ Weder zip/game.zip noch ein project.godot im Repo-Root gefunden!"
-            exit 1
+            echo "project_path=." >> "$GITHUB_OUTPUT"
           fi
 
       # Den aufgelösten Projektstand als Artefakt zwischenspeichern damit
@@ -112,9 +85,9 @@ jobs:
         with:
           name: resolved-project
           path: |
-            ${{ steps.detect.outputs.project_path == '.' && '.' || steps.detect.outputs.project_path }}
-            !.git/
-            !zip/
+            ${{ steps.detect.outputs.project_path }}
+            !**/.git/
+            !**/zip/
           retention-days: 1
 
   # ─── Unit Tests ─────────────────────────────────────────────────────────────
@@ -122,8 +95,6 @@ jobs:
     name: Run Unit Tests
     runs-on: ubuntu-22.04
     needs: resolve-source
-    # Ohne das hier: "Resource not accessible by integration" beim Erstellen
-    # des Checks-Eintrags — der Default-GITHUB_TOKEN hat sonst kein checks:write.
     permissions:
       checks: write
       pull-requests: write
@@ -136,13 +107,6 @@ jobs:
           name: resolved-project
           path: project
 
-      # v9.3.0 hatte einen globalen "Logger"-Klassennamen, der ab Godot 4.5
-      # mit der neuen nativen Engine-Klasse "Logger" kollidiert
-      # (SCRIPT ERROR: "The member 'Logger' shadows a native class.").
-      # Dadurch schlug addons/gut/utils.gd beim Parsen fehl und GUT lief in
-      # einer Dauerschleife/Endlosschleife fest, statt sauber zu terminieren.
-      # Fix: bitwes/Gut#715 (behoben ab v9.4.0). v9.6.0 ist die für
-      # Godot 4.6 freigegebene Version (unser GODOT_VERSION oben).
       - name: Install GUT Addon
         run: |
           mkdir -p project/addons
@@ -169,16 +133,6 @@ jobs:
           godot --headless --editor --quit 2>&1 || true
           sleep 3
 
-      # FIX 1: -gdir zeigt jetzt auf res://tests/unit statt res://tests.
-      #   GUT durchsucht -gdir NICHT rekursiv. Die echten Unit-Tests liegen
-      #   in tests/unit/test_*.gd — tests/ selbst enthält nur IntegrationTest.gd,
-      #   das (a) nicht dem test_*.gd-Namensschema entspricht und (b) laut
-      #   eigenem Header-Kommentar einen echten ServiceOrchestrator braucht,
-      #   also headless ohnehin nicht laufen soll. Mit res://tests fand GUT
-      #   dadurch schlicht nichts → "Nothing was run."
-      # FIX 2: -gjunit_xml_file ergänzt. Ohne diesen Flag schreibt GUT gar
-      #   keine results.xml — der "Publish test report"-Schritt unten hatte
-      #   also so oder so nie etwas zum Lesen.
       - name: Run GUT tests
         run: |
           cd project
@@ -188,19 +142,6 @@ jobs:
             -gexit \
             2>&1 | tee gut-output.log
 
-      # Zwei-Peer-Integrationstest (ADR-025/026, Connection-Ebene: IT-01/IT-02).
-      # Eigener Schritt statt in -gdir=res://tests/unit mitlaufen zu lassen, weil:
-      #   - tests/integration/ ist bewusst von tests/unit/ getrennt (andere
-      #     Testklasse: echte ENetMultiplayerPeer/Sockets statt reiner Unit-Mocks)
-      #   - ein Fehlschlag hier soll separat sichtbar sein, nicht im selben
-      #     Report mit den Unit-Tests vermischt werden
-      # Läuft rein auf 127.0.0.1-Loopback innerhalb des Runners (zwei
-      # MultiplayerAPI-Instanzen im selben Prozess, siehe Datei-Kopfkommentar) —
-      # braucht keine zwei Prozesse, keine zwei Runner, keine echten Geräte.
-      # IT-03 ist bewusst `pending()` (kein vollständiger Gameplay-Round-Trip,
-      # siehe Datei-Kopfkommentar) — GUT zählt pending nicht als Failure. Ein
-      # echter Failure (z.B. IT-01/IT-02 bricht) soll den Job aber rot machen,
-      # deshalb kein `|| true`, sondern der echte GUT-Exit-Code via PIPESTATUS.
       - name: Run GUT integration tests (two-peer, ADR-025/026)
         run: |
           cd project
@@ -220,15 +161,6 @@ jobs:
         with:
           report_paths: 'project/results.xml,project/results-integration.xml'
 
-      # Plain-Text-Log direkt in der Run-Summary anzeigen — kein Download nötig,
-      # einfach den Actions-Run öffnen, "Summary" aufklappen, Block kopieren.
-      # FIX: GitHub begrenzt $GITHUB_STEP_SUMMARY auf 1024k (kumulativ über
-      # den ganzen Job) — ein rohes `cat` der vollen Logs hat das schon bei
-      # 1660k gerissen ("upload aborted"), wodurch die GESAMTE Summary für
-      # den Job verloren ging (nicht nur dieser Abschnitt). Jetzt: nur die
-      # letzten 200k pro Log (die Failure-Zusammenfassung von GUT steht am
-      # Ende), mit Hinweis auf das volle Log im "gut-test-log"-Artifact
-      # weiter unten für den Fall, dass mehr Kontext gebraucht wird.
       - name: Add test log to job summary
         if: always()
         run: |
@@ -240,13 +172,11 @@ jobs:
             tail -c "$TAIL_BYTES" project/gut-output.log
             echo '```'
             echo "## GUT Testergebnisse (Integration — Two-Peer, ADR-025/026)"
-            echo "_(zeigt max. die letzten ${TAIL_BYTES} Bytes — komplettes Log im Artifact 'gut-test-log')_"
             echo '```'
             tail -c "$TAIL_BYTES" project/gut-integration-output.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # Zusätzlich als Datei zum Download — falls man die Rohdatei braucht.
       - name: Upload test log artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -259,26 +189,11 @@ jobs:
           if-no-files-found: warn
 
   # ─── IT-03: echter Zwei-Prozess-Movement-Round-Trip ─────────────────────────
-  # Kein GUT, kein In-Process-Loopback (das deckt nur IT-01/IT-02 ab, siehe
-  # test-logic-Job oben). Zwei GENUINE `godot --headless`-Prozesse auf demselben
-  # Runner: ein Host (Server + Spieler 1) und ein Client, die sich über einen
-  # echten Port auf 127.0.0.1 verbinden — derselbe App-Boot wie im echten Spiel
-  # (ServiceOrchestrator, EventBus, WorldService, NetworkBridge, Player — keine
-  # Mocks). scripts/testing/IT03Harness.gd ersetzt nur die menschlichen
-  # UI-Klicks (Host starten / Beitreten), NICHT die Gameplay-Logik selbst — der
-  # eigentliche Movement-Input kommt organisch aus Player._loop_free_predicted(),
-  # exakt wie bei einem echten Spieler. Siehe Kopfkommentar der Datei für Details.
   integration-two-process:
     name: IT-03 — Two-Process Movement Round Trip
     runs-on: ubuntu-22.04
     needs: resolve-source
     timeout-minutes: 10
-    # FIX (2026-10-11): issues:write, damit der Debug-Log-Export-Schritt unten
-    # bei einem IT-03-Failure die Logs als Issue-Kommentar posten kann.
-    # Job-Logs sind via API nur mit Admin-Rechten abrufbar und Artifacts nur
-    # mit Auth — Issue-Kommentare dagegen öffentlich lesbar (auch für Agenten).
-    permissions:
-      issues: write
 
     steps:
       - name: Download resolved project
@@ -295,17 +210,12 @@ jobs:
           chmod +x /usr/local/bin/godot
           godot --version
 
-      # Einmalig, sequenziell, VOR dem Start beider Prozesse — sonst würden
-      # Host und Client gleichzeitig in denselben .godot/-Import-Cache schreiben
-      # (Race Condition), siehe identisches Muster im test-logic-Job.
       - name: Force asset import
         run: |
           cd project
           godot --headless --editor --quit 2>&1 || true
           sleep 3
 
-      # Host zuerst, im Hintergrund — braucht einen Moment Vorlauf um den
-      # ENet-Server zu binden, bevor der Client sich verbindet.
       - name: Start host process (background)
         run: |
           cd project
@@ -315,10 +225,6 @@ jobs:
           sleep 5
           echo "Host-PID: $(cat ../host.pid)"
 
-      # Client läuft im Vordergrund — sein Exit-Code IST das Testergebnis
-      # (0 = PASS, 1 = FAIL/Timeout, siehe IT03Harness._fail()/quit(0)).
-      # `timeout` als zusätzliches Sicherheitsnetz falls der Prozess aus
-      # irgendeinem Grund trotz interner Timeouts hängen bleibt.
       - name: Run client process (foreground, result = exit code)
         id: client
         run: |
@@ -335,11 +241,6 @@ jobs:
             kill "$(cat host.pid)" 2>/dev/null || true
           fi
 
-      # Gleicher Guard wie beim "Add test log to job summary"-Schritt oben
-      # (test-logic-Job) — $GITHUB_STEP_SUMMARY ist auf 1024k begrenzt,
-      # kumulativ über den Job. Host-/Client-Log sind hier normalerweise
-      # klein, aber ohne Cap kann ein hängender/verbose Godot-Prozess das
-      # Limit trotzdem sprengen und die komplette Summary killen.
       - name: Add logs to job summary
         if: always()
         run: |
@@ -366,9 +267,6 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
-      # Client-Exit-Code entscheidet über den Job — IT03Harness gibt 0 für PASS,
-      # 1 für FAIL/Timeout zurück (`timeout` selbst gibt 124 bei eigenem
-      # Ablauf zurück, was ebenfalls korrekt als Fehlschlag durchfällt).
       - name: Evaluate result
         run: |
           CODE="${{ steps.client.outputs.exit_code }}"
@@ -379,54 +277,7 @@ jobs:
           fi
           echo "✅ IT-03 bestanden."
 
-      # FIX (2026-10-11): Bei einem IT-03-Failure werden die Host-/Client-Logs
-      # (letzte 25k Zeichen je Log) als Kommentar in ein dediziertes
-      # Debug-Issue gepostet. Issue-Kommentare sind öffentlich lesbar —
-      # Job-Logs brauchen Repo-Admin, Artifacts brauchen Auth. So kann die
-      # Failure-Diagnose auch automatisiert (Agent/Bot) erfolgen.
-      - name: Publish IT-03 failure logs to debug issue
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          CODE="${{ steps.client.outputs.exit_code }}"
-          if [ "$CODE" = "0" ] || [ -z "$CODE" ]; then
-            echo "IT-03 grün — kein Log-Export nötig."
-            exit 0
-          fi
-          {
-            echo "## IT-03 fehlgeschlagen (Client-Exit-Code ${CODE})"
-            echo ""
-            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo "Commit: ${{ github.sha }}"
-            echo ""
-            echo "### Client-Log (letzte 25000 Zeichen)"
-            echo ""
-            echo "```"
-            { [ -f client.log ] && tail -c 25000 client.log; } || echo "(kein Client-Log)"
-            echo "```"
-            echo ""
-            echo "### Host-Log (letzte 25000 Zeichen)"
-            echo ""
-            echo "```"
-            { [ -f host.log ] && tail -c 25000 host.log; } || echo "(kein Host-Log)"
-            echo "```"
-          } > it03-failure-comment.md
-          ISSUE_NUMBER=$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title=="IT-03 Debug-Logs (automatisch)") | .number' | head -1)
-          if [ -n "$ISSUE_NUMBER" ]; then
-            echo "Kommentiere in bestehendes Debug-Issue #$ISSUE_NUMBER."
-            gh issue comment "$ISSUE_NUMBER" --body-file it03-failure-comment.md
-          else
-            echo "Kein offenes Debug-Issue — erstelle eins."
-            gh issue create --title "IT-03 Debug-Logs (automatisch)" --body-file it03-failure-comment.md
-          fi
-
   # ─── DI-Überblick + Testabdeckung ──────────────────────────────────────────
-  # Reines Python/stdlib, statische Analyse über *.gd / BootstrapConfig.tres —
-  # braucht keinen Godot-Import und läuft daher unabhängig von test-logic.
-  # Reporting-only: dieser Job gated nichts (kein exit 1 bei Lücken), siehe
-  # Kopfkommentar in scripts/ci/di_test_overview.py. Falls das mal zum Gate
-  # werden soll: erst mit dem Projekt-Owner klären (docs/ci-pipeline.md).
   di-test-overview:
     name: DI-Überblick & Testabdeckung
     runs-on: ubuntu-22.04
@@ -439,10 +290,6 @@ jobs:
           name: resolved-project
           path: project
 
-      # JSON (--out) ist der primäre Output — für Agenten/Tooling gedacht
-      # (siehe scripts/ci/di_query.py zum Navigieren). --markdown-out liefert
-      # in demselben Lauf zusätzlich die Menschen-lesbare Fassung (u. a. für
-      # die Job-Summary, die das Skript selbst über $GITHUB_STEP_SUMMARY befüllt).
       - name: Run DI/coverage overview
         run: |
           python3 project/scripts/ci/di_test_overview.py \
@@ -462,19 +309,17 @@ jobs:
           if-no-files-found: warn
 
   # ─── Android Build ───────────────────────────────────────────────────────────
+  # GATING (Issue #3): needs um test-logic und integration-two-process erweitert —
+  # rote Tests ⇒ kein APK-Artifact. Debug-APKs gibt es damit nur bei grünen
+  # Tests; für manuelle Handy-Tests trotz roter Tests ggf. workflow_dispatch mit
+  # anschließendem Neustart der fehlgeschlagenen Jobs nutzen.
   build-android:
     name: Build Android APK
     runs-on: ubuntu-22.04
-    # FIX (2026-10-11, Issue #3): Build gated jetzt auf Unit-Tests + IT-03.
-    # Vorher lief build-android parallel zu test-logic/integration-two-process
-    # und produzierte grüne APK-Artifacts selbst wenn Tests rot waren. Jetzt
-    # wird die APK erst gebaut wenn test-logic UND integration-two-process
-    # (IT-03 Host<->Guest Movement Round Trip) erfolgreich waren.
     needs: [resolve-source, test-logic, integration-two-process]
     timeout-minutes: 30
 
     steps:
-      # Aufgelöste Projektquelle (Repo-Root oder entpacktes ZIP) herunterladen
       - name: Download resolved project
         uses: actions/download-artifact@v4
         with:
@@ -483,8 +328,8 @@ jobs:
 
       - name: Show source info
         run: |
-          echo "Projektquelle: ${{ needs.resolve-source.outputs.project_path }}"
-          echo "ZIP genutzt:   ${{ needs.resolve-source.outputs.used_zip }}"
+          echo "Projektquelle: ${NEEDS_PP}"
+          echo "ZIP genutzt:   ${NEEDS_UZ}"
           echo "project.godot: $(find project -name 'project.godot' | head -1)"
 
       - name: Set up Java 17
@@ -493,17 +338,6 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # BUGFIX (2026-09-15): android-actions/setup-android@v3 installiert per
-      # Default die Paketliste "tools platform-tools" NOCH VOR dem eigenen
-      # "Install Android build tools & NDK"-Schritt unten. Google hat das
-      # veraltete "tools"-Paket (Legacy Android SDK Tools) am 2026-09-14 aus
-      # dem SDK-Repository-Manifest entfernt — sdkmanager bricht seitdem
-      # branchenweit schon in diesem Action-eigenen Schritt ab:
-      #   "Warning: Failed to find package 'tools'" → exit code 1
-      # (siehe android-actions/setup-android#537). packages: "" überspringt
-      # nur diese kaputte Default-Installation — ANDROID_HOME wird weiterhin
-      # gesetzt und die SDK-Lizenzen weiterhin akzeptiert. Alle tatsächlich
-      # benötigten Pakete installiert ohnehin schon der nächste Schritt explizit.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
@@ -517,15 +351,6 @@ jobs:
             "build-tools;34.0.0" \
             "ndk;23.2.8568313"
 
-      # KRITISCH: android-actions/setup-android@v3 installiert das SDK und
-      # setzt ANDROID_HOME/ANDROID_SDK_ROOT als Env-Var — Godot 4.x liest
-      # das aber NICHT automatisch für den Android-Export. Ohne den Pfad
-      # explizit in den EditorSettings zu hinterlegen, findet Godot beim
-      # --export-debug weder apksigner/zipalign noch den Debug-Keystore-
-      # Pfad und bricht mit "Project export for preset ... failed" ab (ohne
-      # spezifischeren Grund in der Standardausgabe). Der Dateiname ist für
-      # die gesamte Godot-4.x-Reihe "editor_settings-4.tres", unabhängig von
-      # der genauen Minor-Version (hier 4.6).
       - name: Configure Godot Android SDK path
         run: |
           mkdir -p ~/.config/godot
@@ -572,134 +397,24 @@ jobs:
         run: |
           PRESETS="project/export_presets.cfg"
           if [ ! -f "$PRESETS" ]; then
-            echo "Kein export_presets.cfg — erstelle Host+Guest-Debug-Presets."
-            # ZWEI Presets mit unterschiedlichem package/unique_name (= Android
-            # applicationId) und package/name (= angezeigter App-Name). Android
-            # erkennt zwei Apps als "dieselbe App" ausschließlich über die
-            # applicationId — Signatur/Dateiname spielen dafür keine Rolle.
-            # Mit identischem unique_name würde die zweite Installation die
-            # erste einfach überschreiben (Update statt Nebeneinander-Install).
-            cat > "$PRESETS" << 'EOF'
-          [preset.0]
-          name="Android-Host"
-          platform="Android"
-          runnable=true
-          dedicated_server=false
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="build/android/WildGrove-Host-debug.apk"
-          encryption_include_filters=""
-          encryption_exclude_filters=""
-          encrypt_pck=false
-          encrypt_directory=false
-
-          [preset.0.options]
-          gradle_build/use_gradle_build=false
-          architectures/armeabi-v7a=false
-          architectures/arm64-v8a=true
-          architectures/x86=false
-          architectures/x86_64=false
-          keystore/debug="../debug.keystore"
-          keystore/debug_user="androiddebugkey"
-          keystore/debug_password="android"
-          keystore/release=""
-          keystore/release_user=""
-          keystore/release_password=""
-          package/unique_name="com.yourname.wildgrove.host"
-          package/name="WildGrove Host"
-          package/signed=true
-          package/classify_as_game=true
-          screen/immersive_mode=true
-          screen/orientation=6
-          screen/support_small=false
-          screen/support_normal=true
-          screen/support_large=true
-          screen/support_xlarge=true
-
-          [preset.1]
-          name="Android-Guest"
-          platform="Android"
-          runnable=true
-          dedicated_server=false
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="build/android/WildGrove-Guest-debug.apk"
-          encryption_include_filters=""
-          encryption_exclude_filters=""
-          encrypt_pck=false
-          encrypt_directory=false
-
-          [preset.1.options]
-          gradle_build/use_gradle_build=false
-          architectures/armeabi-v7a=false
-          architectures/arm64-v8a=true
-          architectures/x86=false
-          architectures/x86_64=false
-          keystore/debug="../debug.keystore"
-          keystore/debug_user="androiddebugkey"
-          keystore/debug_password="android"
-          keystore/release=""
-          keystore/release_user=""
-          keystore/release_password=""
-          package/unique_name="com.yourname.wildgrove.guest"
-          package/name="WildGrove Guest"
-          package/signed=true
-          package/classify_as_game=true
-          screen/immersive_mode=true
-          screen/orientation=6
-          screen/support_small=false
-          screen/support_normal=true
-          screen/support_large=true
-          screen/support_xlarge=true
-          EOF
+            echo "❌ Kein export_presets.cfg im Projekt — Host/Guest-Presets müssen im Repo vorliegen (siehe README)." >&2
+            exit 1
           else
-            echo "export_presets.cfg existiert bereits (kommt aus dem Repo) — wird unverändert genutzt."
-            echo "Für Host+Guest brauchst du dort zwei Presets mit unterschiedlichem"
-            echo "package/unique_name — siehe Kommentar in diesem Workflow-Schritt."
+            echo "export_presets.cfg vorhanden (kommt aus dem Projekt)."
           fi
 
-      # FIX (2026-10-11): Vorher stand hier "Set version code from git commit
-      # count" — der war doppelt kaputt: (a) git fetch --depth=1 + rev-list
-      # --count HEAD ergibt IMMER 1, (b) das Ergebnis wurde in GITHUB_ENV
-      # geschrieben, aber von keinem Schritt je konsumiert, und (c) der APK-
-      # versionCode kam real immer aus dem festen "version/code=1" der Presets.
-      # Jede APK hatte dadurch versionCode 1. Jetzt: github.run_number als
-      # monoton steigender versionCode, direkt in die export_presets.cfg
-      # geschrieben — das ist die Stelle, die Godots Android-Export wirklich liest.
+      # FIX 2026-10-11: Vorher war dieser Schritt doppelt kaputt (immer versionCode=1,
+      # Ergebnis wurde nie konsumiert). Jetzt: scripts/ci/bump_version.py schreibt
+      # github.run_number als monoton steigenden versionCode direkt in die Presets.
       - name: Bump APK version code (from run number)
         run: |
-          COUNT="${{ github.run_number }}"
-          echo "Version code: $COUNT"
-          PRESETS="project/export_presets.cfg"
-          if [ -f "$PRESETS" ]; then
-            sed -i "s|^version/code=.*|version/code=$COUNT|" "$PRESETS"
-            sed -i "s|^version/name=.*|version/name=\"0.1.$COUNT\"|" "$PRESETS"
-            grep -n "version/" "$PRESETS" || true
-          else
-            echo "WARN: kein export_presets.cfg gefunden — versionCode bleibt unverändert."
-          fi
-          echo "VERSION_CODE=$COUNT" >> $GITHUB_ENV
+          python3 project/scripts/ci/bump_version.py \
+            --presets project/export_presets.cfg \
+            --version-code ${RUNNR}
 
       - name: Create output directory
         run: mkdir -p project/build/android
 
-      # Tests und GUT-Addon aus dem Projektverzeichnis entfernen bevor Godot
-      # die Assets importiert. Godot parst beim Export ALLE .gd-Dateien im
-      # Projektordner — auch wenn sie per exclude_filter aus dem PCK
-      # ausgeschlossen würden. Da GUT im Build-Job nicht installiert ist,
-      # schlägt das Parsen von test_*.gd (extends GutTest) fehl und bricht
-      # den Export ab. Lösung: Dateien vorher physisch entfernen.
-      #
-      # scripts/testing/ (IT03Harness) ist kein Testskript im GUT-Sinn (parst
-      # ohne GUT-Addon einwandfrei), soll aber trotzdem nicht in der Produktions-
-      # APK landen — es ist ein CI-only Zwei-Prozess-Treiber für IT-03, siehe
-      # scripts/testing/IT03Harness.gd Kopfkommentar. Autoload-Zeile in
-      # project.godot muss mitentfernt werden, sonst referenziert der Export
-      # ein fehlendes Autoload-Skript.
       - name: Strip test files and GUT addon
         run: |
           echo "🧹 Entferne Test-Skripte und GUT-Addon für den Produktions-Export..."
