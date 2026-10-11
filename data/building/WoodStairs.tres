@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_stairs"
+display_name = "Holztreppe"
+kind = 5
+color = Color(0.45, 0.30, 0.18, 1)
+height = 2.5
+thickness = 0.2
+skirt = 0.0
+cost = {
+"log_normal": 5
+}
+refund_ratio = 0.75

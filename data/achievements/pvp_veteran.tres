@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/achievements/AchievementDefinition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = "pvp_veteran"
+display_name = "PvP-Veteran"
+description = "Besiege 10 andere Spieler im PvP-Kampf."
+target = 10.0
+category = "combat"
+reward_gold = 250

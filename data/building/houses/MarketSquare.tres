@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "market_square"
+display_name = "Marktplatz"
+description = "5×3 Felder Steinpflaster. Im Norden vier Marktstände (rot/blau) um einen Wegweiser, in der Mitte ein Brunnen, im Süden zwei Stände mit Fässern und eine Laterne. Keine Mauern — Stände zum Platz hin geöffnet. Mitte des Platzes anvisieren und dort stehen."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 4, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 4, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 4, "dz": 2},
+{"piece_id": "market_stall_red", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "market_stall_blue", "kind": 6, "axis": 2, "dx": 0, "dz": 2},
+{"piece_id": "market_stall_blue", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "signpost_wood", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "well", "kind": 6, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "market_stall_red", "kind": 6, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 3, "dz": 2},
+{"piece_id": "market_stall_blue", "kind": 6, "axis": 0, "dx": 4, "dz": 0},
+{"piece_id": "market_stall_red", "kind": 6, "axis": 2, "dx": 4, "dz": 2},
+])

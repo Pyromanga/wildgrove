@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_talk_mira_again"]
+script = ExtResource("3_ques")
+id = "obj_talk_mira_again"
+label = "Sprich erneut mit Bergarbeiterin Mira"
+type = 4
+target_id = "mira_miner"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="obj_reach_mining_3"]
+script = ExtResource("3_ques")
+id = "obj_reach_mining_3"
+label = "Erreiche Bergbau-Stufe 3"
+type = 1
+target_id = "mining"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"mining": 40}
+item_rewards = {"stone": 5}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {"gathering_speed_ore": 0.1}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_miner_gratitude"
+title = "Mira's Dank"
+description = "Mira hat sich von den Goblins erholt. Beweise ihr, dass du inzwischen ein echter Kumpel-Kollege geworden bist, und sprich noch einmal mit ihr."
+category = "side"
+objectives = [SubResource("obj_talk_mira_again"), SubResource("obj_reach_mining_3")]
+prerequisites = ["quest_miner_defense"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

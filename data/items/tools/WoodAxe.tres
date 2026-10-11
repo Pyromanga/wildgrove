@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ToolDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/equipment/ToolDefinition.gd" id="1_tdef"]
+
+[resource]
+script = ExtResource("1_tdef")
+id = "tool_axe"
+display_name = "Axt"
+max_stack = 1
+sell_price = 5
+speed_stat_id = "gathering_speed_wood"
+speed_bonus = 0.5
+buy_price = 25
+tool_type = 0

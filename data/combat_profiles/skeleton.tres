@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="CombatProfile" format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/combat/CombatProfile.gd" id="1_cp"]
+
+[resource]
+script = ExtResource("1_cp")
+id = "skeleton"
+display_name = "Skelett"
+armor = 0.25
+magic_resist = 0.1

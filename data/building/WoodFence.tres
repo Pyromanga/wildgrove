@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_fence"
+display_name = "Holzzaun"
+kind = 1
+color = Color(0.60, 0.45, 0.28, 1)
+height = 1.0
+thickness = 0.12
+skirt = 0.3
+cost = {
+"log_normal": 2
+}
+refund_ratio = 0.75

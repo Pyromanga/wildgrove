@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_reach_digging_3"]
+script = ExtResource("3_ques")
+id = "obj_reach_digging_3"
+label = "Erreiche Graben-Stufe 3"
+type = 1
+target_id = "digging"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"digging": 50}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_lucius_survey"
+title = "Vermessung des Bodens"
+description = "Wer Grenzen vermisst, muss den Boden kennen. Lucius fordert Grabe-Erfahrung."
+category = "side"
+objectives = [SubResource("obj_reach_digging_3")]
+prerequisites = ["quest_lucius_boundary"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

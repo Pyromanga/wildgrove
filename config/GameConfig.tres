@@ -1,6 +1,16 @@
 [gd_resource type="Resource" script_class="GameConfig" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/core/GameConfig.gd" id="1_x1y2z"]
+[ext_resource type="Script" path="res://scripts/platform/GameConfig.gd" id="1_x1y2z"]
 
 [resource]
 script = ExtResource("1_x1y2z")
+valid_transitions = {
+"BOOT": ["MAIN_MENU", "LOADING"],
+"CREDITS": ["MAIN_MENU"],
+"CUTSCENE": ["PLAYING", "MAIN_MENU"],
+"GAME_OVER": ["MAIN_MENU", "LOADING"],
+"LOADING": ["PLAYING", "MAIN_MENU"],
+"MAIN_MENU": ["LOADING", "CREDITS", "PLAYING"],
+"PAUSED": ["PLAYING", "MAIN_MENU"],
+"PLAYING": ["PAUSED", "GAME_OVER", "CUTSCENE", "LOADING", "MAIN_MENU"]
+}

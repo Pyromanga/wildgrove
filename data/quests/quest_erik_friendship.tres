@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_qd"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="2_obj"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="3_rwd"]
+
+[sub_resource type="Resource" id="obj_talk_erik"]
+script = ExtResource("2_obj")
+id = "obj_talk_to_erik"
+label = "Sprich erneut mit Waldläufer Erik"
+type = 4
+target_id = "erik_woodcutter"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="obj_explore_camp"]
+script = ExtResource("2_obj")
+id = "obj_explore_camp"
+label = "Erkunde Eriks Lager"
+type = 5
+target_id = "erik_camp_explored"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("3_rwd")
+xp_rewards = {"woodcutting": 20}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {"gathering_yield_wood": 0.10}
+
+[resource]
+script = ExtResource("1_qd")
+id = "quest_erik_friendship"
+title = "Eriks Vertrauen"
+description = "Erik hat dir von seinem versteckten Lager erzählt. Sprich noch einmal mit ihm und erkunde es."
+category = "side"
+objectives = [SubResource("obj_talk_erik"), SubResource("obj_explore_camp")]
+reward = SubResource("reward")
+prerequisites = ["quest_woodcutter_intro"]
+auto_start = false
+repeatable = false

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "furnace"
+display_name = "Hochofen"
+kind = 6
+prop_shape = 14
+color = Color(0.52, 0.5, 0.47, 1)
+accent_color = Color(0.2, 0.2, 0.23, 1)
+light_range = 4.5
+height = 1.6
+thickness = 0.1
+skirt = 0.0
+cost = {
+"stone": 16,
+"charcoal": 2
+}
+refund_ratio = 0.6
+station_kind = "furnace"

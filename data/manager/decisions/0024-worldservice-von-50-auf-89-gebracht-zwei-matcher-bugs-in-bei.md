@@ -1,0 +1,13 @@
+# 0024 — WorldService von 50% auf 89% gebracht + zwei Matcher-Bugs in beiden Coverage-Tools gefixt (Klammer-Beifang, kaputte Verschachtelung)
+
+Zeit: 2026-09-01 09:43 UTC
+Rolle: manager
+
+## Gewählt
+WorldService: 7 echte Luecken geschlossen (inject_network_bridge, get_player_by_id, get_player_visuals, route_movement_input, request_entity_interaction, resolve_and_dispatch_interaction, collect_and_store_pet_data) -- alle ueber den bereits von der Datei selbst dokumentierten 'unbekannte peer_id/entity_uuid -> frueher Return, kein Crash'-Fall, ohne echte 3D-Szene/ChunkManager aufzubauen. warmup_mesh_cache()/on_world_scene_ready() bleiben ausgeklammert -- deckt sich mit der bereits VOR diesem Batch im Datei-Kopf dokumentierten Scope-Entscheidung ('Was NICHT getestet wird'), nicht neu getroffen, nur respektiert. Nebenbei zwei Bugs im Matcher (architecture_overview.py UND method_reference_coverage.py) gefunden und gefixt: (1) 'Tests fuer WorldSaveHandler (E-02 -- WorldService save/load)' matchte faelschlich auf WorldService, weil der Name nur beilaeufig in der Klammer vorkam -- Fix: Klammerinhalte vor der Tests-fuer-Suche entfernen, nicht bei der ersten Klammer abschneiden (sonst waere der legitime Mehrfach-Subjekt-Fall 'StatModifier (Daten) und StatModifierService (Logik)' kaputt gegangen). (2) Beim ersten Fixversuch eine Verschachtelungs-Einrueckung falsch gesetzt, wodurch kurzzeitig fast der gesamte Report auf 'ungetestet' zeigte -- vor dem Weiterarbeiten mit vollem architecture_overview.py-Lauf verifiziert, dass wieder 0 false negatives da sind.
+
+## Verworfene Alternativen
+- warmup_mesh_cache()/on_world_scene_ready() jetzt doch erzwingen (z.B. mit Mesh-Stubs) um 100% zu erreichen -- verworfen, widerspricht der bereits dokumentierten und im Batch bestaetigten Scope-Entscheidung; ein erzwungener Test ohne echtes Rendering wuerde nur den Aufruf-Pfad, nicht die eigentliche Funktion pruefen -- Metrik-Kosmetik ohne Testwert, wie schon beim vorletzten Batch (trade/shop/auction_house) vermieden.
+
+## Begründung
+WorldService ist die zentrale Fassade fuer Entity-/Movement-/Interaction-Routing -- unbekannte peer_id/entity_uuid sind der haeufigste reale Fall (Race zwischen Despawn und einem noch unterwegs befindlichen Netzwerk-Paket, laut Code-Kommentaren bereits erwartet), also genau der Pfad der zuerst abgesichert werden sollte. Der Matcher-Fix VOR dem Schreiben neuer Tests war wichtig, weil er eine falsche 'world ist eigentlich schon getestet'-Zahl haette erzeugen koennen -- Sorgfalt hat sich gelohnt: das Ergebnis (9/18 vor UND nach dem Fix) zeigt, dass der Bug fuer WorldService selbst keine Auswirkung hatte, aber projektweit potenziell andere Services falsch bewertet haben koennte.

@@ -36,7 +36,6 @@ var _controller: TerminalController
 # Lifecycle
 # ─────────────────────────────────────────────
 
-
 func _ready() -> void:
 	layer = LAYER_ORDER
 
@@ -52,16 +51,13 @@ func _ready() -> void:
 	_terminal.entry_added.connect(_on_entry_added)
 	_update_visibility(_terminal.is_visible)
 
-
 # ─────────────────────────────────────────────
 # UI Setup
 # ─────────────────────────────────────────────
 
-
 func _setup_ui() -> void:
 	_build_panel()
 	_build_toggle_button()
-
 
 func _build_panel() -> void:
 	_panel = Panel.new()
@@ -86,7 +82,6 @@ func _build_panel() -> void:
 	_input = _build_input()
 	vbox.add_child(_input)
 
-
 func _build_toolbar() -> HBoxContainer:
 	var toolbar := HBoxContainer.new()
 	toolbar.custom_minimum_size.y = TOOLBAR_HEIGHT
@@ -99,7 +94,6 @@ func _build_toolbar() -> HBoxContainer:
 
 	return toolbar
 
-
 func _build_input() -> LineEdit:
 	var input := LineEdit.new()
 	input.custom_minimum_size.y = INPUT_HEIGHT
@@ -108,7 +102,6 @@ func _build_input() -> LineEdit:
 	input.focus_mode = Control.FOCUS_CLICK
 	input.text_submitted.connect(_on_input_submitted)
 	return input
-
 
 func _build_toggle_button() -> void:
 	_btn_toggle = Button.new()
@@ -119,25 +112,26 @@ func _build_toggle_button() -> void:
 	add_child(_btn_toggle)
 	_btn_toggle.global_position = TOGGLE_BTN_START
 
-
 # ─────────────────────────────────────────────
 # Signal-Handler
 # ─────────────────────────────────────────────
 
-
 func _on_copy_pressed() -> void:
 	DisplayServer.clipboard_set(_terminal.get_all_text())
-
+	var exported_path: String = _terminal.export_all_text_to_file()
+	if not exported_path.is_empty():
+		AppLogger.log_info(
+			"Vollständiger Log zusätzlich gespeichert: %s (falls Clipboard gekürzt hat)" % exported_path,
+			"Terminal"
+		)
 
 func _on_input_submitted(text: String) -> void:
 	_controller.submit_command(text)
 	_input.clear()
 	_input.release_focus()  # Keyboard auf Mobile schließen
 
-
 func _on_toggle_input(event: InputEvent) -> void:
 	_controller.handle_button_input(event, _btn_toggle)
-
 
 func _update_visibility(visible: bool) -> void:
 	_panel.visible = visible
@@ -148,8 +142,9 @@ func _update_visibility(visible: bool) -> void:
 		_output.text = _terminal.get_all_text()
 		_input.release_focus()
 
-
-func _on_entry_added(entry: SimpleTerminal.LogEntry) -> void:
+func _on_entry_added(entry) -> void:
+	# Untypisiert: SimpleTerminal.LogEntry (innere Klasse eines AutoLoad-Nodes)
+	# ist in GDScript 4 außerhalb der Klasse nicht als Typ-Hint verwendbar.
 	if entry == null:
 		_output.text = ""
 		return

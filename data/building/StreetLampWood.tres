@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "street_lamp_wood"
+display_name = "Holzlaterne"
+kind = 6
+prop_shape = 9
+color = Color(0.35, 0.24, 0.14, 1)
+accent_color = Color(0.35, 0.24, 0.14, 1)
+height = 2.4
+light_range = 5.0
+thickness = 0.1
+skirt = 0.0
+cost = {
+"log_normal": 3,
+"charcoal": 1
+}
+refund_ratio = 0.6

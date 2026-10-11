@@ -2,10 +2,8 @@ class_name FloatingTextVisuals
 
 var _parent: CanvasLayer
 
-
 func _init(parent: CanvasLayer) -> void:
 	_parent = parent
-
 
 func spawn_text(text: String, color: Color, font_size: int, duration: float) -> void:
 	var label := Label.new()

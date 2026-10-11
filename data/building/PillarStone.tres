@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "pillar_stone"
+display_name = "Steinsäule"
+kind = 6
+prop_shape = 26
+color = Color(0.62, 0.62, 0.64, 1)
+accent_color = Color(0.62, 0.62, 0.64, 1)
+height = 2.5
+thickness = 0.1
+skirt = 0.0
+cost = {
+"stone": 8
+}
+refund_ratio = 0.75

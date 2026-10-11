@@ -1,144 +1,134 @@
 # WildGrove 🌿
 
-> RuneScape × Animal Crossing × Stardew Valley × Zelda — 3D Mobile RPG
+> A 3D mobile RPG built around four combined concepts: open-world exploration with
+> light puzzle/boss encounters, a numeric skill-and-leveling progression system, seasonal
+> farming and resource gathering, and a village/wildlife layer with NPC relationships.
 
-## Spielkonzept
-
-Ein einzigartiges Mobile-RPG das die besten Elemente kombiniert:
-
-- **Zelda** — Hauptstory, Dungeons mit Rätseln, Bossgegner, offene 3D-Welt
-- **RuneScape** — Skill-System (Holzfällen, Fischen, Zaubern, Kampf), Quests, Crafting
-- **Stardew Valley** — Farming, Jahreszeiten, NPC-Beziehungen mit Mini-Quests
-- **Animal Crossing** — Dorfbau, Enzyklopädie (Fische, Insekten, Pflanzen), Echtzeit-Uhr
-
-**Steuerung:** Virtueller Joystick (links) + Click & Point / Tap-Aktionen
+This README describes what the project *is* and how to run it. **Neu hier?**
+Lies zuerst `docs/manager/START_HIER.md` — die kürzeste, einfachste Erklärung,
+wie an diesem Projekt gearbeitet wird. Für *why* it's built the way
+it is, see `docs/adr/` (Architecture Decision Records) and `docs/architecture.md`. For a
+critical, evidence-based read on the current state of the codebase — including open bugs and
+where documentation doesn't match code — see `docs/audit/`.
 
 ---
 
-## Erste Schritte
+## Design pillars
 
-### Voraussetzungen
+WildGrove combines four gameplay concepts into one world, rather than four separate game
+modes:
 
-- [Godot 4.3](https://godotengine.org/download/) installieren
-- Android SDK (API 34) + NDK 23
-- Java 17+
+- **Exploration & encounters** — an open 3D world with discoverable areas, light
+  environmental puzzles, and tiered enemy encounters including boss-scale fights.
+- **Skill progression** — a numeric skill system (e.g. woodcutting, mining, farming, combat)
+  where repeated actions grant XP and unlock capability over time, independent of a single
+  "character level."
+- **Farming & seasons** — plantable, growable, harvestable resources tied to an in-world
+  time/season cycle.
+- **Village & relationships** — NPCs with individual relationship state, a wildlife/resource
+  encyclopedia, and player-driven world development over time.
 
-### Projekt öffnen
+Controls target touch-first mobile play: a virtual joystick for movement, tap-to-interact /
+context-sensitive action buttons for everything else.
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- [Godot 4.6.3](https://godotengine.org/download/)
+- Android SDK (API 34) + NDK 23, if building for device
+- Java 17+, if building for device
+
+### Open the project
 
 ```bash
-git clone https://github.com/DEIN-USERNAME/wildgrove.git
+git clone <your-repo-url>
 cd wildgrove
-# Godot 4 öffnen und den Projektordner auswählen
+# Open in Godot 4 by selecting this folder as the project
 ```
 
-### Projektstruktur anlegen
+### Run tests locally
 
-Nach dem Klonen die folgende Ordnerstruktur erstellen:
+The project uses [GUT](https://github.com/bitwes/Gut) (`addons/gut/`) for unit tests.
+
+```bash
+godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
+```
+
+**Current status, as of this audit:** test coverage is uneven across systems — see
+`docs/audit/AUDIT-01-pain-points-and-review-verification.md` for the specific gaps before
+assuming a passing local run means the relevant system actually works end to end.
+
+---
+
+## Project structure
+
+This reflects the structure as it actually exists, not an aspirational target.
 
 ```
 wildgrove/
-├── .github/
-│   └── workflows/
-│       └── build-apk.yml       ← GitHub Actions (APK Build)
-├── project.godot               ← Godot Projektkonfiguration
-├── export_presets.cfg          ← Android Export-Einstellungen
-├── scenes/
-│   ├── Main.tscn               ← Einstiegspunkt
-│   ├── world/
-│   │   ├── WorldMap.tscn       ← Offene 3D-Welt
-│   │   └── Dungeon.tscn        ← Zelda-artige Dungeons
-│   ├── player/
-│   │   └── Player.tscn         ← Spielerfigur + Kamera
-│   ├── ui/
-│   │   ├── HUD.tscn            ← Joystick, HP, Skills
-│   │   └── Inventory.tscn      ← Inventar / Skills-Menü
-│   ├── village/
-│   │   └── Village.tscn        ← Dorf (Animal Crossing)
-│   └── farm/
-│       └── Farm.tscn           ← Farmland (Stardew)
+├── project.godot              Godot project configuration
+├── export_presets.cfg         Android export settings
+├── config/                    Bootstrap/game configuration resources
+├── scenes/                    Main.tscn, World.tscn, MainMenu.tscn
 ├── scripts/
-│   ├── player/
-│   │   ├── PlayerController.gd ← Bewegung, Joystick
-│   │   └── PlayerStats.gd      ← HP, Skills, XP
-│   ├── systems/
-│   │   ├── SkillSystem.gd      ← RuneScape Skills
-│   │   ├── QuestSystem.gd      ← Quest-Verwaltung
-│   │   ├── FarmSystem.gd       ← Farming-Logik
-│   │   └── RelationSystem.gd   ← NPC-Beziehungen
-│   └── world/
-│       ├── TimeSystem.gd       ← Tag/Nacht, Jahreszeiten
-│       └── WorldGen.gd         ← Welt-Generierung
-├── assets/
-│   ├── icon.png
-│   ├── audio/
-│   └── textures/
-└── addons/
-    └── (Third-Party Plugins)
+│   ├── core/                  Boot pipeline, service registry/factory/orchestrator
+│   ├── services/               Gameplay services (inventory, skills, quests, combat, save…)
+│   ├── world/                  Entities: terrain, chunks, animals, NPCs, combat, water
+│   ├── player/                  Player movement, camera, input, visuals
+│   ├── interaction/             Interactable objects and the interaction pipeline
+│   ├── quest/                   Quest data definitions
+│   ├── ui/                      HUD, controllers, components, visuals
+│   ├── events/                  EventBus and its typed namespaces
+│   ├── interfaces/core/         Narrow context interfaces (IEntityContext, IUIContext, …)
+│   ├── resources/               Typed Resource data classes (items, stats, skills, …)
+│   ├── logger/                  Logging
+│   └── debug/                   In-game debug terminal (production-shipped tooling)
+├── data/                       .tres data assets (items, skills, combat profiles, quests)
+├── tests/unit/                  GUT unit tests
+├── addons/gut/                  GUT test framework
+└── docs/
+    ├── adr/                      Architecture Decision Records
+    ├── audit/                    Independent architecture/code audits (this round + future)
+    ├── architecture.md            Layer model and boot pipeline reference
+    ├── ci-pipeline.md             Documented CI/CD workflow (see below)
+    └── (principles.md, services.md, history.md, MIGRATION*.md)
 ```
 
 ---
 
-## GitHub Actions — Automatischer APK Build
+## CI/CD
 
-### Einrichten
-
-1. Die Datei `.github/workflows/build-apk.yml` in dein Repo kopieren
-2. `git push` → GitHub baut automatisch eine APK
-3. APK unter **Actions → Dein Workflow → Artifacts** herunterladen
-
-### APK auf Handy testen
-
-```bash
-# Via ADB (USB-Debugging aktiviert)
-adb install WildGrove-debug.apk
-
-# Oder: APK-Datei direkt auf das Handy übertragen und öffnen
-# (Einstellungen → Unbekannte Quellen erlauben)
-```
-
-### Release-APK (signiert)
-
-Für einen Release-Build `git tag v0.1.0 && git push --tags`.
-Der Release-Job erstellt automatisch ein GitHub Release mit der APK.
+A GitHub Actions workflow builds an Android debug APK on push/PR (when the commit message
+contains "App") or via manual dispatch, runs the unit test suite, and creates a GitHub
+Release on tag push. The workflow itself is documented in full, with critique, in
+[`docs/ci-pipeline.md`](docs/ci-pipeline.md) — that document is the authoritative reference
+for what the pipeline does and does not currently verify. **Changes to the CI pipeline
+require a conversation with the project owner first** — see that document for why.
 
 ---
 
-## Entwicklungsplan
+## Current focus
 
-### Phase 1: Foundation (aktuell)
-- [x] GitHub CI/CD Pipeline
-- [ ] Godot Projekt-Grundstruktur
-- [ ] Spieler-Controller (3D, Joystick)
-- [ ] Basis-Welt (Terrain)
-- [ ] Mobile HUD
-
-### Phase 2: Core Systems
-- [ ] Skill-System (RuneScape)
-- [ ] Farming-System (Stardew)
-- [ ] NPC + Dialoge
-- [ ] Dorfbau-System (AC)
-
-### Phase 3: Content
-- [ ] Erster Dungeon (Zelda)
-- [ ] 5 Hauptquests
-- [ ] Fisch/Insekten/Pflanzen-Enzyklopädie
-- [ ] Tag/Nacht + Jahreszeiten
-
-### Phase 4: Polish
-- [ ] Sound & Musik
-- [ ] Partikeleffekte
-- [ ] Google Play Store
+Architecture and tooling work has outpaced gameplay verification. Before adding new systems,
+the priority is: confirm the existing core loop (skills/XP, inventory, quests, combat) is
+correct end to end, with real test coverage, and make the CI pipeline actually gate on that
+coverage rather than reporting green regardless of test outcome. See `docs/audit/` for the
+specifics. `AGENT.md` has standing instructions for any agent working in this repo; the
+active task brief for a given round lives in `ReviewAgent.md` (audit) or `ImplementAgent.md`
+(bug-fix execution).
 
 ---
 
-## Technische Details
+## Technical details
 
-| Bereich | Technologie |
+| Area | Choice |
 |---|---|
-| Engine | Godot 4.3 |
-| Sprache | GDScript |
-| Zielplattform | Android (arm64) |
-| Rendering | GL Compatibility (Mobile) |
+| Engine | Godot 4.6.3 |
+| Language | GDScript |
+| Target platform | Android (arm64) |
+| Rendering | GL Compatibility (mobile) |
 | Min. Android | API 24 (Android 7.0) |
 | Target Android | API 34 (Android 14) |
-| Auflösung | 1080×1920 (skaliert) |

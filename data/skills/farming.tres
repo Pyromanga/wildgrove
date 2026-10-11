@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="SkillDefinition" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/resources/SkillDefinition.gd" id="1_skill"]
+[ext_resource type="Script" path="res://scripts/progression/skills/SkillDefinition.gd" id="1_skill"]
 
 [resource]
 script = ExtResource("1_skill")
 id = "farming"
 display_name = "Ackerbau"
-description = "Pflanzen anbauen und ernten."
+description = "Pflanzen anbauen und ernten, genährt vom Lebensstrom im Boden. Wusstest du? Erbsen und Bohnen holen mit Knöllchenbakterien Stickstoff aus der Luft in den Boden – darum wechseln Bauern die Feldfrucht (Fruchtfolge)."
 xp_to_level_up = Array[int]([100, 250, 500, 900, 1400, 2000, 2800, 3800, 5000, 6500])
 xp_scaling_factor = 1.5
 max_level = 99

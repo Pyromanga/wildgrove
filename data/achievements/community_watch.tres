@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/achievements/AchievementDefinition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = "community_watch"
+display_name = "Wachsames Auge"
+description = "Reiche deine erste Meldung ein."
+target = 1.0
+category = "social"
+reward_gold = 25

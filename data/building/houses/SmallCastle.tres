@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "small_castle"
+display_name = "Kleine Burg"
+description = "4×4 Felder Burghof, hohe Steinmauer mit vier Rundtürmen an den Ecken. Der Torturm an der Front ersetzt ein Mauerstück (begehbare Durchfahrt), im Hof stehen ein Brunnen und ein Katapult. Kein Boden — der Hof liegt frei auf dem Gelände."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 4},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 4},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 4},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 3, "dz": 4},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 3},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 3},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 4, "dz": 0},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 4},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 4, "dz": 4},
+{"piece_id": "gatehouse", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "well", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "catapult", "kind": 6, "axis": 0, "dx": 2, "dz": 1},
+])

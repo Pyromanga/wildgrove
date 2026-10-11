@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://scripts/world/World.gd" id="1_world"]
+[ext_resource type="Script" path="res://scripts/world/core/World.gd" id="1_world"]
+[ext_resource type="Script" path="res://scripts/world/core/WorldScopeInitializer.gd" id="2_initializer"]
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_world")
+
+[node name="WorldScopeInitializer" type="Node" parent="."]
+script = ExtResource("2_initializer")

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "city_gate"
+display_name = "Stadttor"
+description = "14 m breite Torfront: zwei Rundtürme, fünf Felder Zinnenmauer mit Rundbogen-Tor in der Mitte, Pflaster durch das Tor, Fahnen und zwei Eisenlaternen auf der Innenseite. Mitte anvisieren und dort stehen."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "stone_gate_arch", "kind": 3, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 4, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 5, "dz": 1},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "street_lamp_iron", "kind": 6, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "banner_blue", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "banner_blue", "kind": 6, "axis": 0, "dx": 4, "dz": 0},
+{"piece_id": "street_lamp_iron", "kind": 6, "axis": 0, "dx": 5, "dz": 1},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 6, "dz": 0},
+])

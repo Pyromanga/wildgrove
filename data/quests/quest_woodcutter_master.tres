@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="QuestDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_qd"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="2_obj"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="3_rwd"]
+
+[sub_resource type="Resource" id="obj_woodcutting_level"]
+script = ExtResource("2_obj")
+id = "obj_reach_woodcutting_5"
+label = "Erreiche Holzfäller-Stufe 5"
+type = 1
+target_id = "woodcutting"
+required = 5
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("3_rwd")
+xp_rewards = {}
+item_rewards = {"log_oak": 10}
+unlock_quests = []
+custom_signals = []
+
+[resource]
+script = ExtResource("1_qd")
+id = "quest_woodcutter_master"
+title = "Meister des Holzfällens"
+description = "Erik erkennt echtes Talent. Erreiche Holzfäller-Stufe 5 um sein Vertrauen zu gewinnen."
+category = "side"
+objectives = [SubResource("obj_woodcutting_level")]
+reward = SubResource("reward")
+prerequisites = ["quest_woodcutter_intro"]
+auto_start = false
+repeatable = false

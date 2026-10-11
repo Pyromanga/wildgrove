@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "hip_roof"
+display_name = "Walmdach"
+kind = 2
+roof_shape = 1
+roof_ridge = 0.6
+color = Color(0.40, 0.24, 0.16, 1)
+height = 1.4
+thickness = 0.0
+skirt = 0.0
+cost = {
+"log_normal": 5
+}
+refund_ratio = 0.75

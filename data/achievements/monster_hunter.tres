@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AchievementDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/achievements/AchievementDefinition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = "monster_hunter"
+display_name = "Monsterjäger"
+description = "Besiege 50 NPCs."
+target = 50.0
+category = "stats"
+reward_gold = 200

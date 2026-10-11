@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/combat/WeaponDefinition.gd" id="1_weap"]
+
+[resource]
+script = ExtResource("1_weap")
+id = "meteorite_dagger"
+display_name = "Sternendolch"
+max_stack = 1
+sell_price = 60
+damage_bonus = 12.0
+damage_type = 0
+on_hit_effect = -1
+on_hit_ticks = 4
+on_hit_damage_per_tick = 3.0
+on_hit_tick_interval = 1.0
+weapon_type = 0
+visual_offset = Vector3(0.0, -0.15, 0.2)
+visual_rotation = Vector3(0.0, 0.0, 0.0)
+grants_protection_type = ""
+pickpocket_crystal_tier = ""

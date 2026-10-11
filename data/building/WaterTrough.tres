@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "trough_water"
+display_name = "Wassertrog"
+kind = 6
+prop_shape = 28
+color = Color(0.5, 0.36, 0.22, 1)
+accent_color = Color(0.3, 0.52, 0.72, 1)
+height = 0.5
+thickness = 0.1
+skirt = 0.0
+cost = {
+"log_normal": 3
+}
+refund_ratio = 0.75

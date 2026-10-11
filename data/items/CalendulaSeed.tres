@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/inventory/ItemDefinition.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+id = "calendula_seed"
+display_name = "Ringelblumensamen"
+max_stack = 999
+sell_price = 1
+xp_bonus = {}
+grants_protection_type = ""
+pickpocket_crystal_tier = ""
+plants_crop_id = "calendula"

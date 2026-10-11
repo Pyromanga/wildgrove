@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_reach_combat_4"]
+script = ExtResource("3_ques")
+id = "obj_reach_combat_4"
+label = "Erreiche Kampf-Stufe 4"
+type = 1
+target_id = "combat"
+required = 4
+optional = false
+
+[sub_resource type="Resource" id="obj_talk_wei_again"]
+script = ExtResource("3_ques")
+id = "obj_talk_wei_again"
+label = "Sprich erneut mit Wei"
+type = 4
+target_id = "wei_master"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"combat": 40}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {"crit_chance": 0.03}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_wei_mastery"
+title = "Wudang-Lektion"
+description = "Wei erkennt Talent, warnt aber vor Eile. Erst wer Stufe 4 erreicht, ohne Abkuerzungen zu nehmen, hat wirklich etwas gelernt."
+category = "side"
+objectives = [SubResource("obj_reach_combat_4"), SubResource("obj_talk_wei_again")]
+prerequisites = ["quest_wei_patience"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

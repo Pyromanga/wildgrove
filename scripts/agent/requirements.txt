@@ -1,0 +1,19 @@
+# Optionale Abhängigkeiten für scripts/agent/-Tools.
+#
+# Alle Tools in scripts/agent/ sind bewusst stdlib-only, MIT EINER AUSNAHME:
+# method_reference_coverage.py kann optional gdtoolkit nutzen, um GDScript
+# über einen echten Parser (Lark-Grammatik) statt über Regex-Textsuche zu
+# analysieren — löst z.B. die "request_X() ruft synchron on_X_confirmed()
+# auf"-Indirektion strukturell auf, statt sie nur zu tolerieren.
+#
+# OHNE gdtoolkit installiert fällt method_reference_coverage.py automatisch
+# auf die alte Regex-Heuristik zurück (mit deutlicher Warnung in der Ausgabe)
+# — das Tool bricht nicht, es liefert nur eine schwächere Näherung.
+#
+# Installation (optional):
+#   pip install -r scripts/agent/requirements.txt --break-system-packages
+#
+# gdtoolkit ist ein GDScript-Formatter/-Linter (https://github.com/Scony/godot-gdscript-toolkit)
+# — wir nutzen hier ausschließlich sein internes gdtoolkit.parser-Modul für den
+# Parse-Tree, nicht den Formatter/Linter selbst.
+gdtoolkit>=4.3

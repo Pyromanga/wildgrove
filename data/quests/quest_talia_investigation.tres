@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_talk_mira_clue"]
+script = ExtResource("3_ques")
+id = "obj_talk_mira_clue"
+label = "Frag Mira, was genau fehlt"
+type = 4
+target_id = "mira_miner"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="obj_track_forestry_3"]
+script = ExtResource("3_ques")
+id = "obj_track_forestry_3"
+label = "Verfolge die Spuren im Wald (Forstwissen-Stufe 3)"
+type = 1
+target_id = "forestry"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="obj_catch_fox"]
+script = ExtResource("3_ques")
+id = "obj_catch_fox"
+label = "Stell dem Uebeltaeter eine Falle -- fang ihn"
+type = 5
+target_id = "caught_fox"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="obj_talk_talia_report"]
+script = ExtResource("3_ques")
+id = "obj_talk_talia_report"
+label = "Melde Talia deinen Fund"
+type = 4
+target_id = "talia_guard"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"forestry": 25}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_talia_investigation"
+title = "Der Dieb im Pelz"
+description = "Aus Miras Lager verschwinden nachts glaenzende Sachen. Waechterin Talia braucht Hilfe, der Spur zu folgen -- bis zum eigentlichen Uebeltaeter."
+category = "side"
+objectives = [SubResource("obj_talk_mira_clue"), SubResource("obj_track_forestry_3"), SubResource("obj_catch_fox"), SubResource("obj_talk_talia_report")]
+prerequisites = []
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

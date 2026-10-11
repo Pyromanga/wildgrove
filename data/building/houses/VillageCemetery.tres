@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "village_cemetery"
+display_name = "Dorffriedhof"
+description = "4×4 Felder, niedrige Steinmauer mit Friedhofstor an der Front. Acht Gräber (Grabsteine, -kreuze, -platten) in zwei Reihen, Wegkreuz mittig als Gedenkstätte. Kein Boden — die Gräber stehen frei auf dem Gelände."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "cemetery_gate", "kind": 3, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 0, "dz": 4},
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 1, "dz": 4},
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 2, "dz": 4},
+{"piece_id": "stone_fence", "kind": 1, "axis": 0, "dx": 3, "dz": 4},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 0, "dz": 2},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 0, "dz": 3},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 4, "dz": 0},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 4, "dz": 1},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 4, "dz": 2},
+{"piece_id": "stone_fence", "kind": 1, "axis": 1, "dx": 4, "dz": 3},
+{"piece_id": "gravestone_stele", "kind": 6, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "grave_cross", "kind": 6, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "gravestone_stele", "kind": 6, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "gravestone_slab", "kind": 6, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "gravestone_slab", "kind": 6, "axis": 0, "dx": 0, "dz": 3},
+{"piece_id": "gravestone_stele", "kind": 6, "axis": 0, "dx": 1, "dz": 3},
+{"piece_id": "grave_cross", "kind": 6, "axis": 0, "dx": 2, "dz": 3},
+{"piece_id": "gravestone_stele", "kind": 6, "axis": 0, "dx": 3, "dz": 3},
+{"piece_id": "wayside_cross", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+])

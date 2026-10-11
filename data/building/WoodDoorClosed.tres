@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_door_closed"
+display_name = "Holztür (geschlossen)"
+kind = 3
+color = Color(0.42, 0.28, 0.16, 1)
+height = 2.5
+thickness = 0.2
+skirt = 0.8
+leaf_state = 2
+cost = {
+"log_normal": 4
+}
+refund_ratio = 0.75

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "garden_bed_flowers"
+display_name = "Blumenbeet"
+kind = 6
+prop_shape = 30
+color = Color(0.36, 0.25, 0.16, 1)
+accent_color = Color(0.86, 0.4, 0.6, 1)
+height = 0.55
+thickness = 0.1
+skirt = 0.0
+cost = {
+"log_normal": 2,
+"fern_fiber": 2
+}
+refund_ratio = 0.75

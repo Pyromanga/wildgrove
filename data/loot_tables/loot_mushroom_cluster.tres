@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootTable.gd" id="1_lt"]
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootEntry.gd" id="2_le"]
+
+[sub_resource type="Resource" id="entry_mushroom"]
+script = ExtResource("2_le")
+item_id = "wild_mushroom"
+weight = 100.0
+quantity_min = 1
+quantity_max = 3
+
+[resource]
+script = ExtResource("1_lt")
+max_rolls = 1
+entries = [SubResource("entry_mushroom")]

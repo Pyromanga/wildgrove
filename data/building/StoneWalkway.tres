@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "stone_walkway"
+display_name = "Wehrgang (Stein)"
+kind = 0
+color = Color(0.55, 0.55, 0.57, 1)
+height = 0.3
+thickness = 0.25
+skirt = 2.3
+cost = {
+"stone": 10
+}
+refund_ratio = 0.75

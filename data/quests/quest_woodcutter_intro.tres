@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="QuestDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_qd"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="2_obj"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="3_rwd"]
+
+[sub_resource type="Resource" id="obj_chop"]
+script = ExtResource("2_obj")
+id = "obj_chop_trees"
+label = "Fälle 3 Eichen"
+type = 2
+target_id = "chop"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("3_rwd")
+xp_rewards = {"woodcutting": 50}
+item_rewards = {"log_normal": 2}
+unlock_quests = []
+custom_signals = []
+
+[resource]
+script = ExtResource("1_qd")
+id = "quest_woodcutter_intro"
+title = "Der erste Holzschlag"
+description = "Waldläufer Erik braucht Holz für den Winter. Fälle 3 Eichen und bringe ihm die Nachricht."
+category = "main"
+objectives = [SubResource("obj_chop")]
+reward = SubResource("reward")
+prerequisites = []
+auto_start = false
+repeatable = false

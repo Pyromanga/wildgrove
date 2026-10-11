@@ -16,6 +16,6 @@ class_name HUD
 
 func _ready() -> void:
 	layer = 1
-	Logger.log_debug(
+	AppLogger.log_debug(
 		"HUD CanvasLayer bereit. Layer: %d, Name: '%s'." % [layer, name], "HUD"
 	)

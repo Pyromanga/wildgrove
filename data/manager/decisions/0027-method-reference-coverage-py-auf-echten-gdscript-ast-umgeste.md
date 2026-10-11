@@ -1,0 +1,13 @@
+# 0027 — method_reference_coverage.py auf echten GDScript-AST umgestellt (gdtoolkit), ZoneService.gd 'set'-Variable umbenannt
+
+Zeit: 2026-09-03 23:48 UTC
+Rolle: manager
+
+## Gewählt
+Statt eines selbstgebauten Regex-Intra-Klassen-Call-Graphs (Decision 0026) jetzt ein ECHTER Parser: gdtoolkit (Lark-Grammatik fuer GDScript, https://github.com/Scony/godot-gdscript-toolkit) als OPTIONALE Abhaengigkeit in neuem scripts/agent/requirements.txt. method_reference_coverage.py nutzt gdtoolkit.parser fuer einen echten Parse-Tree: Methodendefinitionen ueber func_def-Knoten (steigt NICHT in verschachtelte class_def ab, damit innere Spy/Mock-Klassen in Testdateien nicht kollidieren), Methodenaufrufe ueber standalone_call/getattr_call-Knoten -- kein Text-Regex mehr, das durch Kommentare/Strings/Teilstring-Kollisionen getaeuscht werden koennte. OHNE gdtoolkit installiert faellt das Tool automatisch und PRO DATEI auf die alte Regex-Heuristik zurueck (mit sichtbarer Warnung), bricht also nie. Alle Ausgaben (Kurzform/--full/--json) markieren jetzt, ob AST oder Regex-Fallback genutzt wurde. Nebenbei: ZoneService.gd hatte eine lokale Variable namens 'set' (gueltiges GDScript, aber trifft eine kontextuelle Grammatik-Sonderregel von gdtoolkit fuer Property-Setter-Syntax) -- umbenannt zu 'zone_set' in allen vier betroffenen Funktionen (report_enter/report_exit/is_in_zone/get_zones_for), damit alle 422 Projekt-.gd-Dateien fehlerfrei parsen. Reiner Rename, keine Verhaltensaenderung.
+
+## Verworfene Alternativen
+- Bei der Regex-Heuristik aus Decision 0026 bleiben und nur die verbleibenden Einzelfaelle (WorldSaveHandler-Kollision etc.) weiter von Hand nachschaerfen -- verworfen nach direkter Rueckfrage des Menschen ('dann fehlt ein vernuenftiger Call-Graph?!'): jede weitere Regex-Sonderregel waere nur ein weiterer Flicken auf derselben strukturell schwachen Grundlage gewesen. Ein echter Parser loest die ganze Klasse von Problemen (Kommentar-/String-Kollisionen, mehrdeutige Klammer-Heuristiken) auf einen Schlag.
+
+## Begründung
+Der Regex-Ansatz hatte in den letzten beiden Batches bereits zwei eigene Bugs erzeugt (WorldSaveHandler-Fehlzuordnung, kaputte Verschachtelung beim ersten Fixversuch) -- ein Muster, das typischerweise bedeutet: das Werkzeug ist am Rand seiner Eignung. gdtoolkit ist ein etabliertes, aktiv gepflegtes GDScript-Tooling-Projekt (nicht selbstgeschrieben), pypi.org steht im erlaubten Netzwerk-Domain-Katalog dieser Sandbox, und die Installation ist eine bewusst OPTIONALE Erweiterung, die den Stdlib-only-Grundsatz der uebrigen scripts/agent/-Tools nicht verletzt (Fallback bleibt lauffaehig ohne Internet/pip).

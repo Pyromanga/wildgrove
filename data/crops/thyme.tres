@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FarmCropDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/farming/FarmCropDefinition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+id = "thyme"
+display_name = "Thymian"
+seed_item_id = "thyme_seed"
+harvest_loot_table_id = "loot_thyme_field"
+xp_amount = 12
+growth_seconds = 80.0
+skill_id = "herbalism"

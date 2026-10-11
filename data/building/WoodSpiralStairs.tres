@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_spiral_stairs"
+display_name = "Holz-Wendeltreppe"
+kind = 5
+stairs_shape = 1
+color = Color(0.45, 0.30, 0.18, 1)
+height = 2.5
+thickness = 0.2
+skirt = 0.0
+cost = {
+"log_normal": 8,
+"log_oak": 2
+}
+refund_ratio = 0.75

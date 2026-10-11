@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "hand_cart"
+display_name = "Handkarren"
+kind = 6
+prop_shape = 24
+color = Color(0.55, 0.4, 0.25, 1)
+accent_color = Color(0.35, 0.25, 0.16, 1)
+height = 0.9
+thickness = 0.1
+skirt = 0.0
+cost = {
+"log_normal": 6
+}
+refund_ratio = 0.6

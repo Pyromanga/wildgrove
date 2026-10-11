@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/skills/SkillDefinition.gd" id="1_sd"]
+
+[resource]
+script = ExtResource("1_sd")
+id = "combat"
+display_name = "Kampf"
+description = "Übe Schwert und Schild – Angriff und Verteidigung wachsen mit dir. Wusstest du? Eine Plattenrüstung wog meist etwa 20–25 kg, verteilt auf den ganzen Körper; Ritter konnten sich darin frei bewegen – der hilflose Blechritter ist ein Mythos."
+xp_to_level_up = Array[int]([100])
+xp_scaling_factor = 1.15
+max_level = 99

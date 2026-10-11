@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_talk_mira_confront"]
+script = ExtResource("3_ques")
+id = "obj_talk_mira_confront"
+label = "Sprich noch einmal mit Mira -- ueber das Nugget"
+type = 4
+target_id = "mira_miner"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="obj_talk_talia_verdict"]
+script = ExtResource("3_ques")
+id = "obj_talk_talia_verdict"
+label = "Bring Talia die Wahrheit"
+type = 4
+target_id = "talia_guard"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"forestry": 15}
+item_rewards = {"fox_tail_talisman": 1}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {"gathering_speed_ore": 0.05}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_talia_verdict"
+title = "Urteil im Morgenlicht"
+description = "Der Fuchs hatte Miras Gluecksnugget nur, weil sie es selbst achtlos liegen liess -- nicht gestohlen, gefunden. Talia braucht die Wahrheit, bevor sie ein Urteil faellt."
+category = "side"
+objectives = [SubResource("obj_talk_mira_confront"), SubResource("obj_talk_talia_verdict")]
+prerequisites = ["quest_talia_investigation"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

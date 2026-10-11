@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "sundial"
+display_name = "Sonnenuhr"
+kind = 6
+prop_shape = 11
+color = Color(0.62, 0.6, 0.56, 1)
+accent_color = Color(0.75, 0.62, 0.3, 1)
+height = 0.8
+thickness = 0.1
+skirt = 0.0
+cost = {
+"stone": 5,
+"copper_ingot": 1
+}
+refund_ratio = 0.5

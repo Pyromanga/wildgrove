@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "cemetery_gate"
+display_name = "Friedhofstor"
+kind = 3
+color = Color(0.16, 0.16, 0.18, 1)
+height = 2.2
+thickness = 0.15
+skirt = 0.8
+cost = {
+"log_normal": 2,
+"iron_ingot": 3
+}
+refund_ratio = 0.6

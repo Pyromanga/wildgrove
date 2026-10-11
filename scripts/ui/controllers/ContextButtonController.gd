@@ -12,29 +12,24 @@ extends Node
 ## in den Tree einhängen.
 
 var _visuals: ContextButtonVisuals
-var _event_bus: UIEvents
+var _ctx: IUIContext
 var _has_target: bool = false
 
-
-func setup(visuals: ContextButtonVisuals, event_bus: UIEvents) -> void:
+func setup(visuals: ContextButtonVisuals, ctx: IUIContext) -> void:
 	_visuals = visuals
-	_event_bus = event_bus
+	_ctx = ctx
 	_visuals.button.pressed.connect(_on_pressed)
 
-
 func _ready() -> void:
-	EventBus.world.proximity_changed.connect(_on_proximity_changed)
+	_ctx.bus().world().proximity_changed.connect(_on_proximity_changed)
 	_update_visibility()
-
 
 func _on_proximity_changed(_target: Node3D, in_range: bool) -> void:
 	_has_target = in_range
 	_update_visibility()
 
-
 func _on_pressed() -> void:
-	_event_bus.emit_request_context_menu()
-
+	_ctx.bus().ui().emit_request_context_menu()
 
 func _update_visibility() -> void:
 	if is_instance_valid(_visuals):

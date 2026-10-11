@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "wall_walk"
+display_name = "Mauer mit Wehrgang"
+description = "6 Felder Steinmauer mit Wehrgang: Zinnen-Brüstung außen, begehbarer Gang (2 m breit) auf der Mauerkrone, Holzgeländer innen und eine Steintreppe in der Westecke. In Reihe stellbar; die Treppe nur am Anfang nötig."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 4, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 5, "dz": 1},
+{"piece_id": "stone_stairs", "kind": 5, "axis": 2, "dx": 0, "dz": 2},
+{"piece_id": "street_lamp_iron", "kind": 6, "axis": 0, "dx": 5, "dz": 2},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 0, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 1, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 2, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 3, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 4, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 5, "dz": 1, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 0, "dz": 1, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 1, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 1, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 2, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 2, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 3, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 3, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 4, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 4, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 5, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 5, "dz": 2, "storey": 1},
+])

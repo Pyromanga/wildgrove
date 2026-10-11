@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "fortress_yard"
+display_name = "Wehrhof"
+description = "6×5 Felder Festungshof: hohe Zinnenmauer, vier Rundtürme an den Ecken, Torturm an der Südfront (begehbare Durchfahrt), im Hof Brunnen, Waffenständer, Holzstapel, Fass, Handkarren, Feuerstelle, Bank und Fahnen, gepflasterter Weg vom Tor. Größte Struktur des Wehrbaus — Mitte des Hofes anvisieren und dort stehen."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 3},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 0, "dz": 2},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 0, "dz": 3},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 0, "dz": 4},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 0, "dz": 5},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 1, "dz": 5},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 2, "dz": 5},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 4, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 4, "dz": 5},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 5, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 5, "dz": 5},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 6, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 6, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 6, "dz": 2},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 6, "dz": 3},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 6, "dz": 4},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 5},
+{"piece_id": "weapon_rack", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "bench_wood", "kind": 6, "axis": 1, "dx": 1, "dz": 2},
+{"piece_id": "firepit", "kind": 6, "axis": 0, "dx": 1, "dz": 3},
+{"piece_id": "weapon_rack", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "street_lamp_iron", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 2, "dz": 3},
+{"piece_id": "well", "kind": 6, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "gatehouse", "kind": 6, "axis": 0, "dx": 3, "dz": 4},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 4, "dz": 0},
+{"piece_id": "street_lamp_iron", "kind": 6, "axis": 0, "dx": 4, "dz": 2},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 4, "dz": 3},
+{"piece_id": "woodpile", "kind": 6, "axis": 0, "dx": 5, "dz": 0},
+{"piece_id": "hand_cart", "kind": 6, "axis": 3, "dx": 5, "dz": 3},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 6, "dz": 0},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 6, "dz": 5},
+])

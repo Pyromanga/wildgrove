@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "pyramid_roof"
+display_name = "Zeltdach"
+kind = 2
+roof_shape = 2
+color = Color(0.35, 0.35, 0.38, 1)
+height = 1.5
+thickness = 0.0
+skirt = 0.0
+cost = {
+"stone": 5,
+"log_normal": 2
+}
+refund_ratio = 0.75

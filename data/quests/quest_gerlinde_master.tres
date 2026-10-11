@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_reach_beekeeping_3"]
+script = ExtResource("3_ques")
+id = "obj_reach_beekeeping_3"
+label = "Erreiche Imkerei-Stufe 3"
+type = 1
+target_id = "beekeeping"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"beekeeping": 50}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_gerlinde_master"
+title = "Meisterin der Waben"
+description = "Gerlinde möchte sehen, ob du das Imkern wirklich beherrschst."
+category = "side"
+objectives = [SubResource("obj_reach_beekeeping_3")]
+prerequisites = ["quest_gerlinde_combs"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

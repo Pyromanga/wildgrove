@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="QuestDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_qd"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="2_obj"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="3_rwd"]
+
+[sub_resource type="Resource" id="obj_collect_ore"]
+script = ExtResource("2_obj")
+id = "obj_collect_iron"
+label = "Sammle 5 Eisenerz"
+type = 0
+target_id = "iron_ore"
+required = 5
+optional = false
+
+[sub_resource type="Resource" id="obj_kill_goblins"]
+script = ExtResource("2_obj")
+id = "obj_kill_goblins"
+label = "Besiege 3 Goblins"
+type = 3
+target_id = "goblin"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("3_rwd")
+xp_rewards = {"mining": 30, "combat": 40}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+
+[resource]
+script = ExtResource("1_qd")
+id = "quest_miner_defense"
+title = "Erzfeinde"
+description = "Goblins haben die Mine überfallen. Sammle Eisenerz und vertreibe sie."
+category = "side"
+objectives = [SubResource("obj_collect_ore"), SubResource("obj_kill_goblins")]
+reward = SubResource("reward")
+prerequisites = []
+auto_start = false
+repeatable = false

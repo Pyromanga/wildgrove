@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SmithingRecipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/crafting/SmithingRecipe.gd" id="1_smit"]
+
+[resource]
+script = ExtResource("1_smit")
+id = "forge_copper_helmet"
+display_name = "Kupferhelm schmieden"
+station = "anvil"
+inputs = {"copper_ingot": 3}
+output_item_id = "copper_helmet"
+output_quantity = 1
+min_level = 2
+xp = 55
+required_tools = ["tool_hammer", "tool_tongs"]

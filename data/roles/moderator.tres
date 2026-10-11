@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="Role" format=3]
+
+[ext_resource type="Script" path="res://scripts/platform/Role.gd" id="1_role"]
+
+[resource]
+script = ExtResource("1_role")
+id = "moderator"
+display_name = "Moderator"
+capabilities = Array[StringName]([&"kick_player", &"mute_player", &"teleport_self", &"teleport_player", &"spectate_player", &"view_reports"])

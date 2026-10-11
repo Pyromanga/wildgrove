@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SmithingRecipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/crafting/SmithingRecipe.gd" id="1_smit"]
+
+[resource]
+script = ExtResource("1_smit")
+id = "forge_steel_axe"
+display_name = "Stahl-Streitaxt schmieden"
+station = "anvil"
+inputs = {"steel_ingot": 2, "log_normal": 1}
+output_item_id = "steel_axe"
+output_quantity = 1
+min_level = 17
+xp = 175
+required_tools = ["tool_hammer", "tool_tongs"]

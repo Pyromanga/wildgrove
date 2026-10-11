@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "flat_roof"
+display_name = "Flachdach"
+kind = 2
+roof_shape = 3
+color = Color(0.32, 0.32, 0.34, 1)
+height = 1.2
+thickness = 0.0
+skirt = 0.0
+cost = {
+"stone": 5
+}
+refund_ratio = 0.75

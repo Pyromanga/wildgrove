@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "scarecrow"
+display_name = "Vogelscheuche"
+kind = 6
+prop_shape = 31
+color = Color(0.72, 0.6, 0.28, 1)
+accent_color = Color(0.45, 0.3, 0.2, 1)
+height = 1.9
+thickness = 0.1
+skirt = 0.0
+cost = {
+"fern_fiber": 6,
+"log_normal": 2
+}
+refund_ratio = 0.75

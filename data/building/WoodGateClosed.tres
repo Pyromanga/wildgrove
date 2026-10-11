@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_gate_closed"
+display_name = "Holztor (geschlossen)"
+kind = 3
+color = Color(0.42, 0.28, 0.16, 1)
+height = 2.5
+thickness = 0.25
+skirt = 0.8
+opening_shape = 1
+opening_width = 1.7
+opening_height = 2.3
+leaf_state = 2
+cost = {
+"log_normal": 8
+}
+refund_ratio = 0.75

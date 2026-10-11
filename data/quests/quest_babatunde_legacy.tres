@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_reach_forestry_2"]
+script = ExtResource("3_ques")
+id = "obj_reach_forestry_2"
+label = "Erreiche Forstwissen-Stufe 2"
+type = 1
+target_id = "forestry"
+required = 2
+optional = false
+
+[sub_resource type="Resource" id="obj_talk_babatunde_again"]
+script = ExtResource("3_ques")
+id = "obj_talk_babatunde_again"
+label = "Sprich erneut mit Babatunde"
+type = 4
+target_id = "babatunde_spirit"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"forestry": 30}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {"gathering_yield_wood": 0.08}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_babatunde_legacy"
+title = "Weitergegebenes Wissen"
+description = "Babatunde merkt beschaemt, dass die Fehde seit Generationen vorbei ist. Zufrieden gibt er dir statt Beute etwas Wertvolleres weiter: Wissen ueber den Wald."
+category = "side"
+objectives = [SubResource("obj_reach_forestry_2"), SubResource("obj_talk_babatunde_again")]
+prerequisites = ["quest_babatunde_tale"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

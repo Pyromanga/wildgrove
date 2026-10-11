@@ -3,7 +3,6 @@ class_name UIUtils
 const COLOR_BG = Color(0, 0, 0, 0.6)
 const COLOR_ACCENT = Color(0.2, 0.8, 0.3)
 
-
 static func create_label_box(text: String) -> PanelContainer:
 	var pc := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
@@ -17,10 +16,9 @@ static func create_label_box(text: String) -> PanelContainer:
 	pc.add_child(lbl)
 	return pc
 
-
 static func create_button(text: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(150, 40)
+	btn.custom_minimum_size = Vector2(150, UIMetrics.TAP_MIN)
 	btn.pressed.connect(callback)
 	return btn

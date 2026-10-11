@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "smithy"
+display_name = "Schmiede"
+description = "3×2 Felder, Steinmauern und Steindach, eine Tür, Hochofen hinten links. Der Amboss (hinten rechts, Feld frei gelassen) braucht Eisenbarren und lässt sich erst nachrüsten: Hochofen bauen, Eisen schmelzen, dann den Amboss setzen."
+pieces = Array[Dictionary]([
+{"piece_id": "furnace", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 2},
+{"piece_id": "wood_door", "kind": 3, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 3, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 3, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 1, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 2, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 1, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 2, "dz": 1},
+])

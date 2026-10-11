@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ArmorDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/equipment/ArmorDefinition.gd" id="1_armo"]
+
+[resource]
+script = ExtResource("1_armo")
+id = "iron_chestplate"
+display_name = "Eisenpanzer"
+max_stack = 1
+sell_price = 45
+armor_slot = 1
+armor_value = 0.08
+grants_protection_type = ""
+pickpocket_crystal_tier = ""

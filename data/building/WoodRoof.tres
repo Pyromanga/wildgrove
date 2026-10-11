@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_roof"
+display_name = "Holzdach"
+kind = 2
+color = Color(0.45, 0.22, 0.16, 1)
+height = 1.4
+thickness = 0.0
+skirt = 0.0
+cost = {
+"log_normal": 4
+}
+refund_ratio = 0.75

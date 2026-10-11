@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "stable"
+display_name = "Stall"
+description = "4×2 Felder Holzstall für Pferd und Esel: Futtertrog und Wassertrog an der Rückwand, Trennzaun zwischen den Boxen, Heuballen und Sack in der Front, Eingang an der Ostseite. Davor ein Handkarren und eine Laterne."
+pieces = Array[Dictionary]([
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "wood_fence", "kind": 1, "axis": 1, "dx": 2, "dz": 0},
+{"piece_id": "hay_bale", "kind": 1, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": -1, "dz": 1},
+{"piece_id": "trough_feed", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "sacks", "kind": 6, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "trough_feed", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "trough_water", "kind": 6, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "hand_cart", "kind": 6, "axis": 3, "dx": 4, "dz": 1},
+])

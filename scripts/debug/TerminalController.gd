@@ -1,34 +1,27 @@
-extends Node
+extends RefCounted
 class_name TerminalController
 
-var _logic: Node  # SimpleTerminal
-var _ui: CanvasLayer  # SimpleTerminalUI
+## TerminalController — Verbindet SimpleTerminalUI mit SimpleTerminal-Logik.
+##
+## Leitet Eingaben weiter; die eigentliche Drag-Logik des Toggle-Buttons sitzt seit BUGFIX
+## 2026-09-27 ("Admin-Button soll wie der Log-Button verschiebbar sein") in
+## DraggableToggleController (siehe dort) — AdminPanelUI nutzt exakt dieselbe Klasse für
+## seinen eigenen Button, statt die (nicht ganz triviale, BUG-25-gehärtete) Drag-Erkennung
+## ein zweites Mal zu implementieren. Öffentliche API dieser Klasse unverändert, damit
+## SimpleTerminalUI und die bestehenden Tests (test_terminal_controller.gd) unangetastet bleiben.
+## Extends RefCounted (nicht Node) damit _init() Argumente annehmen kann.
 
-var _is_dragging := false
-var _drag_offset := Vector2.ZERO
-var _drag_start_pos := Vector2.ZERO
-
+var _logic: Node       # SimpleTerminal (AutoLoad)
+var _ui: CanvasLayer   # SimpleTerminalUI
+var _drag: DraggableToggleController
 
 func _init(logic_node: Node, ui_node: CanvasLayer) -> void:
 	_logic = logic_node
-	_ui = ui_node
-
+	_ui    = ui_node
+	_drag  = DraggableToggleController.new(_logic.toggle)
 
 func handle_button_input(event: InputEvent, button: Button) -> void:
-	if event is InputEventMouseButton or event is InputEventScreenTouch:
-		if event.pressed:
-			_is_dragging = true
-			_drag_start_pos = event.global_position
-			_drag_offset = button.global_position - event.global_position
-		else:
-			_is_dragging = false
-			# Klick-Erkennung: Wenn kaum bewegt, dann Toggle
-			if event.global_position.distance_to(_drag_start_pos) < 15:
-				_logic.toggle()
-
-	if (event is InputEventMouseMotion or event is InputEventScreenDrag) and _is_dragging:
-		button.global_position = event.global_position + _drag_offset
-
+	_drag.handle_button_input(event, button)
 
 func submit_command(text: String) -> void:
 	_logic.execute(text)

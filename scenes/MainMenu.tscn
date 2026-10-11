@@ -1,16 +1,184 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/MainMenuController.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://scripts/ui/MenuScopeInitializer.gd" id="2_scope"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 script = ExtResource("1_ctrl")
 
-[node name="StartButton" type="Button" parent="."]
-layout_mode = 0
-offset_left = 800.0
-offset_top = 500.0
-offset_right = 1120.0
-offset_bottom = 580.0
-text = "Spiel Starten"
+[node name="MenuScopeInitializer" type="Node" parent="."]
+script = ExtResource("2_scope")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.12, 0.08, 1)
+
+; ── Solo / Character-Select Panel ─────────────────────────────────────────────
+
+[node name="CenterContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -280.0
+offset_right = 200.0
+offset_bottom = 280.0
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="CenterContainer"]
+layout_mode = 2
+text = "WildGrove"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 48
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer"]
+layout_mode = 2
+text = "Wähle deinen Charakter"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="Spacer" type="Control" parent="CenterContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+
+[node name="CharacterList" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="Divider" type="HSeparator" parent="CenterContainer"]
+layout_mode = 2
+
+[node name="NewGameButton" type="Button" parent="CenterContainer"]
+layout_mode = 2
+text = "Neues Spiel"
+custom_minimum_size = Vector2(400, 52)
+
+[node name="MultiplayerButton" type="Button" parent="CenterContainer"]
+layout_mode = 2
+text = "Multiplayer"
+custom_minimum_size = Vector2(400, 52)
+
+[node name="StatusLabel" type="Label" parent="CenterContainer"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+visible = false
+
+; ── Multiplayer-Setup Panel (initial hidden) ──────────────────────────────────
+
+[node name="NetPanel" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -300.0
+offset_right = 220.0
+offset_bottom = 300.0
+alignment = 1
+visible = false
+
+[node name="NetTitleLabel" type="Label" parent="NetPanel"]
+layout_mode = 2
+text = "Multiplayer"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 36
+
+[node name="NetSpacer" type="Control" parent="NetPanel"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+
+; ── Host ──────────────────────────────────────────────────────────────────────
+
+[node name="HostSection" type="VBoxContainer" parent="NetPanel"]
+layout_mode = 2
+
+[node name="HostLabel" type="Label" parent="NetPanel/HostSection"]
+layout_mode = 2
+text = "— Spiel hosten —"
+horizontal_alignment = 1
+
+[node name="HostPortRow" type="HBoxContainer" parent="NetPanel/HostSection"]
+layout_mode = 2
+alignment = 1
+
+[node name="HostPortLabel" type="Label" parent="NetPanel/HostSection/HostPortRow"]
+layout_mode = 2
+text = "Port:"
+custom_minimum_size = Vector2(60, 0)
+
+[node name="HostPortEdit" type="LineEdit" parent="NetPanel/HostSection/HostPortRow"]
+layout_mode = 2
+text = "7777"
+custom_minimum_size = Vector2(120, 0)
+
+[node name="StartHostButton" type="Button" parent="NetPanel/HostSection"]
+layout_mode = 2
+text = "Server starten"
+custom_minimum_size = Vector2(440, 52)
+
+[node name="HostDivider" type="HSeparator" parent="NetPanel"]
+layout_mode = 2
+
+; ── Join ──────────────────────────────────────────────────────────────────────
+
+[node name="JoinSection" type="VBoxContainer" parent="NetPanel"]
+layout_mode = 2
+
+[node name="JoinLabel" type="Label" parent="NetPanel/JoinSection"]
+layout_mode = 2
+text = "— Spiel beitreten —"
+horizontal_alignment = 1
+
+[node name="JoinAddressRow" type="HBoxContainer" parent="NetPanel/JoinSection"]
+layout_mode = 2
+alignment = 1
+
+[node name="JoinAddressLabel" type="Label" parent="NetPanel/JoinSection/JoinAddressRow"]
+layout_mode = 2
+text = "Adresse:"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="JoinAddressEdit" type="LineEdit" parent="NetPanel/JoinSection/JoinAddressRow"]
+layout_mode = 2
+text = "127.0.0.1"
+custom_minimum_size = Vector2(200, 0)
+
+[node name="JoinPortRow" type="HBoxContainer" parent="NetPanel/JoinSection"]
+layout_mode = 2
+alignment = 1
+
+[node name="JoinPortLabel" type="Label" parent="NetPanel/JoinSection/JoinPortRow"]
+layout_mode = 2
+text = "Port:"
+custom_minimum_size = Vector2(80, 0)
+
+[node name="JoinPortEdit" type="LineEdit" parent="NetPanel/JoinSection/JoinPortRow"]
+layout_mode = 2
+text = "7777"
+custom_minimum_size = Vector2(120, 0)
+
+[node name="StartJoinButton" type="Button" parent="NetPanel/JoinSection"]
+layout_mode = 2
+text = "Verbinden"
+custom_minimum_size = Vector2(440, 52)
+
+[node name="JoinDivider" type="HSeparator" parent="NetPanel"]
+layout_mode = 2
+
+; ── Zurück ────────────────────────────────────────────────────────────────────
+
+[node name="BackButton" type="Button" parent="NetPanel"]
+layout_mode = 2
+text = "← Zurück"
+custom_minimum_size = Vector2(440, 44)

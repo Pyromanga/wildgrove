@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootTable.gd" id="1_lt"]
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootEntry.gd" id="2_le"]
+
+[sub_resource type="Resource" id="entry_essence"]
+script = ExtResource("2_le")
+item_id = "wraith_essence"
+weight = 100.0
+quantity_min = 1
+quantity_max = 2
+
+[resource]
+script = ExtResource("1_lt")
+max_rolls = 1
+entries = [SubResource("entry_essence")]
+gold_min = 8
+gold_max = 18

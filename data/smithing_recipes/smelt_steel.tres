@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SmithingRecipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/crafting/SmithingRecipe.gd" id="1_smit"]
+
+[resource]
+script = ExtResource("1_smit")
+id = "smelt_steel"
+display_name = "Stahlbarren aufkohlen"
+station = "furnace"
+inputs = {"iron_ingot": 1, "charcoal": 2}
+output_item_id = "steel_ingot"
+output_quantity = 1
+min_level = 12
+xp = 80
+required_tools = ["tool_tongs"]

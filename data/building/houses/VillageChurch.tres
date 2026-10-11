@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "village_church"
+display_name = "Dorfkirche"
+description = "3×4 Felder, Stein, Tür + 4 Fenster, Satteldach. Runder Steinturm an der Front-Ecke, Wegkreuz vor dem Eingang (beide freistehend, ca. 2 zusätzliche Meter Platz an Front und Seite einplanen)."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 3},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 3},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 3},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "iron_door", "kind": 3, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 4},
+{"piece_id": "wood_window", "kind": 4, "axis": 0, "dx": 1, "dz": 4},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 4},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "wood_window", "kind": 4, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "wood_window", "kind": 4, "axis": 1, "dx": 0, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 3},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 3, "dz": 0},
+{"piece_id": "wood_window", "kind": 4, "axis": 1, "dx": 3, "dz": 1},
+{"piece_id": "wood_window", "kind": 4, "axis": 1, "dx": 3, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 3, "dz": 3},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 2},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 3},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 3},
+{"piece_id": "stone_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 3},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": -1, "dz": 0},
+{"piece_id": "wayside_cross", "kind": 6, "axis": 0, "dx": 1, "dz": -1},
+])

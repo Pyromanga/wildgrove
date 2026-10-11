@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "chapel_stone"
+display_name = "Steinkapelle"
+kind = 6
+prop_shape = 7
+color = Color(0.62, 0.61, 0.58, 1)
+accent_color = Color(0.36, 0.22, 0.17, 1)
+height = 2.4
+thickness = 0.1
+skirt = 0.0
+cost = {
+"stone": 14,
+"log_normal": 4
+}
+refund_ratio = 0.5

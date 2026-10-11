@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "anvil"
+display_name = "Amboss"
+kind = 6
+prop_shape = 15
+color = Color(0.3, 0.31, 0.35, 1)
+accent_color = Color(0.4, 0.28, 0.17, 1)
+height = 0.85
+thickness = 0.1
+skirt = 0.0
+cost = {
+"iron_ingot": 6,
+"log_normal": 2
+}
+refund_ratio = 0.6
+station_kind = "anvil"

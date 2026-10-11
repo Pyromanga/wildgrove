@@ -1,12 +1,10 @@
-# scripts/ui/ressources/notificationVisuals.gd
+# scripts/ui/visuals/notificationVisuals.gd
 class_name NotificationVisuals
 
 var _parent: CanvasLayer
 
-
 func _init(parent: CanvasLayer) -> void:
 	_parent = parent
-
 
 func show_popup(text: String) -> void:
 	# Bestehende Popups aufräumen
@@ -39,8 +37,15 @@ func show_popup(text: String) -> void:
 	_parent.add_child(container)
 
 	# Auto-Close Timer (Logik, die in die Visuals darf, da sie zum 'Aufräumen' der Nodes gehört)
-	_parent.get_tree().create_timer(3.0).timeout.connect(
-		func():
-			if is_instance_valid(container):
-				container.queue_free()
-	)
+	# BUGFIX (2026-09-13): get_tree().create_timer() lebt UNABHÄNGIG vom
+	# Popup-Container weiter. Wird der Container vorher schon durch ein
+	# neueres Popup ersetzt (show_popup() räumt alte Popups sofort weg),
+	# feuert dieser verwaiste Timer später gegen ein bereits freigegebenes
+	# Objekt -> 'Lambda capture at index 0 was freed.' Ein Timer-Kindknoten
+	# am Container stirbt automatisch MIT ihm — kein verwaister Timer mehr.
+	var auto_close := Timer.new()
+	auto_close.wait_time = 3.0
+	auto_close.one_shot  = true
+	container.add_child(auto_close)
+	auto_close.timeout.connect(container.queue_free)
+	auto_close.start()

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="FarmCropDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/farming/FarmCropDefinition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+id = "carrot"
+display_name = "Karotte"
+seed_item_id = "carrot_seed"
+harvest_loot_table_id = "loot_carrot"
+xp_amount = 15
+growth_seconds = 45.0

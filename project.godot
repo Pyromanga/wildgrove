@@ -1,6 +1,6 @@
 ; Engine configuration file.
-; WildGrove — RuneScape × Animal Crossing × Stardew Valley × Zelda
-; Godot 4.3 — Mobile 3D
+; Open-World RPG mit Skill-Progression, Farming und Village-Aufbau
+; Godot 4.6 — Mobile 3D
 
 [configuration]
 
@@ -13,7 +13,7 @@ config/description="Ein Abenteuer-RPG mit Farming, Dorfbau und Dungeons"
 config/version="0.1.1"
 config/tags=PackedStringArray("mobile", "rpg", "3d")
 run/main_scene="res://scenes/MainMenu.tscn"
-config/features=PackedStringArray("4.3", "Mobile")
+config/features=PackedStringArray("4.6", "Mobile")
 
 [display]
 
@@ -41,14 +41,26 @@ lights_and_shadows/directional_shadow/size=2048
 
 [autoload]
 ; Reihenfolge ist wichtig — jeder Autoload darf nur auf frühere zugreifen.
-; 1. Logger           — keine Abhängigkeiten
-; 2. EventBus         — braucht nur Logger
-; 3. SimpleTerminal   — braucht Logger + EventBus
-; 4. Services         — Platzhalter, wird von Orchestrator befüllt
-; 5. ServiceOrchestrator — bootet alle Services, überlebt Szenenwechsel
+; 1. AppLogger        — keine Abhängigkeiten
+;    (Umbenannt von "Logger" → kollidierte ab Godot 4.5 mit der neuen
+;    eingebauten Engine-Klasse "Logger" (GH-91006). Mit Autoload-Namen
+;    "Logger" löste GDScript "Logger.log_info(...)" plötzlich auf die
+;    leere native Klasse auf statt auf unseren Autoload.)
+; 2. EventBus         — braucht nur AppLogger
+; 3. SimpleTerminal   — braucht AppLogger + EventBus
+; 4. ServiceOrchestrator — bootet alle Services, überlebt Szenenwechsel
+; 5. IT03Harness        — CI-only (scripts/testing/, wird vor dem Produktions-
+;    Export physisch entfernt, siehe build-apk.yml "Strip test files"). Ohne
+;    --it03-server/--it03-client Cmdline-User-Arg ist _ready() ein No-Op —
+;    kostet im normalen Spiel nur einen leeren Array-Scan.
+; 6. DedicatedServerBootstrap — Tier-3-Produktionspfad (ADR-010 Round 55),
+;    BLEIBT im Export (kein CI-only-Tool wie IT03Harness). Ohne
+;    --dedicated-server Cmdline-User-Arg ist _ready() ein No-Op — kostet im
+;    normalen Spiel (Solo/Tier-2/Client) nur einen leeren Array-Scan.
 
-Logger="*res://scripts/logger/Logger.gd"
-EventBus="*res://scripts/events/EventBus.gd"
+AppLogger="*res://scripts/logger/Logger.gd"
+EventBus="*res://scripts/eventbus/EventBus.gd"
 SimpleTerminal="*res://scripts/debug/SimpleTerminal.gd"
-Services="*res://scripts/core/Services.gd"
-ServiceOrchestrator="*res://scripts/core/ServiceOrchestrator.gd"
+ServiceOrchestrator="*res://scripts/platform/ServiceOrchestrator.gd"
+IT03Harness="*res://scripts/testing/IT03Harness.gd"
+DedicatedServerBootstrap="*res://scripts/platform/DedicatedServerBootstrap.gd"

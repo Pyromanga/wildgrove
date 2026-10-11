@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LootTable" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootTable.gd" id="1_loot"]
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootEntry.gd" id="2_loot"]
+
+[sub_resource type="Resource" id="entry_rosehips"]
+script = ExtResource("2_loot")
+item_id = "rosehips"
+weight = 100.0
+quantity_min = 2
+quantity_max = 5
+
+[resource]
+script = ExtResource("1_loot")
+max_rolls = 1
+entries = [SubResource("entry_rosehips")]
+gold_min = 0
+gold_max = 0

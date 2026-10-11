@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "wall_corner"
+display_name = "Mauereck mit Eckturm"
+description = "Rundturm mit Zinnenmauer-Armen nach Osten und Süden (je fünf Felder) und einer Fahne. Baustein für Stadt- und Burgmauern: an den Armen weitere Mauerstücke, Torbögen oder Türme ansetzen. Mitte der Arme anvisieren."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 1, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 1, "dz": 2},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 1, "dz": 3},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 1, "dz": 4},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 1, "dx": 1, "dz": 5},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 4, "dz": 1},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 5, "dz": 1},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+])

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "gate_arch"
+display_name = "Torbogen"
+description = "5 Felder Zinnenmauer mit Rundbogen-Durchgang in der Mitte und je einer Fahne daneben. Ohne Dach, ohne Boden — an Mauern oder Türme ansetzen und beliebig oft in Reihe stellen."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_gate_arch", "kind": 3, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "stone_wall_crenel", "kind": 1, "axis": 0, "dx": 4, "dz": 0},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 3, "dz": 0},
+])

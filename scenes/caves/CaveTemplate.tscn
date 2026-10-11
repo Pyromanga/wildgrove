@@ -1,0 +1,121 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/caves/CavePortalTrigger.gd" id="1_portal"]
+
+[sub_resource type="Environment" id="Environment_cave"]
+background_mode = 1
+background_color = Color(0.02, 0.02, 0.03, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.16, 0.17, 0.24, 1)
+ambient_light_energy = 0.7
+fog_enabled = true
+fog_light_color = Color(0.05, 0.05, 0.08, 1)
+fog_density = 0.035
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_exit"]
+size = Vector3(2, 3, 1)
+
+[node name="CaveTemplate" type="Node3D"]
+
+; ── Höhlen-Vorlage: handgefertigt via CSG ──────────────────────────────────
+; Kein Voxel-Editor, keine Blocky-Grid-Logik — nur ein paar CSG-Primitive,
+; die von Rock-Mass subtrahiert/hinzugefügt werden. Alles unten ist direkt
+; im Godot-Editor weiter verschieb-/skalierbar (Position, Radius, Höhe je
+; Node im Inspector). Genau das war der Wunsch: eine Vorlage zum Reinsetzen
+; und Weiterbauen, kein prozedurales System.
+;
+; EINBINDUNG INS WORLD-SCOPE (Lager-A-Ansatz, siehe Terrain-Gespräch):
+;   1. Diese Szene NICHT irgendwo in eurer begehbaren Heightmap platzieren —
+;      instanziert sie stattdessen weit unterhalb/abseits des normalen
+;      Terrains (z.B. globale Position y = -300), damit sie nie mit
+;      generiertem Terrain kollidiert. Kostet nichts (ist nur ein
+;      Transform-Offset), muss aber EINMALIG passieren, bevor Spieler
+;      hineinteleportiert werden.
+;   2. In der Overworld: ein CavePortalTrigger (Area3D, gleiches Script,
+;      eigene CollisionShape3D) an der sichtbaren Höhlenöffnung platzieren,
+;      target_path auf "EntryMarker" dieser Szene zeigen lassen.
+;   3. Hier drin: "ExitPortal" (unten schon vorbereitet) target_path auf
+;      einen Marker3D direkt vor dem Overworld-Höhleneingang zeigen lassen.
+;   4. Fertig — keine neue Service/BootstrapConfig-Verdrahtung nötig, siehe
+;      CavePortalTrigger.gd-Klassenkommentar für die Netcode-Begründung.
+
+[node name="Environment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_cave")
+
+[node name="CaveShell" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="RockMass" type="CSGBox3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -7)
+size = Vector3(12, 7, 18)
+
+[node name="Tunnel" type="CSGCylinder3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 1.4, -5)
+radius = 1.5
+height = 10.0
+sides = 10
+operation = 2
+
+[node name="TunnelBulge" type="CSGSphere3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -8.5)
+radius = 2.2
+operation = 2
+
+[node name="Room" type="CSGCylinder3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, -12)
+radius = 4.5
+height = 5.5
+sides = 12
+operation = 2
+
+[node name="Stalactite1" type="CSGCylinder3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 5.6, -11)
+radius = 0.4
+height = 1.2
+cone = true
+operation = 0
+
+[node name="Stalactite2" type="CSGCylinder3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8, 5.4, -13)
+radius = 0.5
+height = 1.5
+cone = true
+operation = 0
+
+[node name="Boulder1" type="CSGSphere3D" parent="CaveShell"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.3, -0.6, -12.5)
+radius = 1.0
+operation = 0
+
+[node name="TorchLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, -1)
+light_color = Color(1.0, 0.65, 0.3, 1)
+light_energy = 1.4
+omni_range = 6.0
+
+[node name="DeepGlow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.2, -12)
+light_color = Color(0.4, 0.7, 1.0, 1)
+light_energy = 1.0
+omni_range = 8.0
+
+; Wo Spieler landen, wenn sie von der Overworld aus reinteleportiert werden.
+[node name="EntryMarker" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+
+; Freier Referenzpunkt für später — z.B. Erz-/Kristall-Spawns, ein NPC,
+; oder Loot-Chest-Platzierung mitten im Raum.
+[node name="RoomCenterMarker" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12)
+
+; Zurück in die Overworld. target_path ist absichtlich LEER gelassen —
+; nach dem Instanziieren im World-Baum auf einen Overworld-Marker3D zeigen
+; lassen (siehe Einbindungs-Hinweis oben). Ohne target_path loggt das Script
+; beim Start nur eine Warnung, teleportiert aber niemanden (kein stiller Fehler).
+[node name="ExitPortal" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.5)
+script = ExtResource("1_portal")
+target_y_offset = 0.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ExitPortal"]
+shape = SubResource("BoxShape3D_exit")

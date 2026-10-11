@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_collect_honeycomb_zeidler"]
+script = ExtResource("3_ques")
+id = "obj_collect_honeycomb_zeidler"
+label = "Sammle Honigwaben"
+type = 0
+target_id = "honeycomb"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"beekeeping": 30}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_gerlinde_combs"
+title = "Honig aus der Baumhöhle"
+description = "Gerlinde ist Zeidlerin: Sie holt Honig aus Baumhöhlen, wie es früher im Wald Brauch war."
+category = "side"
+objectives = [SubResource("obj_collect_honeycomb_zeidler")]
+prerequisites = []
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

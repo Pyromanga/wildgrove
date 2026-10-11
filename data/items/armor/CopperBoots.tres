@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ArmorDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/equipment/ArmorDefinition.gd" id="1_armo"]
+
+[resource]
+script = ExtResource("1_armo")
+id = "copper_boots"
+display_name = "Kupferstiefel"
+max_stack = 1
+sell_price = 9
+armor_slot = 3
+armor_value = 0.01
+grants_protection_type = ""
+pickpocket_crystal_tier = ""

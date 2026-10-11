@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_collect_mushroom"]
+script = ExtResource("3_ques")
+id = "obj_collect_mushroom"
+label = "Sammle 4 wilde Pilze"
+type = 0
+target_id = "wild_mushroom"
+required = 4
+optional = false
+
+[sub_resource type="Resource" id="obj_collect_fern_fiber"]
+script = ExtResource("3_ques")
+id = "obj_collect_fern_fiber"
+label = "Sammle 3 Farnfasern"
+type = 0
+target_id = "fern_fiber"
+required = 3
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"foraging": 35}
+item_rewards = {}
+unlock_quests = ["quest_herbalist_secret"]
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_herbalist_request"
+title = "Sennas Sammelauftrag"
+description = "Die Kräuterkundige Senna braucht frische Zutaten für ihre Tinkturen. Sammle wilde Pilze und Farnfasern für sie."
+category = "side"
+objectives = [SubResource("obj_collect_mushroom"), SubResource("obj_collect_fern_fiber")]
+prerequisites = []
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

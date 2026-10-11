@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "carpenter_shop"
+display_name = "Zimmerei"
+description = "4×2 Felder, offene Holzhalle mit Tresenzaun zur Straße (Süden) und Eingängen an beiden Enden. Drei Werkbänke an der Rückwand, zwei Fässer."
+pieces = Array[Dictionary]([
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "workbench", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "workbench", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "workbench", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 3, "dz": 1},
+])

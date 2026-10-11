@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "village_square"
+display_name = "Dorfplatz"
+description = "5×5 Felder: gepflasterte Mitte mit Brunnen, vier Bänken und vier Laternen; links und rechts je zwei Marktstände, oben Kisten, Säcke und eine Fahne, unten Handkarren, Tisch und Feuerstelle. Mitte anvisieren und dort stehen."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 3},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 3},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 2},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 3},
+{"piece_id": "market_stall_red", "kind": 6, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "market_stall_blue", "kind": 6, "axis": 1, "dx": 0, "dz": 3},
+{"piece_id": "crate", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "bench_wood", "kind": 6, "axis": 1, "dx": 1, "dz": 2},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": 1, "dz": 3},
+{"piece_id": "hand_cart", "kind": 6, "axis": 0, "dx": 1, "dz": 4},
+{"piece_id": "banner_blue", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "bench_wood", "kind": 6, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "well", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "bench_wood", "kind": 6, "axis": 2, "dx": 2, "dz": 3},
+{"piece_id": "firepit", "kind": 6, "axis": 0, "dx": 2, "dz": 4},
+{"piece_id": "sacks", "kind": 6, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "bench_wood", "kind": 6, "axis": 3, "dx": 3, "dz": 2},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": 3, "dz": 3},
+{"piece_id": "table_wood", "kind": 6, "axis": 0, "dx": 3, "dz": 4},
+{"piece_id": "market_stall_blue", "kind": 6, "axis": 3, "dx": 4, "dz": 1},
+{"piece_id": "market_stall_red", "kind": 6, "axis": 3, "dx": 4, "dz": 3},
+])

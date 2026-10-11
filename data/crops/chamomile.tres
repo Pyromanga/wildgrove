@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FarmCropDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/farming/FarmCropDefinition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+id = "chamomile"
+display_name = "Kamille"
+seed_item_id = "chamomile_seed"
+harvest_loot_table_id = "loot_chamomile_field"
+xp_amount = 10
+growth_seconds = 60.0
+skill_id = "herbalism"

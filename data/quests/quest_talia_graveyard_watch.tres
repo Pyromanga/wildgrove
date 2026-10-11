@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_kill_graveyard_skeletons"]
+script = ExtResource("3_ques")
+id = "obj_kill_graveyard_skeletons"
+label = "Erlege 5 Skelette von den Friedhoefen"
+type = 3
+target_id = "skeleton"
+required = 5
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"combat": 40}
+item_rewards = {"bone_fragment": 5}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_talia_graveyard_watch"
+title = "Wache am Friedhof"
+description = "Seit die Friedhoefe im Land wachsen, ziehen zu viele Skelette umher. Talia braucht jemanden, der beweist, dass er mit ihnen fertig wird -- und der lernt, ihre Ruhe notfalls selbst zu sichern."
+category = "side"
+objectives = [SubResource("obj_kill_graveyard_skeletons")]
+prerequisites = []
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

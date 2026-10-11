@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "chapel_wood"
+display_name = "Holzkapelle"
+kind = 6
+prop_shape = 7
+color = Color(0.55, 0.40, 0.26, 1)
+accent_color = Color(0.28, 0.19, 0.13, 1)
+height = 2.4
+thickness = 0.1
+skirt = 0.0
+cost = {
+"log_normal": 10,
+"log_oak": 2
+}
+refund_ratio = 0.5

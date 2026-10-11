@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "windmill_cottage"
+display_name = "Müllerhäuschen"
+description = "Kleine Steinhütte (wie Steinhütte) mit angebauter Windmühle und einer Sonnenuhr im Vorgarten. Ca. 2×3 Felder Gesamtfläche."
+pieces = Array[Dictionary]([
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "wood_door", "kind": 3, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 1, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 1, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "windmill", "kind": 6, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "sundial", "kind": 6, "axis": 0, "dx": 0, "dz": -1},
+])

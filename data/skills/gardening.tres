@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/skills/SkillDefinition.gd" id="1_skil"]
+
+[resource]
+script = ExtResource("1_skil")
+id = "gardening"
+display_name = "Gartenkunde"
+description = "Blumen säen, pflegen und pflücken, bis der Hain in allen Farben leuchtet. Wusstest du? Nur junge Sonnenblumen folgen der Sonne, erwachsene blicken nach Osten (Heliotropismus)."
+xp_to_level_up = Array[int]([100, 220, 400, 650, 1000, 1450, 2000])
+xp_scaling_factor = 1.2
+max_level = 50

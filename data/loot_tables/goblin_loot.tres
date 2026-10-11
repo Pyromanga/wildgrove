@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootTable.gd" id="1_lt"]
+[ext_resource type="Script" path="res://scripts/economy/rewards/LootEntry.gd" id="2_le"]
+
+[sub_resource type="Resource" id="entry_ear"]
+script = ExtResource("2_le")
+item_id = "goblin_ear"
+weight = 80.0
+quantity_min = 1
+quantity_max = 2
+
+[sub_resource type="Resource" id="entry_copper"]
+script = ExtResource("2_le")
+item_id = "copper_ore"
+weight = 40.0
+quantity_min = 1
+quantity_max = 3
+
+[sub_resource type="Resource" id="entry_dagger"]
+script = ExtResource("2_le")
+item_id = "poison_dagger"
+weight = 15.0
+quantity_min = 1
+quantity_max = 1
+
+[sub_resource type="Resource" id="entry_iron"]
+script = ExtResource("2_le")
+item_id = "iron_ore"
+weight = 10.0
+quantity_min = 1
+quantity_max = 1
+
+[resource]
+script = ExtResource("1_lt")
+max_rolls = 2
+entries = [SubResource("entry_ear"), SubResource("entry_copper"), SubResource("entry_dagger"), SubResource("entry_iron")]
+gold_min = 2
+gold_max = 8

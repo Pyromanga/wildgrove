@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_collect_fern_fiber_paper"]
+script = ExtResource("3_ques")
+id = "obj_collect_fern_fiber_paper"
+label = "Sammle Farnfasern"
+type = 0
+target_id = "fern_fiber"
+required = 4
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"foraging": 30}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_lian_fibre"
+title = "Fasern prüfen"
+description = "Lian will vergleichen, welche Pflanzenfasern sich für Papier eignen."
+category = "side"
+objectives = [SubResource("obj_collect_fern_fiber_paper")]
+prerequisites = ["quest_lian_wasp_paper"]
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

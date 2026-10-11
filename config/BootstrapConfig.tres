@@ -1,93 +1,659 @@
-[gd_resource type="Resource" script_class="BootstrapConfig" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="BootstrapConfig" load_steps=36 format=3]
 
-[ext_resource type="Script" path="res://scripts/core/BootstrapConfig.gd" id="1_config"]
-[ext_resource type="Script" path="res://scripts/core/ServiceDefinition.gd" id="2_def"]
+[ext_resource type="Script" path="res://scripts/platform/BootstrapConfig.gd" id="1_config"]
+[ext_resource type="Script" path="res://scripts/platform/ServiceDefinition.gd" id="2_def"]
+[ext_resource type="Script" path="res://scripts/platform/ResourceDefinition.gd" id="3_resdef"]
 
-[sub_resource type="Resource" id="Resource_scenemanager"]
-script = ExtResource("2_def")
-service_name = "scenemanager"
-path = "res://scripts/services/SceneManager.gd"
-deps = Array[String]([])
+; ─────────────────────────────────────────────
+; GLOBAL-SERVICES — app-lifetime, kein Charakter-State (ADR-009)
+; ─────────────────────────────────────────────
 
 [sub_resource type="Resource" id="Resource_ticker"]
 script = ExtResource("2_def")
 service_name = "ticker"
-path = "res://scripts/core/ServiceTicker.gd"
-deps = Array[String]([])
+path = "res://scripts/platform/ServiceTicker.gd"
+required_deps = Array[String]([])
 
-[sub_resource type="Resource" id="Resource_savesystem"]
+[sub_resource type="Resource" id="Resource_scenemanager"]
 script = ExtResource("2_def")
-service_name = "savesystem"
-path = "res://scripts/services/SaveSystem.gd"
-deps = Array[String]([])
+service_name = "scenemanager"
+path = "res://scripts/session/SceneManager.gd"
+required_deps = Array[String](["event_bus"])
 
 [sub_resource type="Resource" id="Resource_data"]
 script = ExtResource("2_def")
 service_name = "data"
-path = "res://scripts/services/DataService.gd"
-deps = Array[String]([])
+path = "res://scripts/persistence/DataService.gd"
+required_deps = Array[String]([])
+
+[sub_resource type="Resource" id="Resource_savesystem"]
+script = ExtResource("2_def")
+service_name = "savesystem"
+path = "res://scripts/persistence/SaveSystem.gd"
+required_deps = Array[String](["event_bus"])
+
+[sub_resource type="Resource" id="Resource_gamemanager"]
+script = ExtResource("2_def")
+service_name = "gamemanager"
+path = "res://scripts/platform/GameManager.gd"
+required_deps = Array[String](["event_bus", "gameconfig"])
+optional_deps = Array[String](["scenemanager"])
+
+[sub_resource type="Resource" id="Resource_session_manager"]
+script = ExtResource("2_def")
+service_name = "session_manager"
+path = "res://scripts/session/SessionManager.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["event_bus"])
+
+[sub_resource type="Resource" id="Resource_settings_service"]
+script = ExtResource("2_def")
+service_name = "settings_service"
+path = "res://scripts/persistence/SettingsService.gd"
+required_deps = Array[String]([])
+
+; ADR-031: Rollenbasiertes Permission-System. App-Scope, da Rollen account-weit
+; gelten, nicht pro Welt/Charakter (siehe ADR dortige Begründung).
+[sub_resource type="Resource" id="Resource_permission_service"]
+script = ExtResource("2_def")
+service_name = "permission_service"
+path = "res://scripts/platform/PermissionService.gd"
+required_deps = Array[String]([])
+
+; ─────────────────────────────────────────────
+; SESSION-SERVICES — charakter-lifetime, werden bei Charakter-Wechsel
+; neu gebootet (ADR-009). Können auf Global-Services als Deps verweisen.
+; ─────────────────────────────────────────────
 
 [sub_resource type="Resource" id="Resource_playerstates"]
 script = ExtResource("2_def")
 service_name = "playerstates"
-path = "res://scripts/player/PlayerStateService.gd"
-deps = Array[String]([])
+path = "res://scripts/entities/player/PlayerStateService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["event_bus"])
+
+[sub_resource type="Resource" id="Resource_stat_modifiers"]
+script = ExtResource("2_def")
+service_name = "stat_modifiers"
+path = "res://scripts/economy/equipment/StatModifierService.gd"
+required_deps = Array[String]([])
+
+; ADR-030: Zonen-System.
+[sub_resource type="Resource" id="Resource_zone_service"]
+script = ExtResource("2_def")
+service_name = "zone_service"
+path = "res://scripts/world/zones/ZoneService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["event_bus"])
+
+[sub_resource type="Resource" id="Resource_combat"]
+script = ExtResource("2_def")
+service_name = "combat"
+path = "res://scripts/entities/combat/CombatSystem.gd"
+required_deps = Array[String](["event_bus"])
+optional_deps = Array[String](["equipment", "pvp", "skill_system", "stat_modifiers", "ticker"])
+
+[sub_resource type="Resource" id="Resource_equipment"]
+script = ExtResource("2_def")
+service_name = "equipment"
+path = "res://scripts/economy/equipment/EquipmentService.gd"
+required_deps = Array[String](["savesystem"])
+optional_deps = Array[String](["data", "inventory", "stat_modifiers"])
 
 [sub_resource type="Resource" id="Resource_skill_system"]
 script = ExtResource("2_def")
 service_name = "skill_system"
-path = "res://scripts/services/SkillSystem.gd"
-deps = Array[String](["data", "savesystem"])
+path = "res://scripts/progression/skills/SkillSystem.gd"
+required_deps = Array[String](["data", "event_bus", "savesystem"])
+optional_deps = Array[String](["stat_modifiers"])
+
+[sub_resource type="Resource" id="Resource_inventory"]
+script = ExtResource("2_def")
+service_name = "inventory"
+path = "res://scripts/economy/inventory/InventorySystem.gd"
+required_deps = Array[String](["event_bus"])
+optional_deps = Array[String](["data", "savesystem"])
+
+; ADR-033: Spieler-Währung, eigenständiger Service statt Item-im-Inventar
+; (siehe ADR "Option B"). Save-Key "currency", getrennt vom Inventar-Bucket.
+[sub_resource type="Resource" id="Resource_currency"]
+script = ExtResource("2_def")
+service_name = "currency"
+path = "res://scripts/economy/currency/CurrencyService.gd"
+required_deps = Array[String](["event_bus"])
+optional_deps = Array[String](["savesystem"])
 
 [sub_resource type="Resource" id="Resource_reward_dispatcher"]
 script = ExtResource("2_def")
 service_name = "reward_dispatcher"
-path = "res://scripts/services/RewardDispatcher.gd"
-deps = Array[String](["inventory", "skill_system"])
+path = "res://scripts/economy/rewards/RewardDispatcher.gd"
+required_deps = Array[String](["event_bus", "inventory", "skill_system"])
+; BUGFIX (2026-09-21): RewardDispatcher.configure() calls
+; deps.get_optional(ServiceKeys.STAT_MODIFIERS), but "stat_modifiers" was never
+; declared here, so get_optional() always returned null even though
+; stat_modifiers boots earlier in the same dependency chain and is available.
+; Result: "StatModifierService fehlt" WARN on every boot, and stat-modifier
+; quest/achievement rewards silently skipped. Declaring it as optional here
+; lets ServiceDeps actually hand it over when present.
+optional_deps = Array[String](["stat_modifiers"])
+
+; Round 88: Shop-NPC-Handel (kaufen/verkaufen), baut auf CurrencyService
+; (ADR-033) + InventorySystem auf. Kein eigener Save-Key — Shop selbst hält
+; keinen State, nur Katalog-Logik.
+; Round 113 (ADR-050 Phase 2): "event_bus" ergänzt — ShopService.configure()
+; liest seit Round 113 ServiceKeys.EVENT_BUS (purchase_completed/
+; transaction_failed wandern von nativen Signalen auf den neuen
+; ShopEvents-Namespace, siehe ADR-050 "Umsetzungsstand (Round 113)"). Ohne
+; diesen Eintrag würde deps.get_optional(EVENT_BUS) in Produktion still null
+; bleiben — exakt der Round-98/Round-112-Bug-Präzedenzfall, hier von
+; vornherein vermieden statt erst gefunden.
+[sub_resource type="Resource" id="Resource_shop"]
+script = ExtResource("2_def")
+service_name = "shop"
+path = "res://scripts/economy/shop/ShopService.gd"
+required_deps = Array[String](["currency", "data", "inventory"])
+optional_deps = Array[String](["event_bus"])
+
+; Schmelzen & Schmieden (SmithingService): Rezepte aus data/smithing_recipes/ an Hochofen/Amboss
+; (BuildPieceDefinition.station_kind). Braucht inventory (Zutaten/Ergebnis/Werkzeuge), skill_system
+; (Level-Gate + XP im Skill "smithing") und data (Rezepte). equipment ist optional (Werkzeug im
+; Werkzeug-Slot zaehlt als vorhanden). NetworkBridge ist KEINE configure()-Dep (Zyklus, siehe
+; network_bridge unten) — SmithingService bekommt sie per Phase-C8-Late-Inject, analog "shop".
+[sub_resource type="Resource" id="Resource_smithing"]
+script = ExtResource("2_def")
+service_name = "smithing"
+path = "res://scripts/economy/crafting/SmithingService.gd"
+required_deps = Array[String](["data", "inventory", "skill_system"])
+optional_deps = Array[String](["equipment", "event_bus"])
+
+; ADR-032: PvP-Flags & Skull-Reputationssystem. Braucht permission_service
+; (pvp_immune-Capability) + zone_service (pvp/safe-Tags) + savesystem
+; (PlayerFlags-Persistenz) + ticker (CombatConsent-Cleanup) + event_bus
+; (zone_entered für das Safe-Zone-Vulnerabilitäts-Fenster).
+[sub_resource type="Resource" id="Resource_pvp"]
+script = ExtResource("2_def")
+service_name = "pvp"
+path = "res://scripts/world/pvp/PvPService.gd"
+required_deps = Array[String](["permission_service", "zone_service"])
+optional_deps = Array[String](["event_bus", "savesystem", "ticker", "aura"])
+
+; ADR-034: Bank/Lager-Service, getrennt vom Inventar (PvP-Tod/Diebstahl-
+; sicher). Braucht inventory + currency für die eigentlichen Ein-/Auszahl-
+; Bewegungen, data für Item-Anzeigenamen, savesystem für PlayerFlags-artige
+; Persistenz (eigener "bank"-Bucket).
+; Round 112 (ADR-050 Phase 2): "event_bus" ergänzt — BankService.configure()
+; liest seit Round 112 ServiceKeys.EVENT_BUS (deposit_completed/
+; withdraw_completed/bank_transaction_failed wandern von nativen Signalen
+; auf den neuen BankEvents-Namespace, siehe ADR-050 "Umsetzungsstand
+; (Round 112)"). Ohne diesen Eintrag würde deps.get_optional(EVENT_BUS) in
+; Produktion still null bleiben — exakt der Round-98-Bug-Präzedenzfall bei
+; PvPDeathLossService, hier von vornherein vermieden statt erst gefunden.
+[sub_resource type="Resource" id="Resource_bank"]
+script = ExtResource("2_def")
+service_name = "bank"
+path = "res://scripts/economy/bank/BankService.gd"
+required_deps = Array[String](["currency", "data", "inventory"])
+optional_deps = Array[String](["savesystem", "event_bus"])
+
+; ADR-035: Handshake-Handel (Spieler-zu-Spieler). Kein eigener Save-Key —
+; Sessions sind reine Laufzeit-Verhandlungen (siehe TradeService.gd
+; Klassenkommentar). Einstieg läuft über die Interaktions-Pipeline
+; (WorldService/EntityOrchestrator/EntityContext, analog "currency" dort),
+; deshalb KEIN eigener required_deps-Eintrag hier für "world" nötig — die
+; Kante läuft andersherum (World -> Trade über EntityContext.get_trade_service()).
+; Round 113 (ADR-050 Phase 2): "event_bus" ergänzt — TradeService.configure()
+; liest seit Round 113 ServiceKeys.EVENT_BUS (transaction_failed wandert von
+; nativem Signal auf den neuen TradeEvents-Namespace, siehe ADR-050
+; "Umsetzungsstand (Round 113)"). Ohne diesen Eintrag würde
+; deps.get_optional(EVENT_BUS) in Produktion still null bleiben — exakt der
+; Round-98/Round-112-Bug-Präzedenzfall, hier von vornherein vermieden statt
+; erst gefunden.
+[sub_resource type="Resource" id="Resource_trade"]
+script = ExtResource("2_def")
+service_name = "trade"
+path = "res://scripts/economy/trading/TradeService.gd"
+required_deps = Array[String](["currency", "inventory"])
+optional_deps = Array[String](["savesystem", "event_bus"])
+
+; ADR-035: Auktionshaus (asynchroner Marktplatz). Braucht zusätzlich "bank" für
+; Escrow-Items, deren Quelle die Bank war (remove_item_for_listing()/
+; add_item_to_bank()). Eigener Save-Key "auction_house" — Listings müssen
+; Server-Neustarts überleben (anders als "trade").
+; Round 113 (ADR-050 Phase 2): "event_bus" ergänzt — AuctionHouseService.
+; configure() liest seit Round 113 ServiceKeys.EVENT_BUS (purchase_completed/
+; transaction_failed wandern von nativen Signalen auf den neuen
+; AuctionEvents-Namespace, siehe ADR-050 "Umsetzungsstand (Round 113)"). Ohne
+; diesen Eintrag würde deps.get_optional(EVENT_BUS) in Produktion still null
+; bleiben — exakt der Round-98/Round-112-Bug-Präzedenzfall, hier von
+; vornherein vermieden statt erst gefunden.
+[sub_resource type="Resource" id="Resource_auction_house"]
+script = ExtResource("2_def")
+service_name = "auction_house"
+path = "res://scripts/economy/trading/AuctionHouseService.gd"
+required_deps = Array[String](["currency", "data", "inventory", "bank"])
+optional_deps = Array[String](["savesystem", "event_bus"])
+
+; ADR-038: Item-Schutz-Dreiklang. Zustandslos (kein eigener Save-Key) — Schutz
+; lebt als Instanz-Zustand direkt auf ItemInstance (siehe dort), von
+; InventorySystem bereits mit-persistiert/mit-synchronisiert. Braucht deshalb
+; nur "inventory" als required_dep, kein "data"/"savesystem" nötig.
+[sub_resource type="Resource" id="Resource_item_protection"]
+script = ExtResource("2_def")
+service_name = "item_protection"
+path = "res://scripts/economy/protection/ItemProtectionService.gd"
+required_deps = Array[String](["inventory"])
+
+; ADR-036: Item-/Gold-Verlust bei PvP-Tod (Skull-Loot). Braucht pvp (Skull-
+; Status des Opfers), currency + inventory (Verlust-Pool + Übertragung an den
+; Killer). item_protection optional — Schutz-Ausnahmen greifen weiterhin
+; korrekt (permanent geschützte Items bleiben ausgenommen), nur der
+; einmalige PvP-Schutz-Charge wird nicht konsumiert, wenn der Service fehlt.
+; ADR-036: Aura/Gesinnung — Reputationswert, Kill-Strafe (von
+; PvPDeathLossService aufgerufen) + "Danken"-Interaktion. savesystem
+; optional (wie bei PvPService — Aura + Dank-Cooldowns überleben einen
+; Server-Neustart WENN savesystem verfügbar ist, aber der Service selbst
+; funktioniert auch ohne, analog PvPService.configure()). NetworkBridge
+; kommt NICHT über configure()-Deps (zu diesem Zeitpunkt noch nicht
+; registriert), sondern über inject_network_bridge() in Phase C8
+; (siehe BootPipeline.gd), analog PvPService/BankService/TradeService.
+[sub_resource type="Resource" id="Resource_aura"]
+script = ExtResource("2_def")
+service_name = "aura"
+path = "res://scripts/world/pvp/AuraService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["savesystem"])
+
+; ADR-039: Pickpocketing. Braucht inventory (Kristall-Verbrauch + Item-Pool),
+; currency (Gold-Diebstahl), skill_system (Diebstahl-Skill-Formel),
+; zone_service (Diebes-Zonen-Check auf das OPFER). KEIN item_protection-Dep
+; — der is_theft_protected-Ausschluss liest das Flag direkt von der
+; ItemInstance (analog PvPDeathLossService/DeathLootService, die
+; is_pve_death_protected ebenfalls direkt lesen statt über den Service).
+[sub_resource type="Resource" id="Resource_pickpocket"]
+script = ExtResource("2_def")
+service_name = "pickpocket"
+path = "res://scripts/entities/theft/PickpocketService.gd"
+required_deps = Array[String](["inventory", "currency", "skill_system", "zone_service"])
+optional_deps = Array[String](["savesystem", "event_bus"])
+
+; ADR-043: Chat/Social (Round 99) — globaler + Whisper-Kanal. Bewusst OHNE
+; jede fachliche Dep — Absender-/Ziel-Identität kommt fertig aufgelöst vom
+; RPC-Aufrufer (NetworkBridge._sender_as_player_uuid()), keine Item-/Gold-/
+; Skill-Verknüpfung wie bei den anderen Services hier. KEIN "savesystem" —
+; Chat ist bewusst rein transient, kein eigener Save-Key (siehe
+; ChatService.gd-Klassenkommentar). NetworkBridge kommt NICHT über
+; configure()-Deps (zu diesem Zeitpunkt noch nicht registriert), sondern
+; über inject_network_bridge() in Phase C8, analog PvPService/BankService/
+; AuraService/PickpocketService.
+[sub_resource type="Resource" id="Resource_chat"]
+script = ExtResource("2_def")
+service_name = "chat"
+path = "res://scripts/social/chat/ChatService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String]([])
+
+; ADR-044: Reporting/Moderation (Round 100) — persistiert Meldungen (anders
+; als Chat), daher "savesystem" als optional_dep. NetworkBridge wie bei
+; "chat" über inject_network_bridge() in Phase C8, nicht über configure().
+[sub_resource type="Resource" id="Resource_report"]
+script = ExtResource("2_def")
+service_name = "report"
+path = "res://scripts/social/moderation/ReportService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["savesystem"])
+
+; ADR-045: Telemetrie/Crash-Reporting (Round 101) — Telemetrie-Haelfte.
+; Bewusst OHNE jede Dep, auch ohne "savesystem" (Zaehler sind Session-only,
+; siehe TelemetryService.gd-Klassenkommentar) und ohne NetworkBridge (kein
+; Multiplayer-Bezug, kein Upload-Endpunkt) - daher auch NICHT in
+; BootPipeline.gd's Netzwerk-Injektionsliste, im Unterschied zu chat/report.
+;
+; BUGFIX/ERWEITERUNG (2026-09-25): "ticker" als optionale Dep ergaenzt fuer
+; periodisches Speicher-Sampling (on_tick(), siehe TelemetryService.gd-
+; Klassenkommentar "Erweiterung"). Optional statt required, damit der Service
+; auch in Kontexten (z.B. Tests) ohne ServiceTicker weiterhin bootet - dann
+; laufen nur die Snapshots an den Session-Grenzen (session_ready/
+; session_unloaded), kein periodisches Sampling.
+[sub_resource type="Resource" id="Resource_telemetry"]
+script = ExtResource("2_def")
+service_name = "telemetry"
+path = "res://scripts/telemetry/TelemetryService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["ticker"])
+
+; ADR-046: Achievement-System (Round 102). Alle Deps optional (graceful
+; degradation, analog anderen Services hier) - "pvp_death_loss"/
+; "auction_house"/"report" fuer drei der vier Trigger-Quellen (siehe
+; AchievementService.gd-Klassenkommentar "TRIGGER-QUELLEN"), "savesystem"
+; fuer Fortschritt/Unlock-Persistenz, "telemetry" fuer ein
+; achievement_unlocked-Telemetrie-Event. "stats" (Round 103) fuer die
+; vierte Trigger-Quelle (StatsService.stat_changed, siehe ADR-047). KEIN
+; "network_bridge" hier - wie bei chat/report/pvp_death_loss wird
+; NetworkBridge nicht ueber configure()-Deps bezogen, sondern separat ueber
+; inject_network_bridge() in Phase C8 (siehe BootPipeline.gd's Netzwerk-
+; Injektionsliste). Die Reihenfolge hier in der Datei ist irrelevant -
+; ServiceDependencyResolver sortiert per Kahn's Algorithmus ueber ALLE Deps
+; (required+optional), siehe ServiceDefinition.all_deps().
+[sub_resource type="Resource" id="Resource_achievement"]
+script = ExtResource("2_def")
+service_name = "achievement"
+path = "res://scripts/progression/achievements/AchievementService.gd"
+; Round 103: "currency" ergaenzt (Gold-Belohnung bei Unlock, CurrencyService.
+; request_add_gold() direkt, siehe AchievementService.gd "BELOHNUNGEN") und
+; "data" ergaenzt (datengetriebene .tres-Definitionen via DataService, siehe
+; AchievementDefinition.gd). Round 104: "session_manager" ergaenzt (app-scoped,
+; ueber fallback_registry aufloesbar wie bei WorldService) -- liefert
+; get_local_player_id() fuer den neuen Client-Empfangspfad
+; (achievement_unlocked_received/achievement_snapshot_received), siehe
+; AchievementService.gd "CLIENT-EMPFANG". Round 105: "character_creation"
+; ergaenzt -- fuenfte/sechste Trigger-Quelle (character_created/
+; character_creation_skipped), siehe CharacterCreationService.gd (ADR-048).
+required_deps = Array[String]([])
+optional_deps = Array[String](["pvp_death_loss", "auction_house", "report", "savesystem", "telemetry", "stats", "currency", "data", "session_manager", "character_creation"])
+
+; ADR-047: Statistiken (Round 103). "event_bus" fuer die beiden
+; autoritativen Quell-Signale (movement_stats_batch/enemy_killed, siehe
+; StatsService.gd-Klassenkommentar), "savesystem" fuer Persistenz. KEIN
+; "network_bridge" hier, aus demselben Grund wie bei "achievement" oben.
+[sub_resource type="Resource" id="Resource_character_creation"]
+script = ExtResource("2_def")
+service_name = "character_creation"
+path = "res://scripts/onboarding/CharacterCreationService.gd"
+; Round 105 (ADR-048): Fragenreihe -> Aussehen/Charakterzüge, siehe
+; CharacterCreationService.gd Klassenkommentar. Round 106: "network_bridge"
+; ENTFERNT aus optional_deps (war Round 105 noch ein direkter configure()-
+; Dep) - NetworkBridge selbst braucht jetzt umgekehrt einen optionalen Dep
+; auf "character_creation" (fuer den Tier-1/Host-Fallback-Zweig von
+; send_character_creation_submit_answers()/_skip(), siehe dortiger
+; Kommentar), was einen echten Zyklus ergeben haette. Exakt derselbe Grund,
+; warum achievement/report/chat NetworkBridge NIE als configure()-Dep
+; deklarieren, sondern ausschliesslich ueber inject_network_bridge() in
+; Phase C8 bekommen (siehe network_bridge-Kommentar unten und
+; BootPipeline.gd). "session_manager" ergaenzt (Round 106) - liefert
+; get_local_player_id() fuer den neuen Client-Empfangspfad
+; (character_creation_completed_received/_skipped_received), analog
+; AchievementService (Round 104).
+required_deps = Array[String]([])
+optional_deps = Array[String](["savesystem", "session_manager"])
+
+[sub_resource type="Resource" id="Resource_stats"]
+script = ExtResource("2_def")
+service_name = "stats"
+path = "res://scripts/progression/stats/StatsService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["event_bus", "savesystem"])
+
+; ADR-049: Spielerbefuelltes Wiki (Round 107). "event_bus" fuer zwei der
+; drei Trigger-Quellen (world().enemy_killed/quest().quest_started_for_
+; player, siehe WikiService.gd Klassenkommentar "TRIGGER-QUELLEN"),
+; "skill_system" fuer die dritte (skill_changed - direkter Service-Dep,
+; kein EventBus-Signal). "data" fuer get_entry_details()/get_drop_chances()
+; (liest CombatProfile/LootTable/SkillDefinition/QuestDefinition ueber
+; DataService, dieselbe Quelle wie die jeweiligen Gameplay-Systeme selbst).
+; "savesystem" fuer Persistenz. "session_manager" liefert get_local_player_
+; id() fuer den Client-Empfangspfad (wiki_entry_discovered_received/
+; wiki_snapshot_received), analog AchievementService. KEIN "network_bridge"
+; hier - wie bei achievement/character_creation wird NetworkBridge nicht
+; ueber configure()-Deps bezogen, sondern separat ueber
+; inject_network_bridge() in Phase C8 (siehe BootPipeline.gd).
+[sub_resource type="Resource" id="Resource_wiki"]
+script = ExtResource("2_def")
+service_name = "wiki"
+path = "res://scripts/progression/wiki/WikiService.gd"
+required_deps = Array[String]([])
+optional_deps = Array[String](["event_bus", "skill_system", "data", "savesystem", "session_manager"])
+
+[sub_resource type="Resource" id="Resource_pvp_death_loss"]
+script = ExtResource("2_def")
+service_name = "pvp_death_loss"
+path = "res://scripts/entities/combat/PvPDeathLossService.gd"
+required_deps = Array[String](["pvp", "currency", "inventory"])
+; Round 98: "event_bus" ergänzt — PvPDeathLossService.configure() liest seit
+; Round 98 ServiceKeys.EVENT_BUS (Kill-Feed-Broadcast, siehe ADR-036
+; "Umsetzungsstand (Round 98)"). Ohne diesen Eintrag würde
+; deps.get_optional(EVENT_BUS) in Produktion null bleiben — nur die
+; Unit-Tests hätten das verdeckt, weil sie ServiceDeps.from_dict() direkt
+; mit dem Key befüllen, unabhängig von dieser Datei.
+optional_deps = Array[String](["item_protection", "aura", "event_bus"])
+
+; ADR-037: PvE-Tod-Loot (Grab-Hybrid-Timer). Bewusst OHNE "world" in den
+; Deps (weder required noch optional) — WorldService selbst hängt optional
+; von "death_loot" ab (für EntityContext.get_death_loot()), ein Rück-Dep
+; hier würde einen Bootstrap-Zyklus erzeugen. WorldService injiziert sich
+; stattdessen direkt per inject_world() nach dem eigenen configure() (siehe
+; DeathLootService.gd Klassenkommentar "ZYKLUS-VERMEIDUNG").
+[sub_resource type="Resource" id="Resource_death_loot"]
+script = ExtResource("2_def")
+service_name = "death_loot"
+path = "res://scripts/entities/combat/DeathLootService.gd"
+required_deps = Array[String](["currency", "inventory"])
+optional_deps = Array[String]([])
 
 [sub_resource type="Resource" id="Resource_interaction_executor"]
 script = ExtResource("2_def")
 service_name = "interaction_executor"
 path = "res://scripts/interaction/InteractionExecutor.gd"
-deps = Array[String](["playerstates"])
+required_deps = Array[String](["event_bus"])
+optional_deps = Array[String](["playerstates", "stat_modifiers"])
 
 [sub_resource type="Resource" id="Resource_gamesave"]
 script = ExtResource("2_def")
 service_name = "gamesave"
-path = "res://scripts/services/GameSaveService.gd"
-deps = Array[String](["savesystem"])
+path = "res://scripts/persistence/GameSaveService.gd"
+required_deps = Array[String](["event_bus", "savesystem"])
 
-[sub_resource type="Resource" id="Resource_gamemanager"]
+[sub_resource type="Resource" id="Resource_world_gen"]
 script = ExtResource("2_def")
-service_name = "gamemanager"
-path = "res://scripts/core/GameManager.gd"
-deps = Array[String](["scenemanager"])
-
-[sub_resource type="Resource" id="Resource_inventory"]
-script = ExtResource("2_def")
-service_name = "inventory"
-path = "res://scripts/services/InventorySystem.gd"
-deps = Array[String](["data", "savesystem"])
-
+service_name = "world_gen"
+path = "res://scripts/world/core/WorldGenerationService.gd"
+required_deps = Array[String]([])
 
 [sub_resource type="Resource" id="Resource_worldservice"]
 script = ExtResource("2_def")
 service_name = "world"
-path = "res://scripts/world/WorldService.gd"
-deps = Array[String](["savesystem", "data"])
+path = "res://scripts/world/core/WorldService.gd"
+; ARCH-1: entity service deps für EntityContext.from_deps() — alle optional.
+; ADR-030: zone_service ergänzt — für _wire_zone_triggers() (kein EntityContext-Dep).
+; ADR-035: trade ergänzt — für EntityContext.get_trade_service()
+; (Player._on_trade_requested(), einziger EntityContext-Konsument von TradeService).
+; ADR-036: pvp_death_loss ergänzt — für EntityContext.get_pvp_death_loss()
+; (Player._on_player_died(), einziger EntityContext-Konsument von PvPDeathLossService).
+; ADR-036: aura ergänzt — für EntityContext.get_aura()
+; (Player._on_thank_requested(), einziger EntityContext-Konsument von AuraService).
+; ADR-037: death_loot ergänzt — für EntityContext.get_death_loot()
+; (Player._on_player_died(), PvE-Zweig) UND für den direkten inject_world()-
+; Aufruf gleich nach deps.get_optional() unten (siehe DeathLootService.gd
+; Klassenkommentar "ZYKLUS-VERMEIDUNG").
+; ADR-039: pickpocket ergänzt — für EntityContext.get_pickpocket()
+; (Player._on_pickpocket_requested(), einziger EntityContext-Konsument von
+; PickpocketService).
+; settings_service ergänzt — für EntityContext.get_settings() (TouchInput:
+; feste Joystick-Position/-Modus, siehe SettingsService.DEFAULTS
+; joystick_pos_x/y/fixed_joystick).
+; quest ergänzt — für EntityContext.get_quest_service() (DialogueTreeController der
+; Quest-NPCs). BUGFIX: fehlte hier, WorldService.configure() las die Dep daher immer als
+; null, jeder Quest-NPC-Dialog zeigte nur den Fallback-Text und startete nie eine Quest.
+required_deps = Array[String]([])
+optional_deps = Array[String](["bank", "combat", "currency", "data", "equipment", "event_bus", "gamemanager", "interaction_executor", "inventory", "playerstates", "pvp_death_loss", "aura", "death_loot", "pickpocket", "quest", "respawn", "ambient_spawner", "conditional_encounters", "enemy_culling", "savesystem", "session_manager", "settings_service", "skill_system", "stat_modifiers", "ticker", "trade", "world_gen", "zone_service"])
 
-[sub_resource type="Resource" id="Resource_hudmanager"]
+[sub_resource type="Resource" id="Resource_respawn"]
 script = ExtResource("2_def")
-service_name = "hud"
-path = "res://scripts/ui/HUDManager.gd"
-deps = Array[String](["inventory", "playerstates"])
+service_name = "respawn"
+path = "res://scripts/world/respawn/RespawnService.gd"
+; BUG-FIX: 'world' war fälschlich als Dep gelistet und erzeugte einen Zyklus
+; mit worldservice (das 'respawn' als optionale Dep für EntityContext.from_deps()
+; braucht). RespawnService kennt WorldService laut Design NICHT — die Verbindung
+; läuft ausschließlich über Callbacks, die WorldService.on_ready() injiziert
+; (siehe RespawnService.gd configure(), das auch nur ticker+event_bus liest).
+required_deps = Array[String](["event_bus"])
+optional_deps = Array[String](["ticker"])
+
+[sub_resource type="Resource" id="Resource_ambient_spawner"]
+script = ExtResource("2_def")
+service_name = "ambient_spawner"
+path = "res://scripts/world/respawn/AmbientSpawnService.gd"
+; Gegner-Nachspawnen an Grabsteinen/Lagerfeuern etc. (natuerlich + spieler-
+; platziert), siehe AmbientSpawnService.gd Klassenkommentar. Gleiches
+; Callback-Muster wie 'respawn' direkt darueber: kein 'world'-Dep (Zyklus-
+; Vermeidung), Verbindung laeuft ueber set_spawn_callback(), injiziert von
+; WorldService.on_ready().
+required_deps = Array[String]([])
+optional_deps = Array[String](["ticker"])
+
+[sub_resource type="Resource" id="Resource_conditional_encounters"]
+script = ExtResource("2_def")
+service_name = "conditional_encounters"
+path = "res://scripts/world/respawn/ConditionalEncounterService.gd"
+; Biom/Wetter/Nacht-bedingte Spezial-Gegner (Werwolf, Nebelgeist, ...), siehe
+; ConditionalEncounterService.gd Klassenkommentar fuer die Abgrenzung zu
+; 'ambient_spawner' direkt darueber. Gleiches Callback-Muster: kein 'world'-
+; Dep, Verbindung laeuft ueber set_callbacks(), injiziert von WorldService.
+; on_ready().
+required_deps = Array[String]([])
+optional_deps = Array[String](["ticker"])
+
+[sub_resource type="Resource" id="Resource_enemy_culling"]
+script = ExtResource("2_def")
+service_name = "enemy_culling"
+path = "res://scripts/world/respawn/EnemyCullingService.gd"
+; Raeumt verwilderte, weit von jedem Spieler entfernte Gegner auf (Wunsch
+; "spawning optimieren, despawnen nicht korrekt") — siehe
+; EnemyCullingService.gd Klassenkommentar. Gleiches Callback-Muster: kein
+; 'world'-Dep, Verbindung laeuft ueber set_unload_callback(), injiziert von
+; WorldService.on_ready().
+required_deps = Array[String]([])
+optional_deps = Array[String](["ticker"])
 
 [sub_resource type="Resource" id="Resource_questservice"]
 script = ExtResource("2_def")
 service_name = "quest"
-path = "res://scripts/services/QuestService.gd"
-deps = Array[String](["data", "savesystem"])
+path = "res://scripts/progression/quests/QuestService.gd"
+required_deps = Array[String](["event_bus", "savesystem"])
+optional_deps = Array[String](["data", "reward_dispatcher", "skill_system"])
+
+[sub_resource type="Resource" id="Resource_network_bridge"]
+script = ExtResource("2_def")
+service_name = "network_bridge"
+path = "res://scripts/networking/NetworkBridge.gd"
+; ADR-017: session_manager ergaenzt - NetworkBridge fragt fuer get_local_peer_id()
+; jetzt SessionManager (einzige Quelle der Wahrheit fuer Identitaet), statt
+; multiplayer.get_unique_id() ein zweites Mal selbst zu berechnen (AUDIT-05 Mutation 3).
+; ADR-020: "world" ergaenzt - _rpc_request_entity_interaction() delegiert auf der
+; Autoritaet an WorldService.resolve_and_dispatch_interaction(). Einseitige Kante
+; (Network -> World); WorldService selbst bekommt NetworkBridge NICHT als
+; configure()-Dep (das waere ein Zyklus), sondern ueber denselben Phase-C8-
+; Late-Inject-Mechanismus wie Inventory/Quest/SkillSystem/Equipment (siehe
+; BootPipeline.gd) — WORLD ergaenzt in dessen Injection-Liste.
+; ADR-030: "zone_service" ergaenzt - dieselbe einseitige Kante wie "world"
+; (Network -> Zone). ZoneService bekommt NetworkBridge NICHT als configure()-
+; Dep (Zyklus), sondern ueber denselben Phase-C8-Late-Inject wie World.
+; Round 88: "shop" ergaenzt - ShopService braucht NetworkBridge fuer Tier2/3-
+; Kauf/Verkauf-RPCs (send_shop_buy_item()/send_shop_sell_item()), analog zu
+; "equipment" oben.
+; Round 88 Nachtrag: "bank" ergaenzt - BankService braucht NetworkBridge fuer
+; Tier2/3-Ein-/Auszahl-RPCs, analog "shop" oben.
+; ADR-035: "trade"/"auction_house" ergaenzt - beide brauchen NetworkBridge fuer
+; ihre eigenen request_/on_*_confirmed-RPCs (Handels-Angebote/Ready/Bestaetigen
+; bzw. Listen/Kaufen/Stornieren), analog "shop"/"bank" oben. TradeService
+; zusaetzlich fuer send_economy_update_for_player() (Session-Sync an beide
+; Teilnehmer, siehe TradeService.gd Klassenkommentar).
+; ADR-038: "item_protection" ergaenzt - ItemProtectionService braucht
+; NetworkBridge fuer send_item_protection_apply() (Scroll-auf-Item, analog
+; "shop"/"bank" oben - die UI läuft auf dem anwendenden Spieler-Peer, nicht
+; zwingend der Autoritaet).
+; ADR-036: "aura" ergaenzt - AuraService braucht NetworkBridge fuer
+; send_aura_thank() (Danken-Interaktion, analog "shop"/"bank" oben).
+; ADR-039: "pickpocket" ergaenzt - PickpocketService braucht NetworkBridge
+; fuer send_pickpocket_attempt() UND send_pickpocket_notification_for_player()
+; (Opfer-Benachrichtigung, server-initiierter Push analog
+; send_zone_update_for_peer()).
+; ADR-043: "chat" ergaenzt - ChatService braucht NetworkBridge fuer
+; send_chat_message() (Client->Autoritaet) UND send_chat_message_for_player()
+; (gezielte Whisper-Zustellung, analog send_pickpocket_notification_for_player()
+; oben). Der globale Kanal laeuft ueber broadcast_to_all_peers() (ADR-042),
+; kein eigener Dep dafuer noetig - NetworkBridge hat das schon.
+; ADR-044: "report" ergaenzt - ReportService braucht NetworkBridge nur fuer
+; send_report_submit() (Client->Autoritaet, reine Einbahnstrasse - es gibt
+; keine Zustellung an andere Spieler, Meldungen sind nie fuer andere
+; Spieler sichtbar).
+; ADR-046: "achievement" ergaenzt (Round 103) - fuer
+; send_achievement_snapshot_request()s Tier-1-Fallback-Zweig (ruft bei
+; fehlendem Peer direkt _achievement.on_snapshot_requested() auf, analog
+; send_report_submit()). Die reine Unlock-Benachrichtigung
+; (send_achievement_unlocked_for_player()) selbst braucht das weiterhin
+; nicht - nur der neue Snapshot-Request-Pfad (Round 103, Pull-statt-Push
+; fuer spaet joinende Clients) noetigt die Rueckreferenz.
+; ADR-048: "character_creation" ergaenzt (Round 106) - fuer den
+; Tier-1/Host-Fallback-Zweig von send_character_creation_submit_answers()/
+; send_character_creation_skip() (ruft bei fehlendem Peer direkt
+; _character_creation.on_submit_answers_confirmed()/on_skip_creation_
+; confirmed() auf, analog send_report_submit()/"achievement" oben). Die
+; gezielte Ergebniszustellung (send_character_creation_completed_for_player()/
+; _skipped_for_player()) selbst braucht das weiterhin nicht - nur der neue
+; Client-Request-Pfad noetigt die Rueckreferenz.
+; ADR-049: "wiki" ergaenzt (Round 107) - fuer den Tier-1/Host-Fallback-Zweig
+; von send_wiki_snapshot_request() (ruft bei fehlendem Peer direkt
+; _wiki.on_snapshot_requested() auf, analog "achievement" oben). Die
+; gezielte Entdeckungs-Zustellung (send_wiki_entry_discovered_for_player())
+; selbst braucht das weiterhin nicht - nur der Snapshot-Request-Pfad
+; noetigt die Rueckreferenz.
+required_deps = Array[String]([])
+optional_deps = Array[String](["bank", "auction_house", "chat", "report", "achievement", "character_creation", "wiki", "equipment", "inventory", "item_protection", "aura", "pickpocket", "playerstates", "quest", "savesystem", "session_manager", "shop", "skill_system", "smithing", "trade", "world", "zone_service"])
+
+[sub_resource type="Resource" id="Resource_gameconfig"]
+script = ExtResource("3_resdef")
+registry_key = "gameconfig"
+path = "res://config/GameConfig.tres"
 
 [resource]
 script = ExtResource("1_config")
-services = Array[Resource]([SubResource("Resource_scenemanager"), SubResource("Resource_ticker"), SubResource("Resource_savesystem"), SubResource("Resource_data"), SubResource("Resource_playerstates"), SubResource("Resource_skill_system"), SubResource("Resource_interaction_executor"), SubResource("Resource_gamesave"), SubResource("Resource_gamemanager"), SubResource("Resource_inventory"), SubResource("Resource_worldservice"), SubResource("Resource_hudmanager"), SubResource("Resource_questservice"), SubResource("Resource_reward_dispatcher")])
+global_resources = Array[Resource]([SubResource("Resource_gameconfig")])
+global_services = Array[Resource]([
+	SubResource("Resource_ticker"),
+	SubResource("Resource_scenemanager"),
+	SubResource("Resource_data"),
+	SubResource("Resource_savesystem"),
+	SubResource("Resource_gamemanager"),
+	SubResource("Resource_session_manager"),
+	SubResource("Resource_settings_service"),
+	SubResource("Resource_permission_service")
+])
+session_services = Array[Resource]([
+	SubResource("Resource_playerstates"),
+	SubResource("Resource_stat_modifiers"),
+	SubResource("Resource_zone_service"),
+	SubResource("Resource_combat"),
+	SubResource("Resource_equipment"),
+	SubResource("Resource_skill_system"),
+	SubResource("Resource_inventory"),
+	SubResource("Resource_currency"),
+	SubResource("Resource_network_bridge"),
+	SubResource("Resource_reward_dispatcher"),
+	SubResource("Resource_shop"),
+	SubResource("Resource_smithing"),
+	SubResource("Resource_pvp"),
+	SubResource("Resource_bank"),
+	SubResource("Resource_trade"),
+	SubResource("Resource_auction_house"),
+	SubResource("Resource_item_protection"),
+	SubResource("Resource_pvp_death_loss"),
+	SubResource("Resource_death_loot"),
+	SubResource("Resource_aura"),
+	SubResource("Resource_pickpocket"),
+	SubResource("Resource_chat"),
+	SubResource("Resource_report"),
+	SubResource("Resource_telemetry"),
+	SubResource("Resource_achievement"),
+	SubResource("Resource_character_creation"),
+	SubResource("Resource_stats"),
+	SubResource("Resource_wiki"),
+	SubResource("Resource_interaction_executor"),
+	SubResource("Resource_gamesave"),
+	SubResource("Resource_world_gen"),
+	SubResource("Resource_worldservice"),
+	SubResource("Resource_respawn"),
+	SubResource("Resource_ambient_spawner"),
+	SubResource("Resource_conditional_encounters"),
+	SubResource("Resource_enemy_culling"),
+	SubResource("Resource_questservice")
+])

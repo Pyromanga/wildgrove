@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/equipment/ToolDefinition.gd" id="1_tool"]
+
+[resource]
+script = ExtResource("1_tool")
+id = "tool_tongs"
+display_name = "Schmiedezange"
+max_stack = 1
+sell_price = 8
+speed_stat_id = ""
+speed_bonus = 0.0
+buy_price = 40
+tool_type = 3
+grants_protection_type = ""
+pickpocket_crystal_tier = ""

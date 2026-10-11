@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wayside_cross"
+display_name = "Wegkreuz"
+kind = 6
+prop_shape = 4
+color = Color(0.40, 0.27, 0.16, 1)
+height = 2.4
+thickness = 0.1
+skirt = 0.0
+cost = {
+"log_normal": 6,
+"log_oak": 2
+}
+refund_ratio = 0.6

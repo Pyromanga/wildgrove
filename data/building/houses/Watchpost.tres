@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "watchpost"
+display_name = "Wachposten"
+description = "2×2 Felder, Steinboden und Steinmauern, eine Tür, Rundturm an der Hinterecke, Laterne am Eingang. Erster Baustein für eine spätere Befestigung."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "wood_door", "kind": 3, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 2, "dz": 0},
+{"piece_id": "stone_wall", "kind": 1, "axis": 1, "dx": 2, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 1, "dz": 0},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "stone_roof", "kind": 2, "axis": 1, "dx": 1, "dz": 1},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "street_lamp_iron", "kind": 6, "axis": 0, "dx": -1, "dz": 0},
+])

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BuildPieceDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/BuildPieceDefinition.gd" id="1_piece"]
+
+[resource]
+script = ExtResource("1_piece")
+id = "wood_arch_window"
+display_name = "Bogenfenster (Holz)"
+kind = 4
+color = Color(0.5, 0.35, 0.22, 1)
+height = 2.5
+thickness = 0.18
+skirt = 0.8
+opening_shape = 1
+opening_width = 0.9
+opening_height = 2.1
+cost = {
+"log_normal": 2
+}
+refund_ratio = 0.75

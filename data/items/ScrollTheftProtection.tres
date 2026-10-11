@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/inventory/ItemDefinition.gd" id="1_def"]
+
+[resource]
+script = ExtResource("1_def")
+id = "scroll_theft_protection"
+display_name = "Schutzscroll (Diebstahl)"
+max_stack = 20
+sell_price = 0
+grants_protection_type = "theft"

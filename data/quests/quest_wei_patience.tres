@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="QuestDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestDefinition.gd" id="1_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestReward.gd" id="2_ques"]
+[ext_resource type="Script" path="res://scripts/progression/quests/QuestObjective.gd" id="3_ques"]
+
+[sub_resource type="Resource" id="obj_reach_combat_2"]
+script = ExtResource("3_ques")
+id = "obj_reach_combat_2"
+label = "Erreiche Kampf-Stufe 2"
+type = 1
+target_id = "combat"
+required = 2
+optional = false
+
+[sub_resource type="Resource" id="obj_talk_wei_report"]
+script = ExtResource("3_ques")
+id = "obj_talk_wei_report"
+label = "Melde dich bei Wei zurueck"
+type = 4
+target_id = "wei_master"
+required = 1
+optional = false
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("2_ques")
+xp_rewards = {"combat": 25}
+item_rewards = {}
+unlock_quests = []
+custom_signals = []
+stat_modifiers = {}
+
+[resource]
+script = ExtResource("1_ques")
+id = "quest_wei_patience"
+title = "Geduld vor Tempo"
+description = "Kampfmeisterin Wei zaehlt keine Kills. Sie will sehen, dass du dich im Kampf wirklich weiterentwickelst, nicht nur ueberlebst."
+category = "side"
+objectives = [SubResource("obj_reach_combat_2"), SubResource("obj_talk_wei_report")]
+prerequisites = []
+auto_start = false
+repeatable = false
+reward = SubResource("reward")

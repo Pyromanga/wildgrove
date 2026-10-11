@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/equipment/ToolDefinition.gd" id="1_tool"]
+
+[resource]
+script = ExtResource("1_tool")
+id = "tool_hammer"
+display_name = "Schmiedehammer"
+max_stack = 1
+sell_price = 9
+speed_stat_id = ""
+speed_bonus = 0.0
+buy_price = 45
+tool_type = 4
+grants_protection_type = ""
+pickpocket_crystal_tier = ""

@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "city_gate_grand"
+display_name = "Großes Stadttor"
+description = "14 m breite Torfront mit DREI Rundbogen-Toren nebeneinander (Holzflügel offen), zwei Rundtürmen, Zinnenbrüstung und durchgehendem Wehrgang über den Toren, zwei Treppen auf die Mauerkrone, Pflaster durch die Tore. Mitte anvisieren und dort stehen."
+pieces = Array[Dictionary]([
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 4, "dz": 0},
+{"piece_id": "stone_floor", "kind": 0, "axis": -1, "dx": 4, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "wood_gate_open", "kind": 3, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "wood_gate_open", "kind": 3, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "wood_gate_open", "kind": 3, "axis": 0, "dx": 4, "dz": 1},
+{"piece_id": "stone_wall", "kind": 1, "axis": 0, "dx": 5, "dz": 1},
+{"piece_id": "stone_stairs", "kind": 5, "axis": 2, "dx": 1, "dz": 2},
+{"piece_id": "stone_stairs", "kind": 5, "axis": 2, "dx": 5, "dz": 2},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "banner_red", "kind": 6, "axis": 0, "dx": 5, "dz": 0},
+{"piece_id": "tower_stone_round", "kind": 6, "axis": 0, "dx": 6, "dz": 0},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 1, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 2, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 3, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 4, "dz": 1, "storey": 1},
+{"piece_id": "stone_walkway", "kind": 0, "axis": -1, "dx": 5, "dz": 1, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 1, "dz": 1, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 2, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 2, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 3, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 3, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 4, "dz": 1, "storey": 1},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 4, "dz": 2, "storey": 1},
+{"piece_id": "stone_parapet", "kind": 1, "axis": 0, "dx": 5, "dz": 1, "storey": 1},
+])

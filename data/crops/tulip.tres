@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="FarmCropDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/farming/FarmCropDefinition.gd" id="1_crop"]
+
+[resource]
+script = ExtResource("1_crop")
+id = "tulip"
+display_name = "Tulpe"
+seed_item_id = "tulip_bulb"
+harvest_loot_table_id = "loot_tulip_field"
+xp_amount = 16
+growth_seconds = 100.0
+skill_id = "gardening"

@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="HouseTemplateDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building/HouseTemplateDefinition.gd" id="1_house"]
+
+[resource]
+script = ExtResource("1_house")
+id = "tavern"
+display_name = "Taverne"
+description = "4×3 Felder, Holz, Tür und Fenster, Holzdach. Ein Tresenzaun trennt drei Fässer vom Gastraum, Fässer dienen als Tische, an der Ostwand Ausschank und Ofen als Kamin. Draußen Wegweiser und Laterne."
+pieces = Array[Dictionary]([
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 0, "dz": 2},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 1, "dz": 2},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 2, "dz": 2},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 0},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 1},
+{"piece_id": "wood_floor", "kind": 0, "axis": -1, "dx": 3, "dz": 2},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 0},
+{"piece_id": "wood_window", "kind": 4, "axis": 1, "dx": 0, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 0, "dz": 2},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 0, "dz": 3},
+{"piece_id": "wood_window", "kind": 4, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "wood_door", "kind": 3, "axis": 0, "dx": 1, "dz": 3},
+{"piece_id": "wood_window", "kind": 4, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "wood_fence", "kind": 1, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 2, "dz": 3},
+{"piece_id": "wood_wall", "kind": 1, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "wood_window", "kind": 4, "axis": 0, "dx": 3, "dz": 3},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 0},
+{"piece_id": "wood_window", "kind": 4, "axis": 1, "dx": 4, "dz": 1},
+{"piece_id": "wood_wall", "kind": 1, "axis": 1, "dx": 4, "dz": 2},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 0, "dz": 2},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 1, "dz": 2},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 0},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 1},
+{"piece_id": "wood_roof", "kind": 2, "axis": 0, "dx": 3, "dz": 2},
+{"piece_id": "street_lamp_wood", "kind": 6, "axis": 0, "dx": -1, "dz": 3},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 0, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 0, "dz": 2},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 1, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 2, "dz": 0},
+{"piece_id": "barrel", "kind": 6, "axis": 0, "dx": 2, "dz": 2},
+{"piece_id": "market_stall_blue", "kind": 6, "axis": 3, "dx": 3, "dz": 1},
+{"piece_id": "bake_oven", "kind": 6, "axis": 3, "dx": 3, "dz": 2},
+{"piece_id": "signpost_wood", "kind": 6, "axis": 0, "dx": 4, "dz": 3},
+])
