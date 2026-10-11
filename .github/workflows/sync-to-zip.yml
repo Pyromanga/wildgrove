@@ -4,13 +4,16 @@ name: Sync repo to zip
 # zip/game.zip, damit der parallele Workflow (Claude Chat arbeitet mit
 # der ZIP) immer vom aktuellen Repo-Stand weiterarbeitet.
 #
-# Trigger: Push auf main, NUR wenn die Commit-Message "[sync-zip]"
-# enthält (Marker). Der Sync-Commit selbst enthält den Marker nicht —
-# keine Endlosschleife. Commit-Messages hier bewusst OHNE "App", damit
-# nicht versehentlich der APK-Build getriggert wird.
+# Trigger:
+# - Push auf main mit "[sync-zip]" in der Commit-Message (Marker).
+#   Der Sync-Commit selbst enthält den Marker nicht — keine Endlosschleife.
+# - Manuell via workflow_dispatch (z.B. über scripts/ci/wildgrove-ci.sh sync).
+# Commit-Messages hier bewusst OHNE "App", damit nicht versehentlich
+# der APK-Build getriggert wird.
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -25,11 +28,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Pack repo into zip/game.zip (only on [sync-zip] marker)
+      - name: Pack repo into zip/game.zip (marker or manual trigger)
         run: |
           set -euo pipefail
 
-          if ! git log -1 --pretty=%B | grep -q '\[sync-zip\]'; then
+          if [ "\"${{ github.event_name }}\" = "push" ] && ! git log -1 --pretty=%B | grep -q '\[sync-zip\]'; then
             echo "Kein [sync-zip]-Marker im Commit — überspringe Sync."
             exit 0
           fi
