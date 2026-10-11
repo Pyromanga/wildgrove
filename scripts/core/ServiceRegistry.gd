@@ -17,6 +17,12 @@ var _definitions: Dictionary = {}  # Speichert die ServiceDefinition Objekte
 
 
 ## Registriert einen Service zusammen mit seinem Bauplan.
+##
+## Idempotent bei identischer Instanz (Issue #2): Wird dieselbe Instanz
+## erneut registriert (z.B. EventBus-Autoload vor und während der Boot-
+## Pipeline), ist das kein Fehler — kein WARN-Noise, kein Überschreiben.
+## Nur eine ANDERE Instanz unter gleichem Namen ist weiterhin ein
+## echtes Überschreiben und wird wie bisher verwarnt.
 func register(service: Object, definition: ServiceDefinition) -> void:
 	if not is_instance_valid(service):
 		Logger.log_error("Ungültiges Objekt bei Registrierung.", LOG_CAT)
@@ -29,6 +35,13 @@ func register(service: Object, definition: ServiceDefinition) -> void:
 	var key := definition.service_name.to_lower()
 
 	if _services.has(key):
+		if _services[key] == service:
+			# Gleiche Instanz — Definition aktualisieren, sonst No-Op.
+			_definitions[key] = definition
+			Logger.log_debug(
+				"Service '%s' bereits registriert (identische Instanz) — No-Op." % key, LOG_CAT
+			)
+			return
 		Logger.log_warn("Service '%s' wird überschrieben." % key, LOG_CAT)
 
 	_services[key] = service
