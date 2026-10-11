@@ -16,6 +16,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   GODOT_VERSION: "4.6.3"
   EXPORT_NAME: "WildGrove"
@@ -189,11 +192,17 @@ jobs:
           if-no-files-found: warn
 
   # ─── IT-03: echter Zwei-Prozess-Movement-Round-Trip ─────────────────────────
+  # FIX 2026-10-11 (Issue #5): Bei Failure werden Host-/Client-Logs automatisch
+  # als Kommentar in Issue #5 gepostet (gh api, permissions: issues: write) —
+  # damit ist die Ursache ohne Login in den Job-Logs diagnosable.
   integration-two-process:
     name: IT-03 — Two-Process Movement Round Trip
     runs-on: ubuntu-22.04
     needs: resolve-source
     timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - name: Download resolved project
@@ -267,6 +276,29 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+      - name: Post failure logs to Issue #5
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## 🩺 IT-03 Failure — Run [$GITHUB_RUN_ID]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+            echo "Commit: ${{ github.sha }}"
+            echo ""
+            echo "### Host-Log (Tail 150)"
+            echo '```'
+            { [ -f host.log ] && tail -n 150 host.log; } || echo "(kein Host-Log)"
+            echo '```'
+            echo "### Client-Log (Tail 150)"
+            echo '```'
+            { [ -f client.log ] && tail -n 150 client.log; } || echo "(kein Client-Log)"
+            echo '```'
+          } > /tmp/it03-comment.md
+          gh api repos/${{ github.repository }}/issues/5/comments \
+            -f body=@/tmp/it03-comment.md \
+            && echo "✅ Logs als Kommentar in Issue #5 gepostet."
+
       - name: Evaluate result
         run: |
           CODE="${{ steps.client.outputs.exit_code }}"
@@ -328,8 +360,8 @@ jobs:
 
       - name: Show source info
         run: |
-          echo "Projektquelle: ${NEEDS_PP}"
-          echo "ZIP genutzt:   ${NEEDS_UZ}"
+          echo "Projektquelle: ${{ needs.resolve-source.outputs.project_path }}"
+          echo "ZIP genutzt:   ${{ needs.resolve-source.outputs.used_zip }}"
           echo "project.godot: $(find project -name 'project.godot' | head -1)"
 
       - name: Set up Java 17
@@ -410,7 +442,7 @@ jobs:
         run: |
           python3 project/scripts/ci/bump_version.py \
             --presets project/export_presets.cfg \
-            --version-code ${RUNNR}
+            --version-code ${{ github.run_number }}
 
       - name: Create output directory
         run: mkdir -p project/build/android
