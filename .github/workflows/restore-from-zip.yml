@@ -1,11 +1,9 @@
 name: Restore project from zip
 
-# Überträgt den Projektstand aus zip/game.zip ins Repo-Root.
-# VORSICHTIG: nur ergänzen/überschreiben – es wird NICHTS gelöscht.
-# zip/ bleibt erhalten bis der Stand manuell geprüft wurde.
+# Manueller Trigger only — laeuft nicht mehr automatisch bei Push,
+# damit versehentliche Synks ausgeschlossen sind. zip/ bleibt als
+# Quelle bis auf weiteres liegen.
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -42,10 +40,8 @@ jobs:
           SRC=$(dirname "$GODOT_FILE")
           echo "Godot-Projekt im ZIP: $SRC"
 
-          # NUR ERGAENZEN/UEBERSCHREIBEN — kein --delete, nichts wird entfernt.
           cp -a "$SRC"/. ./
 
-          # Godot-Editor-Cache nie committen
           rm -rf .godot
           rm -rf _src
 
@@ -63,6 +59,6 @@ jobs:
             echo "Keine Aenderungen nach Merge — kein Commit."
             exit 0
           fi
-          git commit -m "restore: Projektstand aus zip/game.zip ins Repo gemerged (nur ergaenzt, nichts geloescht)"
+          git commit -m "restore: Projektstand aus zip/game.zip ins Repo gemerged"
           git push
           echo "Restore-Commit gepusht."
