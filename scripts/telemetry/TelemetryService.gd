@@ -28,7 +28,7 @@ class_name TelemetryService
 ## Zwei automatische Beispiel-Events (session_start/session_end) sind
 ## bewusst mit eingebaut, statt den Service komplett ungenutzt zu lassen —
 ## sonst gäbe es 0 tatsächliche Aufrufer dieser neuen Infrastruktur, exakt
-## das Muster, das in früheren Runden (z. B. ADR-042) bewusst vermieden
+## das Muster, das in früheren Runden (z.B. ADR-042) bewusst vermieden
 ## wurde, wo es machbar war.
 ##
 ## BEWUSST NICHT TEIL DIESER RUNDE: kein Netzwerk-Upload/Endpunkt (siehe
@@ -67,6 +67,14 @@ class_name TelemetryService
 ## oben. get_memory_snapshots() hält zusätzlich die letzten
 ## MAX_MEMORY_HISTORY Snapshots im Speicher (Session-only) für eine
 ## künftige Debug-Anzeige (SimpleTerminal-Befehl `mem`, siehe dort).
+##
+## ERWEITERUNG (2026-10-11, Issue #1 — Performance/Lag): FPS- und
+## Frame-Time-Metriken + Tick-Statistiken des ServiceTicker in jedem
+## Snapshot. Vorher zeigte ein Snapshot nur Speicher/Objekt-Zahlen — man
+## sah, DASS das Spiel laggt, aber nicht WER die Frame-Zeit verbraucht.
+## Jetzt: fps/process_time_ms pro Snapshot plus avg/letzte on_tick()-Dauer
+## pro Service (siehe ServiceTicker.get_tick_stats()) — das nächste Log
+## benennt den Verursacher direkt.
 
 const LOG_CAT := "Telemetry"
 
@@ -77,6 +85,11 @@ const MEMORY_SAMPLE_INTERVAL_SEC := 60.0
 ## älteste zuerst verworfen) — begrenzt, damit DIESE Diagnose-Hilfe nicht
 ## selbst zu einem (kleinen, aber unnötigen) Leak wird.
 const MAX_MEMORY_HISTORY := 200
+
+## Ab dieser durchschnittlichen on_tick()-Dauer (Mikrosekunden) bekommt ein
+## Service einen DEBUG-Eintrag im Snapshot-Log (Issue #1) — macht heiße
+## Kandidaten ohne Nachrechnen im Trace sichtbar.
+const TICK_SLOW_THRESHOLD_US := 500.0
 
 ## Event-Namen -> Anzahl in dieser Sitzung. Rein transient (siehe
 ## Klassenkommentar).
@@ -121,6 +134,13 @@ func on_cleanup() -> void:
 	_event_counts.clear()
 	_memory_snapshots.clear()
 	_last_memory_snapshot.clear()
+
+## Performance-Fix (Issue #1): Telemetrie-Sampling braucht kein 60-Hz-Polling.
+## on_tick() akkumuliert delta und feuert erst ab MEMORY_SAMPLE_INTERVAL_SEC —
+## 1 Hz genügt völlig. Siehe ServiceTicker (intervall-basiertes Throttling);
+## on_tick() bekommt die aufsummierte Delta-Zeit des Intervalls übergeben.
+func get_tick_interval() -> float:
+	return 1.0
 
 ## Periodisches Sampling — registriert über ServiceTicker (siehe on_ready()).
 ## Läuft nur, wenn ein Ticker verfügbar ist (siehe configure()).
@@ -172,6 +192,8 @@ func get_session_duration_sec() -> float:
 ## OBJECT_ORPHAN_NODE_COUNT/OBJECT_RESOURCE_COUNT, OS.get_static_memory_usage()/
 ## get_static_memory_peak_usage()) — keine GPU-/Render-Monitore, die je nach
 ## Godot-Minor-Version umbenannt wurden.
+## FPS/Frame-Time (TIME_FPS/TIME_PROCESS) sind同样 stabil und seit Issue #1
+## Teil jedes Snapshots.
 ##
 ## OBJECT_ORPHAN_NODE_COUNT ist der mit Abstand wichtigste Einzelwert für
 ## GENAU die Bug-Klasse von heute: ein Node, der aus dem Baum entfernt aber
@@ -189,7 +211,15 @@ func record_memory_snapshot(label: String = "") -> Dictionary:
 		"node_count": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
 		"orphan_node_count": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
 		"resource_count": int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)),
+		"fps": int(Performance.get_monitor(Performance.TIME_FPS)),
+		"process_time_ms": Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0,
 	}
+
+	# Issue #1: Tick-Statistiken des ServiceTicker mit in den Snapshot —
+	# avg./letzte on_tick()-Dauer pro Service macht den Frame-Zeit-Verbraucher
+	# im nächsten Log direkt namentlich sichtbar.
+	if is_instance_valid(_ticker):
+		snapshot["tick_stats"] = _ticker.get_tick_stats()
 
 	var delta: Dictionary = {}
 	if not _last_memory_snapshot.is_empty():
@@ -208,7 +238,7 @@ func record_memory_snapshot(label: String = "") -> Dictionary:
 	# soll auch beim normalen Mitlesen im Terminal auffallen, nicht nur beim
 	# gezielten Durchsuchen der Log-Datei nach "Telemetry".
 	AppLogger.log_info(
-		"Speicher-Snapshot%s: %.1f MB statisch (Δ%+.2f MB), %d Objekte (Δ%+d), %d Nodes (Δ%+d), %d verwaiste Nodes (Δ%+d), %d Resourcen (Δ%+d)." % [
+		"Speicher-Snapshot%s: %.1f MB statisch (Δ%+.2f MB), %d Objekte (Δ%+d), %d Nodes (Δ%+d), %d verwaiste Nodes (Δ%+d), %d Resourcen (Δ%+d) | FPS: %d, Frame: %.2f ms." % [
 			(" [%s]" % label) if not label.is_empty() else "",
 			snapshot["static_memory_bytes"] / 1048576.0,
 			delta.get("static_memory_bytes", 0) / 1048576.0,
@@ -216,9 +246,27 @@ func record_memory_snapshot(label: String = "") -> Dictionary:
 			snapshot["node_count"], delta.get("node_count", 0),
 			snapshot["orphan_node_count"], delta.get("orphan_node_count", 0),
 			snapshot["resource_count"], delta.get("resource_count", 0),
+			snapshot["fps"],
+			snapshot["process_time_ms"],
 		],
 		LOG_CAT
 	)
+
+	# Issue #1: Services mit auffällig teuren on_tick()-Aufrufen direkt im
+	# Snapshot-Log benennen (DEBUG-Level) — kein Nachrechnen im Trace nötig.
+	if snapshot.has("tick_stats"):
+		for entry in snapshot["tick_stats"]:
+			var calls := int(entry.get("calls", 0))
+			if calls <= 0:
+				continue
+			var avg_us := float(entry.get("total_us", 0)) / float(calls)
+			if avg_us >= TICK_SLOW_THRESHOLD_US:
+				AppLogger.log_debug(
+					"Tick-Statistik: '%s' Ø %.0f µs/Tick (%d Aufrufe, Intervall: %s s)."
+					% [entry.get("class", "?"), avg_us, calls, str(entry.get("interval", 0.0))],
+					LOG_CAT
+				)
+
 	if int(snapshot["orphan_node_count"]) > 0:
 		AppLogger.log_warn(
 			"%d verwaiste Node(s) erkannt — möglicher Teardown-Bug (siehe TelemetryService-Klassenkommentar zu BUG-1/BUG-2/BUG-B)." % snapshot["orphan_node_count"],
@@ -239,7 +287,7 @@ func get_last_memory_snapshot() -> Dictionary:
 # ─────────────────────────────────────────────
 # Copy/Export (BUGFIX/ERWEITERUNG 2026-09-27, "Copy/Export-Button wie bei Logs, nur für
 # Telemetrie") — spiegelt SimpleTerminal.get_all_text()/export_all_text_to_file() 1:1:
-# gleiches Format (Klartext, ein Eintrag pro Zeile), gleicher Ablageort (user://), gleicher
+# gleiches Format (Klartext, ein Eintrag pro Zeile), gleicher Ablageort (user://), gleiche
 # Grund für die zusätzliche Datei (siehe dortiger Kommentar zu Clipboard-Kürzung auf Mobile).
 # ─────────────────────────────────────────────
 
@@ -265,8 +313,10 @@ func get_all_text() -> String:
 		for snapshot in _memory_snapshots:
 			var delta: Dictionary = snapshot.get("delta", {})
 			lines.append(
-				"  [%s] %.1f MB (Δ%+.2f MB), %d Objekte (Δ%+d), %d Nodes (Δ%+d), %d verwaiste Nodes (Δ%+d), %d Resourcen (Δ%+d)" % [
+				"  [%s] %d FPS, %.2f ms Frame | %.1f MB (Δ%+.2f MB), %d Objekte (Δ%+d), %d Nodes (Δ%+d), %d verwaiste Nodes (Δ%+d), %d Resourcen (Δ%+d)" % [
 					snapshot.get("label", ""),
+					int(snapshot.get("fps", 0)),
+					float(snapshot.get("process_time_ms", 0.0)),
 					int(snapshot.get("static_memory_bytes", 0)) / 1048576.0,
 					int(delta.get("static_memory_bytes", 0)) / 1048576.0,
 					int(snapshot.get("object_count", 0)), int(delta.get("object_count", 0)),
@@ -275,7 +325,8 @@ func get_all_text() -> String:
 					int(snapshot.get("resource_count", 0)), int(delta.get("resource_count", 0)),
 				]
 			)
-	return "\n".join(lines)
+	return "
+".join(lines)
 
 ## Schreibt get_all_text() als eigene Datei nach user:// — siehe SimpleTerminal.
 ## export_all_text_to_file()-Kommentar: umgeht OS-seitige Clipboard-Größenlimits (v.a. auf
