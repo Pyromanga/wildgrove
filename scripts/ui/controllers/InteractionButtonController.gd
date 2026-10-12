@@ -1,4 +1,11 @@
-class_name InteractionButtonController
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
+# Dieser alte Controller SHADOWTET per class_name den neuen Controller in
+# scripts/interaction/ui/InteractionButtonController.gd (setup(visuals, ctx),
+# 2 Args). Godot scannt ui/ nach interaction/ — das Legacy-class_name gewann
+# die Registry => Parse-Fehler in der NEUEN InteractionButtonComponent.gd
+# ("setup() expected at most 1 but received 2") => HUDBuilder/HUDManager/
+# ServiceOrchestrator-Kompilierkaskade. Datei ist damit inert (nichts
+# referenziert sie; nur bei explizitem Pfad-Load kompiliert).
 extends Node
 
 ## InteractionButtonController — zeigt/versteckt den Interaktions-Button.
