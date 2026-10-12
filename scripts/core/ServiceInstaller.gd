@@ -1,5 +1,5 @@
 # res://scripts/core/services/ServiceInstaller.gd
-class_name ServiceInstaller extends RefCounted
+extends RefCounted
 
 ## ServiceInstaller — Phase 6 der Boot-Pipeline.
 ##

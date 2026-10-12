@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name PlayerStateService
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## PlayerStateService — Verwaltet den Mikro-State des Spielers (Input-Control).
 ##
@@ -79,7 +79,8 @@ func _on_game_state_changed(game_state: int) -> void:
 		set_state(State.FREE)
 
 
-func _state_name(s: State) -> String:
+func _state_name(s
+: State) -> String:
 	var keys = State.keys()
 	if s >= 0 and s < keys.size():
 		return keys[s]

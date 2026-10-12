@@ -1,4 +1,4 @@
-class_name ItemInstance
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends RefCounted
 
 ## ItemInstance — Laufzeit-Repräsentation eines einzelnen Inventar-Items.

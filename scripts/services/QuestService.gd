@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name QuestService
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## QuestService — Verwaltet den Fortschritt aller Quests.
 ##
@@ -55,6 +55,7 @@ func configure(deps: Dictionary) -> void:
 		_save_system.register_save_provider(self)
 		var saved: Dictionary = _save_system.get_state_for(SAVE_KEY)
 		if not saved.is_empty():
+
 			_restore_from_save(saved)
 
 	Logger.log_end("QuestService.configure()", t, LOG_CAT)
@@ -125,7 +126,8 @@ func start_quest(quest_id: String) -> bool:
 		for prereq in def.prerequisites:
 			if not completed_quests.has(prereq):
 				Logger.log_debug(
-					"Quest '%s': Prerequisite '%s' nicht erfüllt." % [quest_id, prereq], LOG_CAT
+					"Q
+uest '%s': Prerequisite '%s' nicht erfüllt." % [quest_id, prereq], LOG_CAT
 				)
 				return false
 
@@ -185,7 +187,8 @@ func unlock_quest(quest_id: String) -> void:
 		Logger.log_info("Quest freigeschaltet: '%s'." % quest_id, LOG_CAT)
 
 
-func update_objective(quest_id: String, objective_id: String, delta: int) -> void:
+func update_objective(quest_id: String, objective_id: Stri
+ng, delta: int) -> void:
 	if not active_quests.has(quest_id):
 		return
 
@@ -238,7 +241,8 @@ func _on_xp_gained(skill_name: String, amount: int) -> void:
 		for obj in def.objectives:
 			if obj.type == QuestObjective.Type.SKILL and obj.target_id == skill_name:
 				# SKILL-Objectives tracken absoluten Level, nicht XP-Delta
-				var req_level: int = obj.required_amount
+				var req_level: int = obj.required_amo
+unt
 				if is_instance_valid(Services.skill_system):
 					var cur_level: int = Services.skill_system.get_level(skill_name)
 					if cur_level >= req_level:
@@ -298,7 +302,8 @@ func _unlock_followup_quests(completed_id: String) -> void:
 
 func _restore_from_save(saved_data: Dictionary) -> void:
 	active_quests    = saved_data.get("active",    {})
-	completed_quests = saved_data.get("completed", [])
+	completed_quests = saved_data.get("completed", []
+)
 	available_quests = saved_data.get("available", [])
 	Logger.log_info(
 		"Quest-State geladen: aktiv=%d, abgeschlossen=%d, verfügbar=%d."

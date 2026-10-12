@@ -1,5 +1,5 @@
 # res://scripts/core/GameEnums.gd
-class_name GameEnums
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 enum State {
 	BOOT,

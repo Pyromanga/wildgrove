@@ -1,4 +1,4 @@
-class_name InteractionButtonComponent extends BaseUIComponent
+extends BaseUIComponent
 
 ## InteractionButtonComponent — baut den InteractionButtonController.
 ##

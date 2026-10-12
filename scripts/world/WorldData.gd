@@ -1,4 +1,4 @@
-class_name WorldData
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends RefCounted
 
 ## WorldData — Reines Daten-Objekt für den Weltzustand.
@@ -67,7 +67,8 @@ func get_ore_count() -> int:
 
 
 # ─────────────────────────────────────────────
-# Intern — deterministische Key-Generierung
+# Intern — determinis
+tische Key-Generierung
 # ─────────────────────────────────────────────
 
 

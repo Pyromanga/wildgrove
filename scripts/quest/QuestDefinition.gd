@@ -1,4 +1,4 @@
-class_name QuestDefinition
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends Resource
 
 ## QuestDefinition — statische Quest-Daten als .tres-Ressource.

@@ -1,4 +1,4 @@
-class_name InteractionComponent extends BaseUIComponent
+extends BaseUIComponent
 
 ## InteractionComponent — baut den Fortschrittsbalken für laufende Interaktionen.
 

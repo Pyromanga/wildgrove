@@ -1,5 +1,5 @@
 # res://scripts/ui/controllers/InventoryUIController.gd
-class_name InventoryUIController
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 var _visuals: InventoryVisuals
 var _service: InventorySystem

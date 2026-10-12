@@ -1,5 +1,5 @@
 # res://scripts/resources/ItemDefinition.gd
-class_name ItemDefinition extends Resource
+extends Resource
 
 @export var id: String = ""
 @export var display_name: String = ""

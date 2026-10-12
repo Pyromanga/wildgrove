@@ -1,4 +1,4 @@
-class_name InventoryComponent extends BaseUIComponent
+extends BaseUIComponent
 
 
 # FIX: Kein Override-Konflikt mehr, da BaseUIComponent kein build() hat.

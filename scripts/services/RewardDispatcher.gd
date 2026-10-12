@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name RewardDispatcher
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## RewardDispatcher — Übersetzt QuestReward in konkrete Service-Aufrufe.
 ##
@@ -54,7 +54,8 @@ func dispatch(reward: QuestReward) -> bool:
 			all_ok = false
 
 	# Item-Rewards
-	for item_id in reward.item_rewards:
+	for item_id in reward.ite
+m_rewards:
 		var quantity: int = reward.item_rewards[item_id]
 		if is_instance_valid(_inventory):
 			_inventory.add_item(item_id, quantity)

@@ -1,5 +1,5 @@
 extends ServiceNode  # Geändert zu ServiceNode für den Node-Baum
-class_name SaveSystem
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 const LOG_CAT := "SaveSystem"
 const SAVE_PATH := "user://savegame.json"
@@ -61,7 +61,8 @@ func save_game() -> bool:
 	# Alle Provider werden abgefragt
 	for provider in _save_providers:
 		if is_instance_valid(provider):
-			full_state[provider.get_save_key()] = provider.get_save_data()
+			full_state[provider.get_save_key()] = p
+rovider.get_save_data()
 
 	var success := _write_to_disk(full_state)
 	EventBus.system.emit_save_completed(success)

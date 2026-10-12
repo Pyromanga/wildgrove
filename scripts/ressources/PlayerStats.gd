@@ -1,4 +1,4 @@
-class_name PlayerStats
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends RefCounted
 
 ## PlayerStats — Laufzeit-Spielerwerte (veränderlich, werden gespeichert).

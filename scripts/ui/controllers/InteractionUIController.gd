@@ -1,4 +1,4 @@
-class_name InteractionUIController
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## InteractionUIController — treibt den HUD-Fortschrittsbalken für Interaktionen.
 ##

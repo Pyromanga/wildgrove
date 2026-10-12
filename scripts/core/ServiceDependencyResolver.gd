@@ -1,4 +1,4 @@
-class_name ServiceDependencyResolver extends RefCounted
+extends RefCounted
 
 ## ServiceDependencyResolver — Phase 2 der Boot-Pipeline.
 ##
@@ -71,7 +71,8 @@ func resolve(defs: Array[ServiceDefinition]) -> Array[String]:
 		var cycle_members: Array[String] = []
 		for d in defs:
 			if not result_set.has(d.service_name.to_lower()):
-				cycle_members.append(d.service_name)
+				cycle_members.append
+(d.service_name)
 
 		Logger.log_error(
 			"Zyklische Abhängigkeit erkannt! Beteiligte Services: %s" % str(cycle_members), LOG_CAT

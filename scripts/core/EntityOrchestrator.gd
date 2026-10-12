@@ -1,5 +1,5 @@
 extends Node
-class_name EntityOrchestrator
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## EntityOrchestrator — Zuständig für Entity-Lifecycle und Gruppen-Management.
 ##
@@ -58,7 +58,8 @@ func _ready() -> void:
 ## Muss aufgerufen werden bevor spawn_entity() nutzbar ist.
 ## Sicher mehrfach aufrufbar (idempotent) — räumt alte Zustand-Referenzen auf.
 func initialize(world_root: Node3D) -> void:
-	if not is_instance_valid(world_root):
+	if 
+not is_instance_valid(world_root):
 		Logger.log_error("initialize() fehlgeschlagen: world_root ist null oder invalid.", LOG_CAT)
 		return
 
@@ -124,7 +125,8 @@ func on_world_unloaded() -> void:
 
 ## Registriert eine Entity-Definition.
 ## MUSS vor spawn_entity() aufgerufen werden.
-func register_definition(type_id: String, script_path: String, group: String = "") -> void:
+func register_defi
+nition(type_id: String, script_path: String, group: String = "") -> void:
 	if type_id.is_empty():
 		Logger.log_error("register_definition(): type_id darf nicht leer sein!", LOG_CAT)
 		return
@@ -188,7 +190,8 @@ func spawn_entity(type_id: String, position: Vector3, config: Dictionary = {}) -
 
 	_stats["total_spawned"] += 1
 
-	EventBus.world.emit_entity_spawned(type_id, entity, position)
+	EventBus.world.emit_entity_spawne
+d(type_id, entity, position)
 
 	Logger.log_info(
 		"Entity gespawnt: type='%s' uuid='%s' pos=%s" % [type_id, uuid, str(position)],
@@ -255,7 +258,8 @@ func get_debug_info() -> Dictionary:
 	var pool_sizes: Dictionary = {}
 	for type_id in _pool:
 		pool_sizes[type_id] = _pool[type_id].size()
-	return {
+	retur
+n {
 		"world_root": _world_root.name if is_instance_valid(_world_root) else "<null>",
 		"active_entities": _entities.size(),
 		"definitions": _definitions.keys(),
@@ -310,6 +314,7 @@ func _create_or_pool(type_id: String, def: Dictionary) -> Node3D:
 	if instance == null:
 		Logger.log_error("GDScript.new() für '%s' gab null zurück (extends Node3D?)." % type_id, LOG_CAT)
 		return null
+
 
 	# Gruppe setzen VOR add_to_tree (wird in _ready() evtl. gebraucht)
 	var group: String = def.get("group", "")

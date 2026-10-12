@@ -1,4 +1,4 @@
-class_name ServiceFactory extends RefCounted
+extends RefCounted
 
 ## ServiceFactory — Phase 3 der Boot-Pipeline.
 ## Instanziiert Services und verknüpft sie in der Registry mit ihren Definitionen.

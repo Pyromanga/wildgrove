@@ -1,4 +1,4 @@
-class_name ServiceRegistry extends RefCounted
+extends RefCounted
 
 ## ServiceRegistry — Internes Service-Verzeichnis & Definitions-Speicher.
 ## Hält sowohl die Live-Instanzen als auch deren Baupläne (Definitionen).
@@ -55,7 +55,8 @@ func unregister(service_name: String) -> void:
 	var key := service_name.to_lower()
 	if _services.erase(key):
 		_definitions.erase(key)
-		Logger.log_debug("Entfernt: '%s'" % key, LOG_CAT)
+		Logger.log_debug("Entfernt: '%s'" % key, 
+LOG_CAT)
 		service_unregistered.emit(key)
 
 

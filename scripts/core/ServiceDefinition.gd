@@ -1,4 +1,4 @@
-class_name ServiceDefinition extends Resource
+extends Resource
 
 @export var service_name: String = ""
 @export_file("*.gd", "*.tscn") var path: String = ""

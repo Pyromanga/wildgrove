@@ -1,4 +1,4 @@
-class_name BaseEvents extends RefCounted
+extends RefCounted
 
 ## BaseEvents.gd
 ## Basisklasse für alle Event-Namespaces.

@@ -1,5 +1,5 @@
 # res://scripts/player/PlayerMover.gd
-class_name PlayerMover
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends RefCounted
 
 const LOG_CAT := "PlayerMover"
@@ -67,7 +67,8 @@ func calculate_velocity(
 	if on_floor:
 		vel.y = 0.0
 	else:
-		vel.y -= gravity * delta
+		vel.y -= gra
+vity * delta
 		Logger.log_trace(
 			"Gravity angewandt: vel.y=%.3f (gravity=%.1f)" % [vel.y, gravity], {}, LOG_CAT
 		)

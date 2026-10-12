@@ -1,5 +1,5 @@
 # res://scripts/core/ServiceNode.gd
-class_name ServiceNode extends Node
+extends Node
 
 ## ServiceNode — Basisklasse für Node-basierte Services.
 ##

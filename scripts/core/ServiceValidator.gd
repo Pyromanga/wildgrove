@@ -1,4 +1,4 @@
-class_name ServiceValidator extends RefCounted
+extends RefCounted
 
 const LOG_CAT := "ServiceValidator"
 const CONFIG_PATH := "res://config/BootstrapConfig.tres"
@@ -73,7 +73,8 @@ func _load_config() -> BootstrapConfig:
 	return res as BootstrapConfig
 
 
-func _check_definition(def: ServiceDefinition, index: int) -> int:
+f
+unc _check_definition(def: ServiceDefinition, index: int) -> int:
 	var errors := 0
 	var identifier := (
 		"'%s'" % def.service_name if not def.service_name.is_empty() else "Index %d" % index

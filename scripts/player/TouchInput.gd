@@ -1,5 +1,5 @@
 extends Node
-class_name TouchInput
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## TouchInput — Input-Adapter für Mobile + Desktop.
 ## Kein Service — direktes Child des Player-Nodes.
@@ -50,7 +50,8 @@ func connect_to_event_bus() -> void:
 	EventBus.ui.emit_joystick_toggled(false, Vector2.ZERO)  # Initial-State
 
 	# Wir bridgen manuell im _handle_touch / _handle_drag statt via Signal-Chain,
-	# da wir die Emit-Methoden direkt aufrufen (kein zusätzlicher Signal-Overhead).
+	# da wir die Emit-Methoden direkt aufrufen (k
+ein zusätzlicher Signal-Overhead).
 	pass
 
 
@@ -117,7 +118,8 @@ func _handle_touch(event: InputEventScreenTouch, sw: float) -> void:
 				EventBus.ui.emit_joystick_moved(_js_origin, Vector2.ZERO)
 		else:
 			# Rechte Seite → Kamera / Pinch
-			_right_fingers[event.index] = event.position
+			_right_fingers[event.index
+] = event.position
 			if _right_fingers.size() == 1:
 				_cam_finger = event.index
 				_cam_last = event.position

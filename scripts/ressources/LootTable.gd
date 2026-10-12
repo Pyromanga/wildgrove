@@ -1,4 +1,4 @@
-class_name LootTable
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends Resource
 
 ## LootTable — Datengetriebene Drop-Tabelle für Gathering-Objekte.

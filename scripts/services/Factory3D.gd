@@ -1,4 +1,4 @@
-class_name Factory3D
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends RefCounted
 
 ## Factory3D — Programmatische Erzeugung von 3D-Hilfsobjekten.
@@ -56,7 +56,8 @@ func create_3d_bar(parent: Node3D) -> Bar3D:
 	fill_mesh.size    = Vector2(1.1, 0.15)
 	var fill          := _create_3d_shape(fill_mesh, COLOR_BAR_HP, true)
 	fill.name         = "Fill"
-	fill.position.z   = 0.01
+	fill.position.z   = 
+0.01
 	bar_node.add_child(fill)
 
 	bar_node.setup(fill)

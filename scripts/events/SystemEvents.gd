@@ -1,4 +1,4 @@
-class_name SystemEvents extends BaseEvents
+extends BaseEvents
 
 ## SystemEvents.gd
 ## Alle systemrelevanten Signals (Save, Load, Settings, State).

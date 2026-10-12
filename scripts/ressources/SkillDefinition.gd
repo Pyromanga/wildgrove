@@ -1,4 +1,4 @@
-class_name SkillDefinition
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends Resource
 
 ## SkillDefinition — Statische Daten für einen Skill als .tres-Ressource.

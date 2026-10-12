@@ -1,4 +1,4 @@
-class_name ServiceTeardownManager extends RefCounted
+extends RefCounted
 
 ## ServiceTeardownManager — Phase 7, Teardown-Pipeline.
 

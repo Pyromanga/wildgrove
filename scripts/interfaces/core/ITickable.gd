@@ -1,5 +1,5 @@
 # res://scripts/interfaces/core/ITickable.gd
-class_name ITickable
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 
 ## Wird jeden Frame aufgerufen (wie _process)

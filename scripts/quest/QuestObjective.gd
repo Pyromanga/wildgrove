@@ -1,4 +1,4 @@
-class_name QuestObjective
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 extends Resource
 
 ## QuestObjective — ein einzelnes Ziel innerhalb einer Quest.

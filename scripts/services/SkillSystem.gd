@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name SkillSystem
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## SkillSystem — Berechnet XP-Fortschritt und Level-Ups.
 ## Abhängigkeiten (deps): ["data", "savesystem"]
@@ -72,7 +72,8 @@ func get_save_data() -> Dictionary:
 # ─────────────────────────────────────────────
 
 
-func add_xp(skill_name: String, amount: int) -> void:
+func add_xp(skill_name: String, amount: i
+nt) -> void:
 	if not skills.has(skill_name):
 		Logger.log_warn("Unbekannter Skill: '%s'" % skill_name, LOG_CAT)
 		return
@@ -142,7 +143,8 @@ func _check_level_up(skill_name: String) -> void:
 		# Fallback-Formel wenn keine Definition vorhanden
 		xp_needed = entry["level"] * 100
 
-	if entry["xp"] >= xp_needed:
+	if entry[
+"xp"] >= xp_needed:
 		entry["xp"]   -= xp_needed
 		entry["level"] += 1
 		Logger.log_info(

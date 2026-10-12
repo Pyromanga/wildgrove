@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name DataService
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## DataService — Zentrales Repository für ALLE statischen Spieldaten.
 ##
@@ -47,7 +47,8 @@ func configure(_deps: Dictionary) -> void:
 	_load_skills()
 	Logger.log_end("DataService.configure()", t, LOG_CAT)
 	Logger.log_info(
-		"Geladen: %d Items, %d Quests, %d Skills."
+		"Geladen: %d Items, %d Quests, %d S
+kills."
 		% [_items.size(), _quests.size(), _skills.size()],
 		LOG_CAT
 	)
@@ -117,7 +118,8 @@ func get_auto_start_quests() -> Array[String]:
 	for id in _quests:
 		var q: QuestDefinition = _quests[id]
 		if q.auto_start:
-			result.append(id)
+		
+	result.append(id)
 	return result
 
 
@@ -174,7 +176,8 @@ func _load_skills() -> void:
 ## Generischer Ressourcen-Lader für ein Verzeichnis.
 ## key_field: Feldname der als Dictionary-Key verwendet wird (typisch "id").
 ## expected_class: Wenn nicht null, wird ein Typ-Check gemacht.
-func _load_resources_from_dir(path: String, expected_class: Variant, key_field: String) -> Dictionary:
+func _load_resources_from_dir(path: String, expected_class: Variant, key_field: String) -> Dic
+tionary:
 	var result: Dictionary = {}
 
 	if not DirAccess.dir_exists_absolute(path):

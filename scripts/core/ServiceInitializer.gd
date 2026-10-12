@@ -1,4 +1,4 @@
-class_name ServiceInitializer extends RefCounted
+extends RefCounted
 
 ## ServiceInitializer — Phase 4 + 5 der Boot-Pipeline.
 ##
@@ -50,6 +50,7 @@ func run(ordered: Array[String], registry: ServiceRegistry) -> void:
 			Logger.log_end("configure '%s'" % service_name, t, LOG_CAT)
 		else:
 			Logger.log_warn("'%s' hat keine configure()-Methode." % service_name, LOG_CAT)
+
 
 
 # ─────────────────────────────────────────────

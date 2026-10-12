@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name GameManager
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 const LOG_CAT := "GameManager"
 

@@ -1,4 +1,4 @@
-class_name GameConfig extends Resource
+extends Resource
 
 ## GameConfig — Konfiguriert erlaubte State-Übergänge.
 ## WICHTIG: Keys sind Strings (z.B. "BOOT"), keine Enum-Ints.

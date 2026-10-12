@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name InventorySystem
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## InventorySystem — Verwaltet das Spieler-Inventar.
 ## Abhängigkeiten (deps): ["data", "savesystem"]
@@ -59,7 +59,8 @@ func configure(deps: Dictionary) -> void:
 func on_ready() -> void:
 	# Initialen Zustand publizieren
 	inventory_changed.emit(get_all_items())
-	# Loot-Events von InteractableComponent abhören — statt direkter Service-Kopplung.
+	# Loot-Even
+ts von InteractableComponent abhören — statt direkter Service-Kopplung.
 	# InteractableComponent ruft kein Services.inventory.add_item() mehr auf,
 	# sondern emittiert EventBus.world.loot_collected. Wir horchen hier darauf.
 	EventBus.world.loot_collected.connect(add_item)
@@ -134,7 +135,8 @@ func get_item_info(item_id: String) -> ItemDefinition:
 
 # ─────────────────────────────────────────────
 # Intern
-# ─────────────────────────────────────────────
+# ─────────────────────────────────────
+────────
 
 
 func _restore_from_save(saved: Dictionary) -> void:

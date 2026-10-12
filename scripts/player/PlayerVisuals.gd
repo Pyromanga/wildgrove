@@ -1,5 +1,5 @@
 extends Node3D
-class_name PlayerVisuals
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 var mesh: MeshInstance3D
 var rotation_speed: float = 10.0

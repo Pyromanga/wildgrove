@@ -1,5 +1,5 @@
 extends RefCounted
-class_name WorldFactory
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## WorldFactory — Erzeugt die STATISCHE Spielwelt (Geometrie + Licht + Player).
 ##
@@ -58,7 +58,8 @@ func _add_environment(world: Node3D) -> void:
 	var env_node := WorldEnvironment.new()
 	env_node.name = "WorldEnvironment"
 	var env := Environment.new()
-	env.background_mode = Environment.BG_SKY
+	env.backgroun
+d_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sky_mat := ProceduralSkyMaterial.new()
 	sky_mat.sky_top_color = Color(0.2, 0.5, 0.9)
@@ -125,7 +126,8 @@ func _add_player(world: Node3D, pos: Vector3) -> void:
 
 	var player_script: GDScript = load("res://scripts/player/Player.gd")
 	if not player_script:
-		Logger.log_error("Player.gd nicht ladbar — Pfad korrekt?", LOG_CAT)
+		Logger.log_error("Player.gd nicht ladbar — Pfad ko
+rrekt?", LOG_CAT)
 		return
 
 	var player: CharacterBody3D = player_script.new()

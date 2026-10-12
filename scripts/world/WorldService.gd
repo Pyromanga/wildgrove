@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name WorldService
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## WorldService — Zentrale Anlaufstelle für Welt-Daten, Zeit und Entity-Verwaltung.
 ##
@@ -57,7 +57,8 @@ var day_count: int = 1
 func configure(deps: Dictionary) -> void:
 	var t := Logger.log_begin("WorldService.configure()", LOG_CAT)
 
-	_save_system = deps.get("savesystem") as SaveSystem
+	_save_system = deps.
+get("savesystem") as SaveSystem
 	if not is_instance_valid(_save_system):
 		Logger.log_error("SaveSystem fehlt in den Dependencies!", LOG_CAT)
 	else:
@@ -112,7 +113,8 @@ func on_cleanup() -> void:
 
 # ─────────────────────────────────────────────
 # Tick (via ServiceTicker — kein direktes _process()!)
-# ─────────────────────────────────────────────
+# ───────────────────────────────────────────
+──
 func on_tick(delta: float) -> void:
 	if is_instance_valid(Services.game_manager) and Services.game_manager.is_playing():
 		_update_time(delta)
@@ -170,7 +172,8 @@ func on_world_scene_ready(world_root: Node3D) -> void:
 # ─────────────────────────────────────────────
 
 
-func get_save_key() -> String:
+func get_save_key() 
+-> String:
 	return SAVE_KEY
 
 
@@ -237,7 +240,8 @@ func _register_entity_definitions() -> void:
 		"oak_tree",
 		"res://scripts/world/objects/OakTree.gd",
 		"trees"
-	)
+	
+)
 	_entity_orchestrator.register_definition(
 		"iron_ore",
 		"res://scripts/world/objects/IronOre.gd",
@@ -301,6 +305,7 @@ func _update_time(delta: float) -> void:
 		day_count += 1
 		EventBus.world.emit_time_of_day_changed(0)
 		Logger.log_info("Neuer Tag: Tag %d beginnt." % day_count, LOG_CAT)
+
 
 
 func _restore_world(state: Dictionary) -> void:

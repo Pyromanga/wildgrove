@@ -1,5 +1,5 @@
 extends CharacterBody3D
-class_name Player
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## Player.gd — Zentraler Spieler-Controller.
 ##
@@ -60,7 +60,8 @@ func _loop_free(delta: float) -> void:
 	velocity = _mover.calculate_velocity(velocity, move_dir, delta, is_on_floor())
 	move_and_slide()
 	visuals.handle_rotation(move_dir, delta)
-	camera.handle_input(input, delta)
+	camera.han
+dle_input(input, delta)
 
 
 func _loop_busy(delta: float) -> void:
@@ -116,7 +117,8 @@ func get_context_actions() -> Array:
 		var comp: InteractableComponent = target.get_meta("interactable_component")
 		if is_instance_valid(comp):
 			var actions := comp.get_actions()
-			Logger.log_info(
+			Logger.log_in
+fo(
 				"get_context_actions(): %d Aktion(en) für '%s'." % [actions.size(), target.name],
 				LOG_CAT
 			)
@@ -186,7 +188,8 @@ func _build_sensor() -> InteractionSensor:
 	s.name = "InteractionSensor"
 	var col := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
-	# 2.5m Radius: etwas kleiner als InteractableComponent.detection_radius (3.0m)
+	# 2.5m Radius: etwas kleiner als InteractableComponent.detection
+_radius (3.0m)
 	# damit der Sensor nur tatsächlich erreichbare Ziele liefert (Randfall-Puffer)
 	shape.radius = 2.5
 	col.shape = shape

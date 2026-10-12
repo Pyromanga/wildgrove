@@ -1,4 +1,4 @@
-class_name PlayerEvents extends BaseEvents
+extends BaseEvents
 
 ## PlayerEvents — Alle spielerbezogenen Signals.
 

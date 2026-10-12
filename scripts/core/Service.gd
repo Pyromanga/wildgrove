@@ -1,5 +1,5 @@
 # res://scripts/core/Service.gd
-class_name Service extends RefCounted
+extends RefCounted
 
 ## Service — Basisklasse für Pure Services (kein Node-Overhead).
 ##

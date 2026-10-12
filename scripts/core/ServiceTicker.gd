@@ -1,5 +1,5 @@
 extends Node
-class_name ServiceTicker
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## ServiceTicker — verteilt Frame-/Physics-Ticks an alle registrierten Services.
 ##
@@ -45,7 +45,8 @@ func register_service(svc: Object) -> void:
 	if svc.has_method("on_tick") and not svc in _tick_list:
 		var interval := _get_interval_for(svc)
 		_tick_list.append(svc)
-		_intervals.append(interval)
+		_interval
+s.append(interval)
 		_accumulators.append(0.0)
 		_tick_stats.append({
 			"class": svc.get_class(),

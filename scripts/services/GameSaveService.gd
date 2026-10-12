@@ -1,5 +1,5 @@
 extends ServiceNode
-class_name GameSaveService
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## GameSaveService — Koordinator für übergreifende Speicheroperationen.
 ##
@@ -59,5 +59,6 @@ func save_all() -> bool:
 
 
 func _on_save_requested() -> void:
-	Logger.log_info("save_requested empfangen — starte save_all().", LOG_CAT)
+	Logger.
+log_info("save_requested empfangen — starte save_all().", LOG_CAT)
 	save_all()

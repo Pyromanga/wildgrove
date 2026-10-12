@@ -1,5 +1,5 @@
 # scripts/ui/ressources/InteractionButtonVisuals.gd
-class_name InteractionButtonVisuals
+# class_name entfernt (Legacy-Duplikat, Repo-Cleanup 2026-10-12 — Klassen-Registry-Konflikt s. Issue #5)
 
 ## FIX: Button war initial sichtbar (visible=true ist Godot-Default).
 ## InteractionButtonController ruft set_active(false) erst nach _ready() auf,

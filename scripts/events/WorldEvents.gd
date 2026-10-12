@@ -1,4 +1,4 @@
-class_name WorldEvents extends BaseEvents
+extends BaseEvents
 
 ## WorldEvents.gd
 ## Alle weltbezogenen Signals.
@@ -46,7 +46,8 @@ func emit_interaction_started(action_id: String, label: String, duration: float)
 	interaction_started.emit(action_id, label, duration)
 
 
-func emit_interaction_finished(action_id: String, label: String) -> void:
+func 
+emit_interaction_finished(action_id: String, label: String) -> void:
 	_log("Interaktion beendet: '%s' / id='%s'" % [label, action_id])
 	interaction_finished.emit(action_id, label)
 

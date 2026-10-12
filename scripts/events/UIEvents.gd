@@ -1,4 +1,4 @@
-class_name UIEvents extends BaseEvents
+extends BaseEvents
 
 ## UIEvents.gd
 ## UI-spezifische Signale.

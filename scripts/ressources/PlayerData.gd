@@ -1,5 +1,5 @@
 # res://scripts/resources/PlayerData.gd
-class_name PlayerData extends Resource
+extends Resource
 
 @export var speed: float = 6.0
 @export var gravity: float = 12.0

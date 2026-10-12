@@ -1,3 +1,3 @@
-class_name BootstrapConfig extends Resource
+extends Resource
 
 @export var services: Array[ServiceDefinition] = []
