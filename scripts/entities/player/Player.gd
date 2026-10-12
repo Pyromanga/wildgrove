@@ -490,6 +490,18 @@ func _loop_free_predicted(delta: float) -> void:
 	_input_seq += 1
 	var seq := _input_seq
 
+	# DIAGNOSE (2026-10-12, IT-03/Issue #5): Einmalige Bestätigung pro Player-
+	# Instanz, dass der Prediction-Loop tatsächlich läuft und den ersten Input
+	# an die Autorität schickt (oder eben nicht, wenn NetworkBridge fehlt).
+	# Läuft exakt einmal (seq==1) — kein Hot-Path-Overhead danach.
+	if seq == 1:
+		if is_instance_valid(_network):
+			AppLogger.log_info("Prediction aktiv — erster Movement-Input (seq=1) an Autorität gesendet.", LOG_CAT)
+		else:
+			AppLogger.log_error(
+				"Prediction läuft OHNE NetworkBridge — Movement-Input wird NICHT gesendet!", LOG_CAT
+			)
+
 	var move_dir := MathHelper.calculate_move_direction_from_yaw(camera_yaw, move_vec)
 	_apply_movement(move_dir, delta, jump)
 	visuals.handle_rotation(move_dir, delta)

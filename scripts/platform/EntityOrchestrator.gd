@@ -82,6 +82,10 @@ var _entity_quest_service:        QuestService         = null
 ## pro Entity. Gesetzt von WorldService sobald SessionManager es kennt (siehe
 ## on_world_scene_ready()), an jeden neuen EntityContext weitergereicht.
 var _local_peer_id: int = 1
+## FIX (2026-10-12): One-Shot-Guard für die Nicht-Autoritäts-Warnung in
+## _generate_uuid() — siehe dort. Verhindert Log-Spam bei hunderten lokalen
+## Chunk-Entity-Spawns auf Clients.
+var _warned_local_uuid: bool = false
 var _stats:      Dictionary = {
 	"total_spawned":  0,
 	"total_despawned": 0,
@@ -676,11 +680,25 @@ func _generate_uuid() -> String:
 	# Kein get_ticks_usec() (Kollisionsgefahr bei gleichzeitigen Clients).
 	# Tier 1 (kein Peer gesetzt): Guard ist immer true → verhält sich wie bisher.
 	# Tier 2/3: nur die Autorität darf UUIDs vergeben (Phase 4 verdrahtet den RPC-Rückweg).
-	if is_instance_valid(multiplayer) and multiplayer.has_multiplayer_peer():
-		assert(
-			multiplayer.is_server(),
-			"_generate_uuid() darf nur von der Autorität aufgerufen werden!"
-		)
+	# FIX (2026-10-12, IT-03 rot / Issue #5): assert() ersetzt. Clients spawnen
+	# Welt-Entities (Bäume/Erze/Tiere via ChunkEntitySpawner) BEWUSST lokal aus
+	# dem synchronisierten world_seed — _generate_uuid() läuft dadurch regulär
+	# auf Nicht-Autoritäten. Das assert brach die Funktion ab → jede Client-
+	# Entity bekam uuid='' (alle kollidierten im _entities-Dict auf dem Key ''),
+	# zusätzlich hunderte SCRIPT ERRORs pro Chunk-Load im CI-Log. Ein assert ist
+	# hier schlicht falsch: lokales World-Gen auf Clients ist Design (siehe
+	# spawn_entity()-Namens-Kommentar "jeder Peer spawnt ... unabhängig lokal").
+	# Die UUID einer Client-Entity ist rein lokal (nur die Autorität persistiert
+	# world_state, siehe WorldService.configure()-Guard) — Warnung einmal pro
+	# Lauf statt assert, danach normal weiterlaufen lassen.
+	if is_instance_valid(multiplayer) and multiplayer.has_multiplayer_peer() \
+			and not multiplayer.is_server():
+		if not _warned_local_uuid:
+			_warned_local_uuid = true
+			AppLogger.log_warn(
+				"_generate_uuid() auf Nicht-Autorität (Client-World-Gen) — lokale UUID erzeugt; nur die Autorität vergibt netzweit gültige UUIDs.",
+				LOG_CAT
+			)
 	var a := randi()
 	var b := randi()
 	var c := randi()
