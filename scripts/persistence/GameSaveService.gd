@@ -60,6 +60,14 @@ var _save_system: SaveSystem
 var _is_saving:   bool = false
 var _bus:         IEventBus
 
+## FIX (Root Cause #4, IT-03 rot auf 7a33c7d): Der Ticker kommt jetzt über
+## ServiceDeps (get_optional — Tests ohne Ticker laufen ohne fatal weiter),
+## statt über das nie existierende "Services"-Autoload. "Services" war ein
+## PARSE-Fehler, der die komplette Datei unladbar machte: load() → null →
+## Phase factory_character in boot_character() fehlgeschlagen → Host UND
+## Client booteden keine Character-Services mehr → IT-03-Timeout.
+var _ticker:      ServiceTicker
+
 ## Autosave-Akkumulator (Sekunden, aufsummierte Tick-Deltas).
 var _autosave_accum: float = 0.0
 ## Zuletzt gesehener GameState — für Save-bei-Session-Ende (state_changed).
@@ -68,6 +76,9 @@ var _was_playing: bool = false
 func configure(deps: ServiceDeps) -> void:
 	_save_system = deps.require(ServiceKeys.SAVE_SYSTEM) as SaveSystem
 	_bus          = deps.require(ServiceKeys.EVENT_BUS)    as IEventBus
+	# ServiceKeys.TICKER wird von BootPipeline in die Session-Registry gebridged
+	# (ADR-017-Liste in boot_character()) — hier also ein normaler Lookup.
+	_ticker       = deps.get_optional(ServiceKeys.TICKER)  as ServiceTicker
 	if not is_instance_valid(_save_system):
 		AppLogger.log_error("SaveSystem-Dependency fehlt!", LOG_CAT)
 
@@ -84,8 +95,8 @@ func on_ready() -> void:
 
 	# Autosave-Timer: registriere beim Ticker (Intervall-Throttling, Issue #1).
 	# Ohne Ticker kein Autosave — manuelles Speichern bleibt hiervon unberührt.
-	if Services.ticker:
-		Services.ticker.register_service(self)
+	if is_instance_valid(_ticker):
+		_ticker.register_service(self)
 	else:
 		AppLogger.log_warn("ServiceTicker fehlt — Autoritäts-Autosave inaktiv!", LOG_CAT)
 
@@ -142,12 +153,16 @@ func on_tick(delta: float) -> void:
 ##   Tier 1 (Solo, OfflineMultiplayerPeer oder kein Peer)  → true (Autosave an)
 ##   Tier 2/3 Server/Host (is_server())                    → true (Autosave an)
 ##   Tier 2 Client (kein Server)                            → false (kein Autosave)
+##
+## FIX (Root Cause #4): Explizite Typen statt `:=` — SceneTree.multiplayer und
+## MultiplayerAPI.multiplayer_peer haben in dieser Godot-Version keinen zur
+## Compile-Zeit inferierbaren Typ, `var mp := ...` war ein Parse-Fehler.
 func _is_persistence_authority() -> bool:
 	var loop := Engine.get_main_loop()
 	if loop is SceneTree:
-		var mp := (loop as SceneTree).multiplayer
+		var mp: MultiplayerAPI = (loop as SceneTree).multiplayer
 		if mp != null and mp.has_multiplayer_peer():
-			var peer := mp.multiplayer_peer
+			var peer: MultiplayerPeer = mp.multiplayer_peer
 			if peer != null and peer.get_class() != "OfflineMultiplayerPeer":
 				return mp.is_server()
 	return true
