@@ -308,7 +308,7 @@ jobs:
             echo '```'
           } > /tmp/it03-comment.md
           gh api repos/${{ github.repository }}/issues/5/comments \
-            -f body=@/tmp/it03-comment.md \
+            -F body=@/tmp/it03-comment.md \
             && echo "✅ Logs als Kommentar in Issue #5 gepostet."
 
   # ─── DI-Überblick + Testabdeckung ──────────────────────────────────────────
