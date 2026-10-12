@@ -45,6 +45,19 @@ extends Node
 ## dieselbe Sequenz wie MainMenuController._start_join_handshake() /
 ## _on_join_handshake_result() (siehe dort), nur ohne UI.
 ##
+## FIX (2026-10-12, Issue #5 — IT-03 Timeout trotz grünem Boot): das Harness
+## connectete auf EventBus.system.services_initialized und wartete ewig. Die
+## NEUE Architektur (platform/BootPipeline + platform/ServiceOrchestrator)
+## emittiert dieses Signal NICHT (nur die alte core/-Architektur tat es; grep:
+## BootPipeline hat kein emit_services_initialized, Orchestrator emittiert nur
+## session_ready/session_unloaded). Beide Prozesse booteten sauber ("APP BOOT
+## FERTIG"), das Harness startete aber nie Server noch Client → Port 38214 blieb
+## zu → Client-180s-Timeout. Neuer Ansatz: poll-basiert warten, bis der
+## ServiceOrchestrator einen SessionManager liefert (= App-Boot Phase 5/7 durch),
+## unabhängig von jeder Signal-History/Reihenfolge. Das Signal selbst wird aus
+## Kompatibilitätsgründen NICHT entfernt — wer es feuert, künftig gewinnt der
+## schnellere Weg, aber das Harness hängt nie mehr an ihm fest.
+##
 ## EINSCHRÄNKUNG (Round 113 Nachtrag): dieser Harness emittiert
 ## session_requested DIREKT über den EventBus — nicht über den echten
 ## "Neues Spiel"/"Host"-Button im MainMenu. Er testet Netzwerk-Replikation
@@ -78,6 +91,11 @@ const HANDSHAKE_TIMEOUT_SEC := 15.0
 const PLAYER_SPAWN_TIMEOUT_SEC := 60.0
 const SEQ_TIMEOUT_SEC := 20.0
 const IT03_MAX_LIFETIME_SEC := 120.0  # Server-Fallback-Selbstabschaltung.
+## FIX (2026-10-12): wie lange das Harness maximal auf einen bootenden
+## ServiceOrchestrator pollt, bevor es aufgibt (Exit 1). 30s ist großzügig —
+## der Boot läuft in der CI in < 1s durch; falls er hängt, ist das ein
+## echter Boot-Fehler und der Runner soll nicht bis zum Job-Timeout laufen.
+const SERVICES_READY_TIMEOUT_SEC := 30.0
 
 ## Client-seitige Charakter-ID für den Join-Flow. Muss KEIN existierender Save
 ## sein — SaveSystem.begin_session() erzeugt bei Erstkontakt eine neue Identität
@@ -89,6 +107,7 @@ var _role: String = ""  # "server" | "client" | ""
 var _port: int = DEFAULT_PORT
 var _connect_host: String = "127.0.0.1"
 var _connect_port: int = DEFAULT_PORT
+var _kicked: bool = false  # Guard gegen Doppel-Start (Signal + Poll-Pfad)
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -110,11 +129,44 @@ func _ready() -> void:
 		return  # Normales Spiel — kein Verhalten geändert.
 
 	AppLogger.log_info("IT03Harness aktiv. Rolle=%s" % _role, LOG_CAT)
-	if EventBus.system.services_initialized.is_connected(_on_services_ready):
-		return
-	EventBus.system.services_initialized.connect(_on_services_ready, CONNECT_ONE_SHOT)
 
-func _on_services_ready() -> void:
+	# FIX (2026-10-12, Issue #5): services_initialized wird von der neuen
+	# BootPipeline/ServiceOrchestrator-Architektur NICHT emittiert. Statt an
+	# einem toten Signal zu hängen, wird dual getriggert:
+	#   (a) falls doch jemand emittiert → sofort starten (kompatibler Fast-Path)
+	#   (b) parallel poll-basiert auf SessionManager im Orchestrator warten
+	# _kicked verhindert Doppel-Ausführung, egal welcher Pfad zuerst zuschlägt.
+	EventBus.system.services_initialized.connect(_kick_off, CONNECT_ONE_SHOT)
+	_wait_for_services_then_run()
+
+## FIX (2026-10-12): poll-basierte Alternative zum services_initialized-Signal.
+## SessionManager ist ein kritischer App-Scope-Service (BootPipeline Phase 7) —
+## ist er über den Orchestrator abrufbar, ist der App-Boot garantiert weit genug
+## für Server-/Client-Rolle durchgelaufen. Funktioniert unabhängig von
+## Autoload-Reihenfolge und Signal-History.
+func _wait_for_services_then_run() -> void:
+	var elapsed := 0.0
+	while elapsed < SERVICES_READY_TIMEOUT_SEC and not _kicked:
+		var orch := get_node_or_null("/root/ServiceOrchestrator")
+		if orch != null and is_instance_valid(orch) and orch.has_method("get_service"):
+			var sm: Object = orch.get_service(ServiceKeys.SESSION_MANAGER)
+			if sm != null and is_instance_valid(sm):
+				AppLogger.log_info(
+					"IT03: Services bereit (poll-basiert, %.1fs gewartet)." % elapsed, LOG_CAT
+				)
+				_kick_off()
+				return
+		await get_tree().create_timer(0.2).timeout
+		elapsed += 0.2
+	if not _kicked:
+		_fail(
+			"ServiceOrchestrator/SessionManager nicht innerhalb von %.0fs verfügbar — App-Boot fehlgeschlagen oder hängt." % SERVICES_READY_TIMEOUT_SEC
+		)
+
+func _kick_off() -> void:
+	if _kicked:
+		return
+	_kicked = true
 	if _role == "server":
 		_run_server()
 	else:
